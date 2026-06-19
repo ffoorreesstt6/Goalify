@@ -11,7 +11,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/server";
 import type { PlanId } from "@/lib/plans";
 
-export type AdminState = { error?: string } | null;
+type AdminState = { error?: string } | null;
 
 export async function adminLoginAction(_prev: AdminState, formData: FormData): Promise<AdminState> {
   const email = String(formData.get("email") || "");

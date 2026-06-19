@@ -13,7 +13,7 @@ const passwordSchema = z
   .regex(/[a-z]/, "Include at least one lowercase letter")
   .regex(/[0-9]/, "Include at least one number");
 
-export type AuthState = { error?: string; success?: string } | null;
+type AuthState = { error?: string; success?: string } | null;
 
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
