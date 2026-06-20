@@ -67,6 +67,11 @@ const PLANS = {
   business:{name:'Business',price:10,goalLimit:-1,ai:-1},
 };
 const PLAN_ORDER=['free','pro','premium','business'];
+// ⚠️ DEMO-ONLY: these live in client code and are readable in page source.
+// Move to server-side (edge function / DB) validation before launch.
+const PROMO_CODES={'FORESTPRO2026-FP2-PRP':'pro','FORESTPREMIUM2026-FP6-PP':'premium','FORESTBUSINESS2026-FB2-BP':'business'};
+const ADMIN_CODE='ADMINFOREST2010-AF2-ADM';
+function isDemoAdmin(){return localStorage.getItem('goalify_admin')==='1';}
 const PLAN_FEATURES={
   free:['Expense tracking','Basic analytics','Up to 3 goals','5 AI messages/day','Money personality'],
   pro:['Unlimited goals','AI Assistant Lite','Spending predictions','Budget suggestions','Extra charts','50 AI messages/day'],
@@ -813,15 +818,31 @@ function settingsView(){
   </div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Security · Password</h2><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly AI reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b></p>${p.plan==='free'?`<a href="#app/student" class="btn btn-primary mt-4 text-sm">Unlock Pro (students)</a>`:`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`}</div>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b> ${planBadge(p.plan)}</p>${p.plan!=='free'?`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`:`<a href="#app/plans" class="btn btn-primary mt-4 text-sm">See plans</a>`}</div>
+    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🎟️ Redeem a code</h2><p class="mt-1 text-sm text-slate-400">Have a promo code? Activate your plan instantly.</p><div class="mt-4 flex gap-2"><input id="promoInput" class="input" placeholder="ENTER-CODE-HERE" style="text-transform:uppercase"><button class="btn btn-primary text-sm shrink-0" data-action="redeemPromo">Redeem</button></div></div>
+  </div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Privacy & Data</h2><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
+  <div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🛡️ Admin access</h2>${isDemoAdmin()?'<span class="rounded-full px-2 py-0.5 text-[10px] font-medium text-amber-300" style="background:rgba(245,158,11,.15)">Signed in</span>':''}</div>${isDemoAdmin()?`<p class="mt-1 text-sm text-slate-400">You're signed in as admin.</p><div class="mt-3 flex gap-2"><a href="#admin" class="btn btn-primary text-sm">Open admin dashboard</a><button class="btn btn-ghost text-sm" data-action="adminLogout">Sign out admin</button></div>`:`<p class="mt-1 text-sm text-slate-400">Enter the admin access code to open the admin dashboard.</p><div class="mt-3 flex gap-2"><input id="adminInput" type="password" class="input" placeholder="Access code"><button class="btn btn-primary text-sm shrink-0" data-action="adminLogin">Enter</button></div>`}</div>
   <div class="glass rounded-2xl p-6" style="border:1px solid rgba(239,68,68,.3)"><h2 class="text-xl font-bold text-red-300">Delete account</h2><p class="mt-1 text-sm text-slate-400">Permanently delete your data. This cannot be undone.</p><button class="btn mt-4 text-sm" style="background:rgba(239,68,68,.9);color:#fff" data-action="delAcct">Delete my data</button></div></div>`;
 }
 
 // ============================================================
 // ADMIN
 // ============================================================
+function adminDemoView(){
+  const codes=Object.entries(PROMO_CODES),used=JSON.parse(localStorage.getItem('goalify_promo_used')||'[]');
+  const pendingChals=chalState().filter(c=>c.status==='pending');
+  return `<div class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8 flex items-center justify-between"><div class="flex items-center gap-3">${brand('#admin')}<span class="rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-300">Admin</span></div><div class="flex items-center gap-3 text-sm"><a href="#app/dashboard" class="text-slate-400 hover:text-white">← App</a><button class="btn btn-ghost !py-2 text-sm" data-action="adminLogout">Sign out admin</button></div></div>
+  <div class="glass rounded-2xl p-5 mb-6" style="border:1px solid var(--accent2)"><p class="text-sm">⚠️ <b>Demo admin.</b> Real users, subscriptions and verification requests appear here once the Supabase backend is live and people sign up. The data below reads your local demo state.</p></div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${statCard('Users',1,'demo','👥')}${statCard('Your plan',PLANS[ME.plan].name,'','💳')}${statCard('Pending challenges',pendingChals.length,'','⚔️')}${statCard('Promo codes',codes.length,'','🎟️')}</div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎟️ Promo codes</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-white/10 text-left text-xs" style="color:var(--muted)"><th class="pb-2">Code</th><th class="pb-2">Grants</th><th class="pb-2">Status</th></tr></thead><tbody>${codes.map(([code,plan])=>`<tr class="border-b border-white/5"><td class="py-3 font-mono text-xs">${code}</td><td class="py-3">${PLANS[plan].name} ${planBadge(plan)}</td><td class="py-3">${used.includes(code)?'<span class="text-amber-300">used</span>':'<span class="text-emerald-400">active</span>'}</td></tr>`).join('')}</tbody></table></div><p class="mt-3 text-xs text-slate-500">At launch, codes are created/disabled in the database — not hardcoded here.</p></div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">⚔️ Challenge submissions to review</h3>${pendingChals.length===0?'<p class="py-6 text-center text-sm" style="color:var(--muted)">No submissions awaiting review.</p>':`<div class="space-y-3">${pendingChals.map(c=>{const def=CHALLENGES.find(x=>x.key===c.key)||{title:c.key,xp:0};return `<div class="rounded-xl p-4" style="background:var(--glass)"><div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-medium">${def.title}</p><p class="text-xs" style="color:var(--muted)">${(c.proofs||[]).length} proof entries · +${def.xp} XP on approval</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveChal" data-key="${c.key}">Approve</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectChal" data-key="${c.key}">Reject</button></div></div>${(c.proofs||[]).slice(-3).map(p=>`<p class="mt-2 rounded-lg p-2 text-xs" style="background:var(--glass);color:var(--muted)">📝 ${esc(p.day)}: ${esc(p.note||p.explanation||'')}${p.saved?` · €${esc(String(p.saved))}`:''}</p>`).join('')}</div>`;}).join('')}</div>`}</div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎓 Student verifications</h3><p class="py-6 text-center text-sm" style="color:var(--muted)">Verification requests appear here once the backend is live.</p></div>
+  </div>`;
+}
 async function adminView(){
+  if(DEMO_MODE||isDemoAdmin()) return adminDemoView();
   const [{data:users},{data:pending}]=await Promise.all([
     sb.from('profiles').select('id,first_name,last_name,email,plan,role,created_at').order('created_at',{ascending:false}),
     sb.from('student_verifications').select('*').eq('status','pending'),
@@ -961,7 +982,7 @@ async function render(){
   // need session below
   if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
   if(!ME) await loadProfile();
-  if(hash==='admin'){ if(ME?.role!=='admin'){toast('Admins only',' err');location.hash='#app/dashboard';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
+  if(hash==='admin'){ if(ME?.role!=='admin'&&!isDemoAdmin()){toast('Admins only','err');location.hash='#app/settings';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
   if(hash==='quiz'){ QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
   if(hash.startsWith('app/')){
     if(!ME?.onboarded){location.hash='#quiz';return;}
@@ -1019,6 +1040,9 @@ document.addEventListener('click',async(e)=>{
     else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
     else if(act==='setBg'){applyBg(a.getAttribute('data-bg'));if(!DEMO_MODE){await sb.from('profiles').update({bg:ME.bg}).eq('id',SESSION.user.id);}render();}
     else if(act==='demoPlan'){const pl=a.getAttribute('data-plan');if(DEMO_MODE){DEMO_ME.plan=pl;ME.plan=pl;toast('Now previewing '+PLANS[pl].name+' plan (demo)');render();}else{toast('Upgrades are handled by an admin or via student verification.');}}
+    else if(act==='redeemPromo'){const code=($('#promoInput')?.value||'').trim().toUpperCase();if(!code)return toast('Enter a code','err');const plan=PROMO_CODES[code];if(!plan)return toast('Invalid or expired code','err');const used=JSON.parse(localStorage.getItem('goalify_promo_used')||'[]');if(used.includes(code))return toast('This code has already been used','err');used.push(code);localStorage.setItem('goalify_promo_used',JSON.stringify(used));if(DEMO_MODE){DEMO_ME.plan=plan;ME.plan=plan;}else{await sb.from('profiles').update({plan}).eq('id',SESSION.user.id);await loadProfile();}toast('🎉 '+PLANS[plan].name+' plan activated!');render();}
+    else if(act==='adminLogin'){const code=($('#adminInput')?.value||'').trim();if(code!==ADMIN_CODE)return toast('Incorrect access code','err');localStorage.setItem('goalify_admin','1');toast('🛡️ Admin access granted');location.hash='#admin';}
+    else if(act==='adminLogout'){localStorage.removeItem('goalify_admin');toast('Admin signed out');render();}
     else if(act==='shareCard'){try{makeShareCard();toast('Progress card downloaded 📤');}catch(e){toast('Could not generate card','err');}}
     else if(act==='support'){toast('👏 You sent support to '+a.getAttribute('data-name')+'!');}
     else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
@@ -1037,6 +1061,8 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qnext'){captureQuizStep();QSTEP++;renderQuiz();}
     else if(act==='qradio'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
     else if(act==='qchip'){const f=a.getAttribute('data-field'),v=a.getAttribute('data-val');QA[f].has(v)?QA[f].delete(v):QA[f].add(v);renderQuiz();}
+    else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
+    else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
     else if(act==='approveSV'){await sb.rpc('approve_student',{p_id:a.getAttribute('data-id')});toast('Approved → Pro');render();}
     else if(act==='rejectSV'){await sb.rpc('reject_student',{p_id:a.getAttribute('data-id')});toast('Rejected');render();}
   }catch(err){toast(err.message||'Something went wrong','err');}
