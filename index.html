@@ -128,12 +128,18 @@
     .av-pro::before,.av-premium::before{content:"";position:absolute;inset:-3px;border-radius:9999px;padding:2px;background:conic-gradient(from 0deg,var(--accent1),var(--accent2),var(--accent3),var(--accent1));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:avSpin 5s linear infinite;pointer-events:none}
     .av-premium::before{animation:avSpin 3s linear infinite}
     .av-premium{animation:avPulse 2.6s ease-in-out infinite;border-radius:9999px}
+    /* ---- social profile banners (Pro / Premium) ---- */
+    @keyframes bannerShift{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+    .pf-banner-pro{background:linear-gradient(120deg,var(--accent1),var(--accent2),var(--accent3))}
+    .pf-banner-premium{background:linear-gradient(120deg,var(--accent1),var(--accent2),var(--accent3),var(--accent2),var(--accent1));background-size:220% 220%;animation:bannerShift 7s linear infinite}
+    .pf-banner-premium::before{content:"";position:absolute;inset:0;background:radial-gradient(45% 120% at 18% 0%,rgba(255,255,255,.30),transparent 60%),radial-gradient(40% 120% at 85% 100%,rgba(255,255,255,.18),transparent 60%);mix-blend-mode:overlay;pointer-events:none}
+    .pf-banner-premium::after{content:"";position:absolute;inset:0;background:radial-gradient(2px 2px at 20% 40%,#fff8,transparent),radial-gradient(2px 2px at 60% 30%,#fff6,transparent),radial-gradient(1.5px 1.5px at 80% 60%,#fff7,transparent),radial-gradient(1.5px 1.5px at 40% 70%,#fff5,transparent);opacity:.7;pointer-events:none}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=19"></script>
+  <script type="module" src="./app.js?v=21"></script>
 </body>
 </html>

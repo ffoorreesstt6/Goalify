@@ -64,8 +64,12 @@ const PLANS = {
   free:{name:'Free',price:0,goalLimit:3,ai:5},
   pro:{name:'Pro',price:3,goalLimit:-1,ai:50,highlight:true},
   premium:{name:'Premium',price:5,goalLimit:-1,ai:-1},
-  business:{name:'Business',price:10,goalLimit:-1,ai:-1},
+  business:{name:'Business',price:5,goalLimit:-1,ai:-1},
 };
+// monthly + yearly pricing (yearly = a few months free)
+const PRICING={pro:{mo:3,yr:30},premium:{mo:5,yr:50},business:{mo:5,yr:100}};
+// referral reward tiers
+const REWARD_TIERS=[[10,'1 month Pro free'],[25,'3 months Pro free'],[50,'1 year Pro free'],[100,'1 year Premium free']];
 const PLAN_ORDER=['free','pro','premium','business'];
 // ⚠️ DEMO-ONLY: these live in client code and are readable in page source.
 // Move to server-side (edge function / DB) validation before launch.
@@ -99,6 +103,7 @@ function planNav(plan){
   if(c.ai)nav.push(['ai','AI Coach','✨']);
   if(c.gamify)nav.push(['challenges','Challenges','🏆']);
   if(c.social!=='none')nav.push(['social','Social','👥']);
+  nav.push(['rewards','Rewards','🎁']);
   nav.push(['plans','Plans','💳']);
   if(plan==='free')nav.push(['student','Student Verify','🎓']);
   nav.push(['settings','Settings','⚙️']);
@@ -838,8 +843,16 @@ function studentView(){
 function socialView(){
   const c=caps(ME.plan);const full=c.social==='full';
   const completed=GOALS.filter(g=>g.completed);
-  const me=`<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${esc(ME.username||(ME.first_name||'you').toLowerCase())}</p></div></div>
-    <div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div></div>`;
+  const nm=`${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}`.trim();
+  const un=esc(ME.username||(ME.first_name||'you').toLowerCase());
+  const got=[...earnedBadges()];
+  const miniBadges=got.slice(-7).map(k=>{const b=BADGES.find(x=>x.key===k);return b?`<span title="${esc(b.name)} — ${esc(b.desc)}" class="text-lg badge-pop">${b.emoji}</span>`:'';}).join('');
+  const bannerCls=ME.plan==='premium'?'pf-banner-premium':ME.plan==='pro'?'pf-banner-pro':'';
+  const banner=bannerCls?`<div class="relative h-24 ${bannerCls}">${ME.plan==='premium'?'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">✨ Premium</span><a href="#app/settings" class="absolute right-3 bottom-3 rounded-lg bg-black/25 px-2.5 py-1 text-[11px] text-white hover:bg-black/40">🎨 Customize</a>':'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">PRO</span>'}</div>`:'';
+  const stats=`<div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div>`;
+  const me = bannerCls
+   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6 -mt-10"><div class="flex items-end gap-4"><span class="inline-flex h-20 w-20 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(72)}</span><div class="flex-1 min-w-0 pb-1"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
+   : `<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${stats}</div>`;
   const find=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">Find people</h3><div class="flex gap-2"><input class="input" placeholder="Search by username…" id="findUser"><button class="btn btn-primary shrink-0" data-action="findUser">Search</button></div><p class="mt-3 text-sm text-center py-6" style="color:var(--muted)">No profiles to show yet. Real people appear here once accounts go live — no placeholder users.</p></div>`;
   const shared = completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Your achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p><button class="btn !bg-white/20 !text-white mt-3 !py-1.5 text-xs" data-action="shareCard">📤 Share</button></div>`).join('')}</div></div>`:`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">🏆 Achievement cards</h3><p class="text-sm text-center py-6" style="color:var(--muted)">Complete a goal to unlock a shareable achievement card.</p></div>`;
   if(!full){
@@ -851,19 +864,62 @@ function socialView(){
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">Your network, feed, achievement cards and goal memories.</p></div>${me}<div class="grid gap-6 lg:grid-cols-2">${feed}${find}</div>${shared}${memories}</div>`;
 }
 
+function planCard(id,cur){
+  const p=PLANS[id],isCur=id===cur,hl=p.highlight,paid=id!=='free',pr=PRICING[id];
+  const tag=isCur?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Your plan</span>`:(hl?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:'');
+  const price=paid?`<div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${pr.mo}</span><span class="text-sm text-slate-400">/mo</span></div><p class="mt-1 text-xs text-slate-400">or <b class="text-white">€${pr.yr}/year</b> · save ${Math.round(100-(pr.yr/(pr.mo*12))*100)}%</p>`:`<div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€0</span><span class="text-sm text-slate-400">/forever</span></div><p class="mt-1 text-xs text-slate-400">No card needed</p>`;
+  const trial=paid?`<div class="mt-3 flex flex-wrap gap-2 text-[11px]"><span class="rounded-full px-2 py-1" style="background:var(--glass);color:var(--muted)">✨ 1-week free trial</span><span class="rounded-full px-2 py-1" style="background:var(--glass);color:var(--muted)">✓ Cancel anytime</span></div>`:'';
+  const feats=`<ul class="mt-4 flex-1 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul>`;
+  let action;
+  if(isCur){action=`<button class="btn btn-ghost mt-4 w-full text-sm" disabled>Current plan</button>`;}
+  else if(!paid){action=`<button class="btn btn-ghost mt-4 w-full text-sm" data-action="demoPlan" data-plan="free">Switch to Free</button>`;}
+  else{
+    const opts=[`<button class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff" data-action="demoPlan" data-plan="${id}"><span>Monthly</span><span class="font-bold">€${pr.mo}/mo</span></button>`,
+      `<button class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)" data-action="demoPlan" data-plan="${id}"><span>Yearly <span class="text-[10px] rounded-full px-1.5 py-0.5 ml-1" style="background:var(--accent2);color:#fff">best value</span></span><span class="font-bold">€${pr.yr}/yr</span></button>`];
+    if(id==='pro')opts.push(`<a href="#app/student" class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)"><span>🎓 Student Verification</span><span class="font-bold text-emerald-400">Free 2 yrs</span></a>`);
+    opts.push(`<a href="#app/rewards" class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)"><span>🎁 Referral Reward</span><span class="font-bold text-emerald-400">Invite & earn</span></a>`);
+    action=`<button class="btn ${hl?'btn-primary':'btn-ghost'} mt-4 w-full text-sm" data-action="togglePay" data-id="${id}">${PLAN_ORDER.indexOf(id)>PLAN_ORDER.indexOf(cur)?'Upgrade':'Switch'} to ${p.name} <span class="ml-1">▼</span></button>
+      <div id="pay-${id}" class="hidden mt-2 space-y-2 anim">${opts.join('')}<p class="text-[11px] text-center" style="color:var(--muted)">1-week free trial · cancel anytime</p></div>`;
+  }
+  return `<div class="relative flex flex-col rounded-2xl p-6 anim transition hover:-translate-y-1 ${hl?'glass-strong':'glass'}" style="${isCur?'box-shadow:0 0 0 2px var(--accent2)':(hl?'box-shadow:0 0 40px -12px rgba(99,102,241,.4)':'')}">
+    ${tag}
+    <div class="flex items-center gap-2"><h3 class="text-lg font-semibold">${p.name}</h3>${id!=='free'?planBadge(id):''}</div>
+    ${price}${trial}${feats}${action}
+  </div>`;
+}
 function plansView(){
   const cur=ME.plan;
-  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Plans</h1><p class="mt-1 text-sm text-slate-400">Pick the plan that fits your goals. You're currently on <b class="text-white">${PLANS[cur].name}</b>.</p></div>
-  <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id],isCur=id===cur,hl=p.highlight;
-    return `<div class="relative flex flex-col rounded-2xl p-6 ${hl?'glass-strong':'glass'}" style="${isCur?'box-shadow:0 0 0 2px var(--accent2)':(hl?'box-shadow:0 0 40px -10px rgba(99,102,241,.4)':'')}">
-      ${isCur?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Your plan</span>`:(hl?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:'')}
-      <h3 class="text-lg font-semibold">${p.name}</h3>
-      <div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm text-slate-400">/mo</span></div>
-      <p class="mt-1 text-xs text-slate-400">${p.ai===-1?'Unlimited AI':p.ai+' AI msgs/day'} · ${p.goalLimit===-1?'Unlimited goals':p.goalLimit+' goals'}</p>
-      <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul>
-      ${isCur?`<button class="btn btn-ghost mt-5 w-full text-sm" disabled>Current plan</button>`:`<button class="btn ${hl?'btn-primary':'btn-ghost'} mt-5 w-full text-sm" data-action="demoPlan" data-plan="${id}">${PLAN_ORDER.indexOf(id)>PLAN_ORDER.indexOf(cur)?'Upgrade':'Switch'} to ${p.name}</button>`}
-    </div>`;}).join('')}</div>
-  ${DEMO_MODE?`<p class="text-xs text-slate-500">Demo: switching plans here lets you preview how each tier looks (e.g. Appearance customization is Pro and up). No payment is taken.</p>`:`<p class="text-xs text-slate-500">Students can unlock Pro for free via <a href="#app/student" class="text-accent-purple hover:underline">Student Verification</a>.</p>`}
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Plans & Pricing</h1><p class="mt-1 text-sm text-slate-400">Pick the plan that fits you. You're on <b class="text-white">${PLANS[cur].name}</b>. Every paid plan includes a <b class="text-white">1-week free trial</b> — cancel anytime.</p></div>
+  <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">${PLAN_ORDER.map(id=>planCard(id,cur)).join('')}</div>
+  <div class="glass rounded-2xl p-5 text-sm text-slate-400"><b class="text-white">🎓 Students:</b> verify your status for <b class="text-white">Pro free for 2 years</b>. <b class="text-white">🎁 Everyone:</b> invite friends in <a href="#app/rewards" class="text-accent-purple hover:underline">Rewards</a> to earn free Pro & Premium.</div>
+  ${DEMO_MODE?`<p class="text-xs text-slate-500">Demo: selecting a plan previews how that tier looks — no payment is taken. Real billing activates when the backend goes live.</p>`:''}
+  </div>`;
+}
+// -------------------- Rewards / referrals --------------------
+function referralCode(){let c=localStorage.getItem('goalify_refcode');if(!c){c=(ME?.first_name||'GOAL').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)||'GOAL';c+=Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('goalify_refcode',c);}return c;}
+function rewardsView(){
+  const code=referralCode();
+  const link=location.origin+location.pathname+'#r='+code;
+  const invited=+(localStorage.getItem('goalify_ref_invited')||0); // real count once backend is live
+  const nextTier=REWARD_TIERS.find(t=>invited<t[0])||REWARD_TIERS[REWARD_TIERS.length-1];
+  const prog=Math.min(100,Math.round(invited/nextTier[0]*100));
+  const earned=REWARD_TIERS.filter(t=>invited>=t[0]);
+  const tierRows=REWARD_TIERS.map(t=>{const done=invited>=t[0];return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${done?'box-shadow:0 0 0 1px var(--accent2)':''}"><span class="text-xl">${done?'✅':'🎁'}</span><div class="flex-1"><p class="text-sm font-medium">${t[0]} friends</p><p class="text-[11px]" style="color:var(--muted)">${t[1]}</p></div>${done?'<span class="text-xs text-emerald-400 font-semibold">Earned</span>':`<span class="text-xs" style="color:var(--muted)">${invited}/${t[0]}</span>`}</div>`;}).join('');
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">🎁 Rewards</h1><p class="mt-1 text-sm text-slate-400">Invite friends to Goalify and earn free Pro & Premium. Real sign-ups only — verified by email.</p></div>
+  <div class="glass-strong rounded-2xl p-6">
+    <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="text-[11px] uppercase tracking-widest" style="color:var(--muted)">Progress to next reward</p><h2 class="mt-1 text-2xl font-bold">${invited} / ${nextTier[0]} friends invited</h2><p class="text-sm gtext font-semibold">Reward: ${nextTier[1]}</p></div><div class="text-right"><p class="text-3xl font-extrabold gtext">${prog}%</p></div></div>
+    <div class="mt-4 h-3 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div>
+  </div>
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-3">Your referral</h3>
+      <p class="label">Referral code</p><div class="flex gap-2"><input class="input font-mono" value="${code}" readonly id="refCode"><button class="btn btn-primary shrink-0 text-sm" data-action="copyRef">Copy</button></div>
+      <p class="label mt-4">Referral link</p><div class="flex gap-2"><input class="input text-xs" value="${esc(link)}" readonly id="refLink"><button class="btn btn-ghost shrink-0 text-sm" data-action="copyRefLink">Copy</button></div>
+      <div class="mt-4 grid grid-cols-2 gap-3 text-center"><div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${invited}</p><p class="text-[11px]" style="color:var(--muted)">Friends invited</p></div><div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${earned.length}</p><p class="text-[11px]" style="color:var(--muted)">Rewards earned</p></div></div>
+    </div>
+    <div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-3">Reward tiers</h3><div class="space-y-2">${tierRows}</div></div>
+  </div>
+  <div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">How it works</h3><ul class="space-y-1.5 text-sm" style="color:var(--muted)"><li class="flex gap-2"><span>1️⃣</span>Share your code or link with friends.</li><li class="flex gap-2"><span>2️⃣</span>They sign up with a new account and verify their email.</li><li class="flex gap-2"><span>3️⃣</span>Each verified friend counts toward your next reward.</li></ul>
+  <p class="mt-3 text-xs" style="color:var(--muted)">Rules: new accounts only · email verification required · no self-referrals · duplicate accounts don't count. Counts go live once accounts are enabled.</p></div>
   </div>`;
 }
 
@@ -1100,7 +1156,7 @@ async function render(){
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
     const route2=(allowed.has(route)||route==='student')?route:'dashboard';
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,social:socialView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,social:socialView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'){drawSpend('year');drawCat();if(c.ai)loadAiInsights();}
@@ -1520,6 +1576,9 @@ document.addEventListener('click',async(e)=>{
     else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
     else if(act==='copyInvite'){const link=location.origin+location.pathname+'#invite';try{await navigator.clipboard.writeText(link);toast('🔗 Invite link copied!');}catch(e){toast('Invite link: '+link);}}
     else if(act==='findUser'){toast('No matching profiles yet — live once accounts are enabled.');}
+    else if(act==='togglePay'){const el=document.getElementById('pay-'+a.getAttribute('data-id'));if(el)el.classList.toggle('hidden');}
+    else if(act==='copyRef'){const v=$('#refCode')?.value||referralCode();try{await navigator.clipboard.writeText(v);toast('🎁 Referral code copied!');}catch(e){toast('Code: '+v);}}
+    else if(act==='copyRefLink'){const v=$('#refLink')?.value||'';try{await navigator.clipboard.writeText(v);toast('🔗 Referral link copied!');}catch(e){toast('Link: '+v);}}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='chalFilter'){CHAL_FILTER=+a.getAttribute('data-d');render();}
     else if(act==='joinChal'){const k=a.getAttribute('data-key');const arr=chalState();if(!arr.find(c=>c.key===k)){arr.push({key:k,start:todayISO(),proofs:[],status:'active'});setChalState(arr);}toast('Challenge started — log proof daily 💪');render();}
