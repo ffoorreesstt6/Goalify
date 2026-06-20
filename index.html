@@ -18,34 +18,61 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    :root{color-scheme:dark}
-    body{background:#070A14;color:#f1f5f9;font-family:Inter,system-ui,sans-serif;overflow-x:hidden}
-    .glass{background:rgba(255,255,255,.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08)}
-    .glass-strong{background:rgba(255,255,255,.07);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.12)}
-    .gtext{background:linear-gradient(135deg,#60a5fa,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+    /* ---- theme tokens ---- */
+    :root{
+      color-scheme:dark;
+      --bg:#070A14; --text:#f1f5f9; --muted:#94a3b8;
+      --glass:rgba(255,255,255,.04); --glass-strong:rgba(255,255,255,.07); --border:rgba(255,255,255,.10);
+      --accent1:#4f46e5; --accent2:#8b5cf6; --accent3:#a855f7;
+    }
+    /* color themes (accent only) */
+    html[data-accent="blue"]  {--accent1:#4f46e5;--accent2:#8b5cf6;--accent3:#a855f7}
+    html[data-accent="green"] {--accent1:#059669;--accent2:#22c55e;--accent3:#4ade80}
+    html[data-accent="yellow"]{--accent1:#d97706;--accent2:#f59e0b;--accent3:#fbbf24}
+    html[data-accent="pink"]  {--accent1:#db2777;--accent2:#ec4899;--accent3:#f472b6}
+    html[data-accent="white"] {--accent1:#475569;--accent2:#64748b;--accent3:#94a3b8}
+    /* light mode */
+    html.light{
+      color-scheme:light;
+      --bg:#f4f6fb; --text:#0f172a; --muted:#64748b;
+      --glass:rgba(15,23,42,.04); --glass-strong:rgba(15,23,42,.06); --border:rgba(15,23,42,.10);
+    }
+    body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden;transition:background .3s,color .3s}
+    .glass{background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border)}
+    .glass-strong{background:var(--glass-strong);backdrop-filter:blur(22px);border:1px solid var(--border)}
+    .gtext{background:linear-gradient(135deg,var(--accent1),var(--accent2),var(--accent3));-webkit-background-clip:text;background-clip:text;color:transparent}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:.75rem;padding:.75rem 1.5rem;font-weight:600;transition:.25s;cursor:pointer;border:none;text-decoration:none}
-    .btn-primary{color:#fff;background:linear-gradient(135deg,#4f46e5,#8b5cf6);box-shadow:0 8px 24px -8px rgba(99,102,241,.6)}
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 32px -8px rgba(139,92,246,.8)}
+    .btn-primary{color:#fff;background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 8px 24px -8px rgba(99,102,241,.5)}
+    .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.05)}
     .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
-    .btn-ghost{color:#fff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
-    .btn-ghost:hover{background:rgba(255,255,255,.1)}
+    .btn-ghost{color:var(--text);background:var(--glass);border:1px solid var(--border)}
+    .btn-ghost:hover{filter:brightness(1.1)}
     .orb{position:absolute;border-radius:9999px;filter:blur(80px);opacity:.5;pointer-events:none}
-    .input{width:100%;border-radius:.75rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);padding:.65rem 1rem;font-size:.875rem;outline:none;color:#f1f5f9}
-    .input:focus{border-color:rgba(168,85,247,.6)}
-    .label{margin-bottom:.35rem;display:block;font-size:.8rem;font-weight:500;color:#cbd5e1}
-    ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:#070A14}
-    ::-webkit-scrollbar-thumb{background:linear-gradient(#4f46e5,#8b5cf6);border-radius:8px}
-    .grid-bg{background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(ellipse at center,#000 35%,transparent 75%);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 75%)}
-    .nav-link.active{background:linear-gradient(90deg,rgba(59,130,246,.2),rgba(139,92,246,.2))}
+    .input{width:100%;border-radius:.75rem;border:1px solid var(--border);background:var(--glass);padding:.65rem 1rem;font-size:.875rem;outline:none;color:var(--text)}
+    .input:focus{border-color:var(--accent2)}
+    .label{margin-bottom:.35rem;display:block;font-size:.8rem;font-weight:500;color:var(--muted)}
+    ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(var(--accent1),var(--accent2));border-radius:8px}
+    .grid-bg{background-image:linear-gradient(rgba(128,128,128,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(128,128,128,.08) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(ellipse at center,#000 35%,transparent 75%);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 75%)}
+    .nav-link.active{background:linear-gradient(90deg,var(--glass-strong),var(--glass))}
     .toast{position:fixed;bottom:1.25rem;right:1.25rem;z-index:80;border-radius:.75rem;padding:.75rem 1rem;font-size:.875rem}
     .anim{animation:fadeUp .5s ease forwards}
     .progress-fill{transition:width .8s cubic-bezier(.4,0,.2,1)}
+    /* accent helpers driven by theme */
+    .text-accent-purple{color:var(--accent2)!important}
+    .text-accent-violet{color:var(--accent3)!important}
+    /* light-mode legibility for tailwind utility colors used across views */
+    html.light .text-slate-400,html.light .text-slate-300,html.light .text-slate-500{color:#64748b!important}
+    html.light .bg-white\/5{background:rgba(15,23,42,.04)!important}
+    html.light .bg-white\/10{background:rgba(15,23,42,.07)!important}
+    html.light .border-white\/10,html.light .border-white\/5{border-color:rgba(15,23,42,.10)!important}
+    html.light aside{background:rgba(255,255,255,.85)!important}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=5"></script>
+  <script type="module" src="./app.js?v=7"></script>
 </body>
 </html>

@@ -27,7 +27,8 @@ const DEMO_ME = {
   plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
   monthly_income:3500, monthly_savings:700, xp:450, currency:'EUR',
   budget:{groceries:420,restaurants:250,shopping:180,entertainment:120,subscriptions:60,transportation:90},
-  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en'
+  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
+  coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null
 };
 const DEMO_GOALS = [
   {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,created_at:'2024-01-01'},
@@ -91,6 +92,32 @@ const CHALLENGES=[
   {key:'noimpulse',title:'No Impulse-Buy',desc:'No non-essentials for 10 days.',emoji:'🛑',xp:80},
 ];
 
+// -------------------- AI coach personalities --------------------
+const COACH_MODES={
+  chill:{name:'Chill Coach',emoji:'😌',desc:'Soft, supportive tone'},
+  fun:{name:'Fun Coach',emoji:'🎉',desc:'Upbeat & motivational'},
+  strict:{name:'Strict Coach',emoji:'🎯',desc:'Direct, no fluff'},
+  roast:{name:'Roast Mode',emoji:'🔥',desc:'Light humor, keeps it real'},
+};
+// -------------------- savings strategy modes --------------------
+const SAVINGS_MODES={
+  chill:{name:'Chill',emoji:'🌿',cut:0.10,desc:'Small cuts, low pressure'},
+  fun:{name:'Fun',emoji:'🎈',cut:0.20,desc:'Balanced optimization'},
+  hard:{name:'Hard',emoji:'🔥',cut:0.35,desc:'Aggressive savings'},
+  extreme:{name:'Extreme',emoji:'⚡',cut:0.50,desc:'Maximum optimization'},
+};
+// categories that can realistically be reduced
+const REDUCIBLE=['restaurants','fastfood','shopping','entertainment','subscriptions','cigarettes','gas'];
+// -------------------- badges --------------------
+const BADGES=[
+  {key:'starter',name:'Goal Starter',emoji:'🚀',desc:'Created your first goal'},
+  {key:'saver7',name:'7-Day Saver',emoji:'🔥',desc:'7-day check-in streak'},
+  {key:'cutter',name:'Expense Cutter',emoji:'✂️',desc:'Completed a savings challenge'},
+  {key:'finisher',name:'Goal Finisher',emoji:'🎯',desc:'Completed a goal'},
+  {key:'leveled',name:'Level Up',emoji:'⭐',desc:'Reached level 5'},
+  {key:'consistency',name:'Consistency Master',emoji:'🏆',desc:'30-day streak'},
+];
+
 // -------------------- helpers --------------------
 const $=(s,el=document)=>el.querySelector(s);
 const esc=(s)=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -141,6 +168,61 @@ function goalifyScore(s,goals,xp){
 }
 function healthScore(s){let v=50;v+=Math.min(30,s.savingsRate*.6);v+=s.leftover>0?10:-15;v=Math.max(0,Math.min(100,Math.round(v)));
   return {v,r:v>=80?'Excellent':v>=60?'Good':v>=40?'Fair':'Needs work'};}
+
+// -------------------- behaviour engine (all math in code, never invented) --------------------
+function uid(){return DEMO_MODE?'demo':(SESSION?.user?.id||'anon');}
+function savingsMode(){return SAVINGS_MODES[ME?.savings_mode||'fun'];}
+function coachMode(){return COACH_MODES[ME?.coach_mode||'fun'];}
+function monthCatSpend(){const now=new Date(),m=new Date(now.getFullYear(),now.getMonth(),1),map={};EXPENSES.filter(e=>e.category!=='income'&&e.category!=='savings'&&new Date(e.spent_at)>=m).forEach(e=>{map[e.category]=(map[e.category]||0)+Number(e.amount);});return map;}
+function topGoal(){return GOALS.filter(g=>!g.completed).sort((a,b)=>(b.target_amount-b.saved_amount)-(a.target_amount-a.saved_amount))[0]||null;}
+// what to cut: each item = {cat, spend, save, impact} — driven by the active savings mode
+function whatToReduce(){
+  const map=monthCatSpend(), cut=savingsMode().cut, g=topGoal();
+  return REDUCIBLE.filter(c=>map[c]>0).map(c=>{
+    const save=Math.round(map[c]*cut*100)/100; let impact='';
+    if(g&&save>0){
+      const remaining=Math.max(0,g.target_amount-g.saved_amount);
+      const base=Math.max(0,Number(g.monthly_contribution)||0);
+      if(base>0){const dn=Math.max(0,Math.round((remaining/base-remaining/(base+save))*30));if(dn>0)impact=`reach “${g.name}” ${dn} days sooner`;}
+      else{impact=`covers “${g.name}” in ~${Math.ceil(remaining/save)} mo`;}
+    }
+    return {cat:c,spend:map[c],save,impact};
+  }).filter(x=>x.save>0).sort((a,b)=>b.save-a.save).slice(0,5);
+}
+// streaks (daily check-in) — stored locally
+function streakState(){try{return JSON.parse(localStorage.getItem('goalify_streak_'+uid()))||{count:0,last:null};}catch(e){return{count:0,last:null};}}
+function setStreakState(s){localStorage.setItem('goalify_streak_'+uid(),JSON.stringify(s));}
+function doCheckIn(){const s=streakState(),t=todayISO();if(s.last===t)return{...s,already:true};const y=new Date(Date.now()-864e5).toISOString().slice(0,10);s.count=(s.last===y?s.count+1:1);s.last=t;setStreakState(s);return{...s,already:false};}
+function completedChals(){try{return JSON.parse(localStorage.getItem('goalify_chaldone_'+uid()))||[];}catch(e){return[];}}
+function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done=completedChals(),set=new Set();
+  if(GOALS.length>0)set.add('starter');
+  if(s.count>=7)set.add('saver7');
+  if(done.length>0)set.add('cutter');
+  if(GOALS.some(g=>g.completed))set.add('finisher');
+  if(lvl>=5)set.add('leveled');
+  if(s.count>=30)set.add('consistency');
+  return set;}
+// theme
+function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');}
+// avatar (with badge ring)
+function avatarHTML(size=36){
+  const b=[...earnedBadges()],badge=b.length?BADGES.find(x=>x.key===b[b.length-1]):null;
+  const inner=ME?.avatar_url?`<img src="${esc(ME.avatar_url)}" class="h-full w-full object-cover">`:ini(ME);
+  return `<span class="relative inline-flex shrink-0"><span class="flex items-center justify-center overflow-hidden rounded-full text-sm font-semibold text-white" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${inner}</span>${badge?`<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px]" style="background:var(--bg);border:1px solid var(--border)" title="${esc(badge.name)}">${badge.emoji}</span>`:''}</span>`;
+}
+// grounded demo AI reply (uses real computed numbers, adapts to coach mode)
+function demoCoachReply(q,mode){
+  const s=snapshot(ME,EXPENSES),cm=ME.coach_mode||'fun',wr=whatToReduce(),top=wr[0],cutPct=Math.round(savingsMode().cut*100);
+  const roasting=(mode==='roast'||cm==='roast');
+  const tone=roasting?'Alright, real talk 🔥 ':{chill:'No pressure 🌿 ',fun:'Love the energy! 🎉 ',strict:'',roast:'Alright, real talk 🔥 '}[cm]||'';
+  if(roasting){
+    if(top){const m=CATS[top.cat]||CATS.other;return `${tone}You dropped ${fmt(top.spend)} on ${m.l} this month. Trim ${cutPct}% and that's ${fmt(top.save)} back in your pocket${top.impact?' — '+top.impact:''}. You'll get there… eventually. 😏`;}
+    return `${tone}Your spending's actually fine. Don't let it go to your head.`;
+  }
+  if(top){const m=CATS[top.cat]||CATS.other;return `${tone}Your savings rate is ${s.savingsRate}%. Biggest easy win: cut ${m.l} by ${cutPct}% to save ${fmt(top.save)}/mo${top.impact?' and '+top.impact:''}. Want me to turn that into a weekly plan?`;}
+  return `${tone}You're spending ${fmt(s.spending)} of ${fmt(s.income)} — a ${s.savingsRate}% savings rate. Add a goal and I'll build a plan around it.`;
+}
 
 // -------------------- icons --------------------
 const LOGO='<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z" stroke-linejoin="round"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -245,14 +327,11 @@ function loginView(){
 }
 function signupView(){
   return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Create your account</h1><p class="mt-1 text-sm text-slate-400">Start free. No credit card required.</p>
-    <form id="signupForm" class="mt-6 space-y-3">
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input" required></div></div>
-      <div><label class="label">Username</label><input name="username" class="input" required></div>
+    <form id="signupForm" class="mt-6 space-y-4">
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input"></div></div>
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">Date of birth</label><input name="dob" type="date" class="input" required></div><div><label class="label">Country</label><input name="country" list="countryList" class="input" placeholder="Search…" required><datalist id="countryList">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
-      <label class="flex items-start gap-2 text-xs text-slate-400"><input type="checkbox" name="tos" class="mt-0.5" required> I accept the <a href="#" class="text-accent-purple">Terms of Service</a> and <a href="#" class="text-accent-purple">Privacy Policy</a></label>
-      <label class="flex items-start gap-2 text-xs text-slate-400"><input type="checkbox" name="marketing" class="mt-0.5"> Send me product tips (optional)</label>
+      <div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div>
+      <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div>
       <button class="btn btn-primary w-full" id="signupBtn">Create account</button>
     </form>
     <p class="mt-5 text-center text-sm text-slate-400">Have an account? <a href="#login" class="text-accent-purple hover:underline">Log in</a></p></div>`);
@@ -380,7 +459,7 @@ function shell(route,inner){
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
-    <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2"><span class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">${ini(ME)}</span><div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
+    <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
   <div class="lg:pl-64"><div class="flex items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">${brand('#app/dashboard')}<select onchange="location.hash='#app/'+this.value" class="input !w-auto !py-1.5 text-sm">${NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[1]}</option>`).join('')}</select></div><main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
 }
@@ -388,6 +467,36 @@ function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5
 function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid='g'+label.replace(/\W/g,'');return `<div class="flex flex-col items-center"><div class="relative" style="width:140px;height:140px"><svg width="140" height="140" style="transform:rotate(-90deg)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="70" cy="70" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle cx="70" cy="70" r="${r}" stroke="url(#${gid})" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s ease"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold">${score}</span><span class="text-xs text-slate-400">${sub||''}</span></div></div><p class="mt-2 text-sm font-medium text-slate-400">${label}</p></div>`;}
 
 let GOALS=[],EXPENSES=[],AIUSED=0;
+
+// ---- minimal dashboard building blocks ----
+function goalOverviewHTML(){
+  const g=topGoal();
+  if(!g) return `<div class="glass-strong rounded-2xl p-6"><div class="flex flex-wrap items-center justify-between gap-4"><div><h2 class="text-lg font-semibold">No active goal yet</h2><p class="text-sm" style="color:var(--muted)">Set a goal and Goalify shows exactly what to cut to reach it faster.</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ Create a goal</a></div></div>`;
+  const p=pct(g.saved_amount,g.target_amount),remaining=Math.max(0,g.target_amount-g.saved_amount);
+  const base=Math.max(0,Number(g.monthly_contribution)||0),months=base>0?Math.ceil(remaining/base):null;
+  const daysLeft=months!=null?months*30:null,perDay=daysLeft?remaining/daysLeft:null;
+  return `<div class="glass-strong rounded-2xl p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><p class="text-[11px] uppercase tracking-widest" style="color:var(--muted)">Top goal</p><h2 class="text-xl font-bold">${esc(g.name)}</h2></div></div>
+      <div class="text-right"><p class="text-2xl font-extrabold gtext">${p}%</p><p class="text-xs" style="color:var(--muted)">${fmt(g.saved_amount)} / ${fmt(g.target_amount)}</p></div>
+    </div>
+    <div class="mt-4 h-3 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div>
+    <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-xs" style="color:var(--muted)">Still needed</p><p class="font-bold">${fmt(remaining)}</p></div>
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-xs" style="color:var(--muted)">Time left</p><p class="font-bold">${daysLeft!=null?daysLeft+' days':'—'}</p></div>
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-xs" style="color:var(--muted)">Per day</p><p class="font-bold">${perDay!=null?fmt(perDay):'set a plan'}</p></div>
+    </div>
+  </div>`;
+}
+function whatToReduceHTML(){
+  const items=whatToReduce(),sm=savingsMode(),cur=ME.savings_mode||'fun';
+  return `<div class="glass rounded-2xl p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">✂️ What to reduce</h3><p class="text-xs" style="color:var(--muted)">This month · ${sm.emoji} ${sm.name} mode (${Math.round(sm.cut*100)}% cuts)</p></div>
+      <div class="flex gap-1 rounded-xl p-1 text-xs" style="background:var(--glass)">${Object.keys(SAVINGS_MODES).map(k=>`<button data-action="setSavingsMode" data-mode="${k}" class="rounded-lg px-2.5 py-1.5 ${cur===k?'text-white':''}" title="${SAVINGS_MODES[k].name}" style="${cur===k?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${SAVINGS_MODES[k].emoji}</button>`).join('')}</div>
+    </div>
+    ${items.length?`<div class="space-y-3">${items.map(it=>{const m=CATS[it.cat]||CATS.other;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass)"><span class="flex h-10 w-10 items-center justify-center rounded-lg text-lg" style="background:var(--glass)">${m.e}</span><div class="min-w-0 flex-1"><p class="text-sm font-medium">${m.l}</p><p class="text-xs" style="color:var(--muted)">Now ${fmt(it.spend)}/mo${it.impact?' · '+it.impact:''}</p></div><div class="text-right"><p class="text-sm font-bold text-emerald-400">save ${fmt(it.save)}</p><p class="text-[11px]" style="color:var(--muted)">per month</p></div></div>`;}).join('')}<div class="rounded-xl p-3 text-center text-sm" style="background:var(--glass)">Total potential: <b class="text-emerald-400">${fmt(items.reduce((a,i)=>a+i.save,0))}/mo</b></div></div>`:`<p class="py-8 text-center text-sm" style="color:var(--muted)">Add some expenses and Goalify will show exactly where to cut.</p>`}
+  </div>`;
+}
 
 function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),g=goalifyScore(s,GOALS,ME.xp),h=healthScore(s);
@@ -407,7 +516,9 @@ function dashboardView(){
   if(has('pro')){const proj=s.spending*12;blocks+=`<div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Predictions <span class="rounded-full bg-accent-purple/20 px-2 py-0.5 text-[10px] text-accent-violet">Pro</span></div><p class="text-sm text-slate-400">At your current pace you'll spend about <b class="text-white">${fmt(proj)}</b> this year and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b>. ${s.savingsRate<20?'Raising your savings rate to 20% would add '+fmt(Math.max(0,(s.income*0.2-s.leftover)*12))+'/yr.':'Great pace — keep it up!'}</p></div>`;}
   // BUSINESS
   if(plan==='business'){const rev=s.income,profit=s.income-s.spending;blocks+=`<div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Revenue</p><p class="mt-2 text-2xl font-bold text-emerald-400">${fmt(rev)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Expenses</p><p class="mt-2 text-2xl font-bold text-orange-400">${fmt(s.spending)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Profit</p><p class="mt-2 text-2xl font-bold gtext">${fmt(profit)}</p></div></div><div class="glass rounded-2xl p-6"><div class="mb-2 font-semibold">🧾 Tax estimate (illustrative)</div><p class="text-sm text-slate-400">Estimated set-aside at 20%: <b class="text-white">${fmt(Math.max(0,profit*0.2))}</b>. Connect your accountant's rate in Settings.</p></div>`;}
-  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="mt-1 text-sm text-slate-400">${persona?`You're a ${persona.name} ${persona.emoji} on the ${PLANS[plan].name} plan.`:`${PLANS[plan].name} plan`}</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ New goal</a></div>${blocks}</div>`;
+  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="mt-1 text-sm text-slate-400">${persona?`You're a ${persona.name} ${persona.emoji} on the ${PLANS[plan].name} plan.`:`${PLANS[plan].name} plan`}</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ New goal</a></div>
+  <div class="grid gap-6 lg:grid-cols-2">${goalOverviewHTML()}${whatToReduceHTML()}</div>
+  ${blocks}</div>`;
 }
 
 function goalsView(){
@@ -436,9 +547,10 @@ function simulatorView(){
 }
 
 function aiView(){
-  const plan=ME.plan,limit=PLANS[plan].ai;
+  const plan=ME.plan,limit=PLANS[plan].ai,cm=ME.coach_mode||'fun';
   return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">AI Coach</h1><p class="mt-1 text-sm text-slate-400">Real AI financial coaching.</p></div><div class="text-sm text-slate-400">Today: <span id="aiCount">${AIUSED}</span>${limit===-1?' · Unlimited':' / '+limit+' messages'}</div></div>
-  <div class="glass-strong rounded-2xl p-6 flex flex-col" style="height:64vh"><div class="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 font-semibold">✨ ${plan==='free'?'AI Assistant':plan==='pro'?'AI Assistant Lite':'AI Financial Coach'}</div>
+  <div class="glass rounded-2xl p-4"><p class="mb-2 text-xs font-medium" style="color:var(--muted)">Coach personality</p><div class="flex flex-wrap gap-2">${Object.keys(COACH_MODES).map(k=>{const c=COACH_MODES[k],on=cm===k;return `<button data-action="setCoachMode" data-mode="${k}" class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><span>${c.emoji}</span>${c.name}</button>`;}).join('')}</div></div>
+  <div class="glass-strong rounded-2xl p-6 flex flex-col" style="height:60vh"><div class="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 font-semibold">${COACH_MODES[cm].emoji} ${COACH_MODES[cm].name} <span class="text-xs font-normal" style="color:var(--muted)">· ${COACH_MODES[cm].desc}</span></div>
   <div id="chatLog" class="flex-1 space-y-4 overflow-y-auto pr-1"></div>
   <div class="mt-3 flex flex-wrap gap-2">${['How can I save more?','Where am I overspending?','Build me a savings plan','Roast my spending'].map(s=>`<button class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:text-white" data-action="ask" data-q="${esc(s)}">${s}</button>`).join('')}</div>
   <form id="chatForm" class="mt-3 flex items-center gap-2 glass rounded-xl px-3 py-2"><input id="chatInput" class="flex-1 bg-transparent text-sm outline-none" placeholder="Ask your AI coach…"><button class="btn btn-primary !p-2">→</button></form></div></div>`;
@@ -447,9 +559,15 @@ function aiView(){
 function challengesView(){
   const {level,inLvl}=levelFromXp(ME.xp);
   const activeKeys=JSON.parse(localStorage.getItem('goalify_chal_'+(DEMO_MODE?'demo':SESSION.user.id))||'[]');
+  const st=streakState(),earned=earnedBadges(),checkedToday=st.last===todayISO();
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Challenges</h1><p class="mt-1 text-sm text-slate-400">Build habits, earn real XP, level up.</p></div>
-  <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-extrabold text-white" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">${level}</span><div><p class="font-semibold">Level ${level}</p><p class="text-sm text-slate-400">${ME.xp||0} XP total</p></div></div><div class="w-full sm:w-64"><div class="mb-1 flex justify-between text-xs text-slate-400"><span>${inLvl} XP</span><span>100 XP</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${inLvl}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div></div>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${CHALLENGES.map(t=>{const joined=activeKeys.includes(t.key);return `<div class="glass rounded-2xl p-6 flex flex-col"><div class="text-3xl">${t.emoji}</div><h3 class="mt-3 font-semibold">${t.title}</h3><p class="mt-1 flex-1 text-sm text-slate-400">${t.desc}</p><div class="mt-3 text-xs text-accent-violet">+${t.xp} XP</div>${joined?`<button class="btn btn-primary mt-3 w-full !py-2 text-sm" data-action="doneChal" data-key="${t.key}" data-xp="${t.xp}">✓ Complete (+${t.xp} XP)</button>`:`<button class="btn btn-ghost mt-3 w-full !py-2 text-sm" data-action="startChal" data-key="${t.key}">Start</button>`}</div>`;}).join('')}</div></div>`;
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-extrabold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${level}</span><div><p class="font-semibold">Level ${level}</p><p class="text-sm text-slate-400">${ME.xp||0} XP total</p></div></div><div class="w-full sm:w-56"><div class="mb-1 flex justify-between text-xs text-slate-400"><span>${inLvl} XP</span><span>100 XP</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>
+    <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="text-4xl">🔥</span><div><p class="text-2xl font-extrabold">${st.count} day${st.count===1?'':'s'}</p><p class="text-sm text-slate-400">Check-in streak</p></div></div><button class="btn ${checkedToday?'btn-ghost':'btn-primary'} !py-2.5 text-sm" data-action="checkIn" ${checkedToday?'disabled':''}>${checkedToday?'✓ Checked in today':'Check in (+10 XP)'}</button></div>
+  </div>
+  <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Badges</h3><span class="text-xs" style="color:var(--muted)">${earned.size} / ${BADGES.length} earned</span></div>
+    <div class="grid gap-4 grid-cols-3 sm:grid-cols-6">${BADGES.map(b=>{const on=earned.has(b.key);return `<div class="flex flex-col items-center text-center" title="${esc(b.desc)}"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${on?'':'grayscale'}" style="background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':'opacity:.45'}">${b.emoji}</span><p class="mt-2 text-[11px] font-medium ${on?'':'opacity-50'}">${b.name}</p></div>`;}).join('')}</div></div>
+  <div><h3 class="mb-3 font-semibold">Weekly challenges</h3><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${CHALLENGES.map(t=>{const joined=activeKeys.includes(t.key);return `<div class="glass rounded-2xl p-6 flex flex-col"><div class="text-3xl">${t.emoji}</div><h3 class="mt-3 font-semibold">${t.title}</h3><p class="mt-1 flex-1 text-sm text-slate-400">${t.desc}</p><div class="mt-3 text-xs text-accent-violet">+${t.xp} XP</div>${joined?`<button class="btn btn-primary mt-3 w-full !py-2 text-sm" data-action="doneChal" data-key="${t.key}" data-xp="${t.xp}">✓ Complete (+${t.xp} XP)</button>`:`<button class="btn btn-ghost mt-3 w-full !py-2 text-sm" data-action="startChal" data-key="${t.key}">Start</button>`}</div>`;}).join('')}</div></div></div>`;
 }
 
 function studentView(){
@@ -462,12 +580,23 @@ function studentView(){
 
 function settingsView(){
   const p=ME;
+  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue';
+  const COLORS=[['blue','Blue','#6366f1'],['green','Green','#22c55e'],['yellow','Yellow','#f59e0b'],['pink','Pink','#ec4899'],['white','Graphite','#64748b']];
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Settings</h1><p class="mt-1 text-sm text-slate-400">Manage your account and preferences.</p></div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Profile</h2><form id="profForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🎨 Appearance</h2>
+    <div class="mt-4"><p class="label">Mode</p><div class="flex gap-2">${[['dark','🌙 Dark'],['light','☀️ Light']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="rounded-xl px-4 py-2.5 text-sm ${curMode===m[0]?'text-white':''}" style="${curMode===m[0]?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}">${m[1]}</button>`).join('')}</div></div>
+    <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
+  </div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Profile</h2>
+    <div class="mt-4 flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div><label class="btn btn-ghost text-sm cursor-pointer">📷 Upload photo<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>${p.avatar_url?'<button class="btn btn-ghost text-sm ml-2" data-action="rmAvatar">Remove</button>':''}</div></div>
+    <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">💪 Savings strategy</h2><p class="mt-1 text-sm text-slate-400">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
+    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">✨ AI coach personality</h2><p class="mt-1 text-sm text-slate-400">How your coach talks to you.</p><div class="mt-4 grid grid-cols-2 gap-2">${Object.keys(COACH_MODES).map(k=>{const m=COACH_MODES[k],on=(p.coach_mode||'fun')===k;return `<button data-action="setCoachMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${m.desc}</div></button>`;}).join('')}</div></div>
+  </div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Security · Password</h2><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly AI reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
-  <div class="grid gap-6 sm:grid-cols-2"><div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b></p>${p.plan==='free'?`<a href="#app/student" class="btn btn-primary mt-4 text-sm">Unlock Pro (students)</a>`:`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`}</div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Language & Theme</h2><div class="mt-4 space-y-3"><select class="input" data-action="lang"><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="fr">Français</option><option value="sq">Shqip</option></select><p class="text-sm text-slate-400">Theme: Dark (premium default).</p></div></div></div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b></p>${p.plan==='free'?`<a href="#app/student" class="btn btn-primary mt-4 text-sm">Unlock Pro (students)</a>`:`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`}</div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Privacy & Data</h2><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><button class="btn btn-ghost text-sm" data-action="connected">🔗 Connected accounts</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
   <div class="glass rounded-2xl p-6" style="border:1px solid rgba(239,68,68,.3)"><h2 class="text-xl font-bold text-red-300">Delete account</h2><p class="mt-1 text-sm text-slate-400">Permanently delete your data. This cannot be undone.</p><button class="btn mt-4 text-sm" style="background:rgba(239,68,68,.9);color:#fff" data-action="delAcct">Delete my data</button></div></div>`;
 }
@@ -520,10 +649,9 @@ async function sendChat(q,mode='coach'){
   chat.push({role:'user',text:q});renderChat();
   chat.push({role:'ai',text:'…'});renderChat();
   if(DEMO_MODE){
-    await new Promise(r=>setTimeout(r,900));
+    await new Promise(r=>setTimeout(r,800));
     chat.pop();
-    const demoReplies={coach:"Great question! Based on your spending, you're doing well. Focus on building that emergency fund and keeping food costs under €420/month.",roast:"Okay, €180 on shopping?! Do you even NEED all that? Your emergency fund says you don't. 😤",report:"📊 3 insights: 1) Your savings rate is ~20% — solid! 2) Restaurants are your biggest flex category. 3) You're 42% to your emergency fund — keep going!"};
-    chat.push({role:'ai',text:demoReplies[mode]||demoReplies.coach});renderChat();return;
+    chat.push({role:'ai',text:demoCoachReply(q,mode)});renderChat();return;
   }
   try{
     const {data,error}=await sb.functions.invoke('ai',{body:{messages:chat.filter(m=>m.text!=='…').map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text})),mode}});
@@ -587,9 +715,13 @@ async function render(){
 
   // public routes
   if(hash==='home'){root.innerHTML=landing();window.scrollTo(0,0);return;}
-  if(hash==='login'||hash==='signup'){
+  if(hash==='login'){
     if(DEMO_MODE){location.hash='#quiz';return;}
-    root.innerHTML=authView();return;
+    root.innerHTML=loginView();return;
+  }
+  if(hash==='signup'){
+    if(DEMO_MODE){location.hash='#quiz';return;}
+    root.innerHTML=signupView();return;
   }
   if(hash==='reset'){root.innerHTML=resetView();return;}
   // need session below
@@ -642,10 +774,16 @@ document.addEventListener('click',async(e)=>{
     else if(act==='delExp'){const eid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_EXPENSES.findIndex(x=>x.id===eid);if(idx>-1)DEMO_EXPENSES.splice(idx,1);render();}else{await sb.from('expenses').delete().eq('id',eid);render();}}
     else if(act==='tf'){a.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='';b.classList.remove('text-white');b.classList.add('text-slate-400');});a.style.background='linear-gradient(90deg,#3b82f6,#8b5cf6)';a.classList.add('text-white');a.classList.remove('text-slate-400');drawSpend(a.getAttribute('data-tf'));}
     else if(act==='ask'){const q=a.getAttribute('data-q');sendChat(q,q.toLowerCase().includes('roast')?'roast':'coach');}
+    else if(act==='setSavingsMode'){const m=a.getAttribute('data-mode');ME.savings_mode=m;if(!DEMO_MODE){await sb.from('profiles').update({savings_mode:m}).eq('id',SESSION.user.id);}toast(SAVINGS_MODES[m].emoji+' '+SAVINGS_MODES[m].name+' mode');render();}
+    else if(act==='setCoachMode'){const m=a.getAttribute('data-mode');ME.coach_mode=m;if(!DEMO_MODE){await sb.from('profiles').update({coach_mode:m}).eq('id',SESSION.user.id);}toast(COACH_MODES[m].emoji+' '+COACH_MODES[m].name);render();}
+    else if(act==='setTheme'){applyTheme(a.getAttribute('data-mode'),null);if(!DEMO_MODE){await sb.from('profiles').update({theme:ME.theme}).eq('id',SESSION.user.id);}render();}
+    else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
+    else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
-    else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP!');render();}
+    else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const u=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+u;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));const dk='goalify_chaldone_'+u;const dn=JSON.parse(localStorage.getItem(dk)||'[]');if(!dn.includes(k))dn.push(k);localStorage.setItem(dk,JSON.stringify(dn));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP earned!');render();}
     else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
     else if(act==='connected'){toast('Connected accounts coming soon');}
+    else if(act==='rmAvatar'){ME.avatar_url=null;localStorage.removeItem('goalify_avatar_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({avatar_url:null}).eq('id',SESSION.user.id);}toast('Photo removed');render();}
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
     else if(act==='lang'){toast('Language preference saved');}
     else if(act==='delAcct'){if(DEMO_MODE){toast('Account deletion is disabled in demo mode','err');return;}if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
@@ -659,6 +797,16 @@ document.addEventListener('click',async(e)=>{
 });
 document.addEventListener('change',async(e)=>{
   const a=e.target.closest('[data-action="setPlan"]'); if(a){try{await sb.rpc('admin_set_plan',{p_user:a.getAttribute('data-id'),p_plan:a.value});toast('Plan updated');}catch(err){toast(err.message,'err');}}
+  if(e.target.id==='avatarInput'){
+    const file=e.target.files&&e.target.files[0]; if(!file)return;
+    if(file.size>2*1024*1024){toast('Image too large (max 2MB)','err');return;}
+    const reader=new FileReader();
+    reader.onload=async()=>{const url=reader.result;ME.avatar_url=url;
+      if(DEMO_MODE){localStorage.setItem('goalify_avatar_'+uid(),url);}
+      else{try{await sb.from('profiles').update({avatar_url:url}).eq('id',SESSION.user.id);}catch(err){}}
+      toast('Photo updated');render();};
+    reader.readAsDataURL(file);
+  }
 });
 document.addEventListener('input',e=>{
   if(e.target.closest('[data-action="sim"]'))runSim();
@@ -671,14 +819,14 @@ document.addEventListener('submit',async(e)=>{
     if(f.id==='signupForm'){
       const fd=new FormData(f);
       if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');
-      if(!fd.get('tos'))return toast('Please accept the Terms','err');
       const {score}=pwStrength(fd.get('password'));
-      if(score<4)return toast('Password too weak — add uppercase, a number, and a symbol','err');
+      if(score<3)return toast('Password too weak — needs 8+ chars, a number, and a letter','err');
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
-      const {data,error}=await sb.auth.signUp({email:fd.get('email'),password:fd.get('password'),options:{emailRedirectTo:location.origin+location.pathname,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),dob:fd.get('dob'),country:fd.get('country'),tos_accepted:true,marketing_optin:!!fd.get('marketing')}}});
+      const {data,error}=await sb.auth.signUp({email:fd.get('email'),password:fd.get('password'),options:{data:{first_name:fd.get('first_name'),last_name:fd.get('last_name')}}});
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
-      if(data.session){location.hash='#quiz';} else {location.hash='#verify:'+encodeURIComponent(fd.get('email'));}
+      if(data.session){location.hash='#quiz';}
+      else{toast('Account created! Log in to continue.');location.hash='#login';}
     }
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
@@ -745,13 +893,19 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   render();
 });
 window.addEventListener('hashchange',render);
+loadTheme();
 (async()=>{
   if(DEMO_MODE){
     // Wipe any real Supabase session from storage so the SDK stops making auth/DB calls
     const key='sb-jcskgasaocfueneyahrk-auth-token';
     localStorage.removeItem(key); sessionStorage.removeItem(key);
     localStorage.removeItem(REMEMBER);
-    SESSION=null; ME=DEMO_ME; render(); return;
+    SESSION=null; ME=DEMO_ME;
+    // restore saved avatar; seed a streak so badges feel alive in the demo
+    ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
+    if(!localStorage.getItem('goalify_streak_demo')){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);localStorage.setItem('goalify_streak_demo',JSON.stringify({count:6,last:y}));}
+    applyTheme(ME.theme||'dark',ME.theme_color||'blue');
+    render(); return;
   }
   const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();
 })();
