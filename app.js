@@ -68,6 +68,10 @@ const todayISO=()=>new Date().toISOString().slice(0,10);
 const ini=(p)=>((p?.first_name||p?.email||'U')[0]+(p?.last_name?.[0]||'')).toUpperCase();
 function toast(msg,type='ok'){ const c=type==='err'?'background:rgba(239,68,68,.95)':'background:rgba(16,185,129,.95)'; const el=document.getElementById('toast'); el.innerHTML=`<div class="toast text-white anim" style="${c}">${esc(msg)}</div>`; setTimeout(()=>{el.innerHTML='';},3200); }
 function levelFromXp(xp){return {level:Math.floor((xp||0)/100)+1,inLvl:(xp||0)%100};}
+function pwStrength(v){let s=0,h=[];if(v.length>=8)s++;else h.push('8+ chars');if(/[A-Z]/.test(v))s++;else h.push('uppercase');if(/[a-z]/.test(v))s++;else h.push('lowercase');if(/\d/.test(v))s++;else h.push('number');if(/[^A-Za-z0-9]/.test(v))s++;else h.push('symbol');return{score:s,hints:h};}
+function updatePwStr(v){const fill=$('#pwStrFill'),text=$('#pwStrText');if(!fill)return;const {score,hints}=pwStrength(v);const colors=['','#ef4444','#f97316','#eab308','#22c55e','#10b981'];const labels=['','Weak','Fair','Good','Strong','Very strong'];fill.style.width=score*20+'%';fill.style.background=colors[score]||'transparent';text.textContent=v?(labels[score]+(hints.length&&score<5?' · needs: '+hints.slice(0,2).join(', '):'')):'';}
+const EYE_ON=`<svg viewBox="0 0 24 24" class="h-4 w-4 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF=`<svg viewBox="0 0 24 24" class="h-4 w-4 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
 let ME=null;        // current profile
 let SESSION=null;   // current session
@@ -163,7 +167,7 @@ function loginView(){
   return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Welcome back</h1><p class="mt-1 text-sm text-slate-400">Log in to your Goalify account.</p>
     <form id="loginForm" class="mt-6 space-y-4">
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
-      <div><label class="label">Password</label><input name="password" type="password" class="input" required></div>
+      <div><label class="label">Password</label><div class="relative"><input id="lpw" name="password" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="lpw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div>
       <div class="flex items-center justify-between text-sm"><label class="flex items-center gap-2 text-slate-400"><input type="checkbox" name="remember" checked> Remember me</label><a href="#forgot" class="text-accent-purple hover:underline">Forgot password?</a></div>
       <button class="btn btn-primary w-full" id="loginBtn">Log in</button>
     </form>
@@ -175,7 +179,7 @@ function signupView(){
       <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input" required></div></div>
       <div><label class="label">Username</label><input name="username" class="input" required></div>
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">Password</label><input name="password" type="password" class="input" minlength="8" required></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input" required></div></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div></div>
       <div class="grid grid-cols-2 gap-3"><div><label class="label">Date of birth</label><input name="dob" type="date" class="input" required></div><div><label class="label">Country</label><input name="country" list="countryList" class="input" placeholder="Search…" required><datalist id="countryList">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
       <label class="flex items-start gap-2 text-xs text-slate-400"><input type="checkbox" name="tos" class="mt-0.5" required> I accept the <a href="#" class="text-accent-purple">Terms of Service</a> and <a href="#" class="text-accent-purple">Privacy Policy</a></label>
       <label class="flex items-start gap-2 text-xs text-slate-400"><input type="checkbox" name="marketing" class="mt-0.5"> Send me product tips (optional)</label>
@@ -190,10 +194,26 @@ function forgotView(){
 }
 function resetView(){
   return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Set a new password</h1>
-    <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8" required></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input" required></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
+    <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><div class="relative"><input id="rpw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="rpw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="rpw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="rpw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
 }
 function verifyView(email){
-  return authWrap(`<div class="glass-strong rounded-2xl p-7 text-center"><div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">📧</div><h1 class="text-2xl font-bold">Check your email</h1><p class="mt-2 text-sm text-slate-400">We sent a verification link to <b class="text-white">${esc(email||'your email')}</b>. Click it to activate your account, then log in.</p><a href="#login" class="btn btn-primary mt-6 w-full">Go to login</a></div>`);
+  return authWrap(`<div class="glass-strong rounded-2xl p-7">
+    <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">📧</div>
+    <h1 class="text-2xl font-bold text-center">Enter your code</h1>
+    <p class="mt-2 text-center text-sm text-slate-400">We sent a 6-digit code to <b class="text-white">${esc(email||'your email')}</b>.</p>
+    <form id="otpForm" class="mt-6 space-y-5">
+      <input type="hidden" id="otpEmail" value="${esc(email||'')}">
+      <div>
+        <label class="label text-center block mb-3">6-digit code</label>
+        <div class="flex justify-center gap-2" id="otpBoxes">
+          ${[0,1,2,3,4,5].map(i=>`<input type="text" inputmode="numeric" maxlength="1" data-otp="${i}" class="h-14 w-11 rounded-xl border border-white/10 bg-white/5 text-center text-xl font-bold outline-none focus:border-accent-purple focus:bg-accent-purple/10 transition"${i===0?' autocomplete="one-time-code"':''}>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-primary w-full" id="otpBtn">Verify →</button>
+    </form>
+    <div class="mt-4 text-center text-sm text-slate-400">Didn't get it? <button type="button" class="text-accent-purple hover:underline" data-action="resendOtp" data-email="${esc(email||'')}">Resend code</button></div>
+    <p class="mt-3 text-center text-sm text-slate-400"><a href="#login" class="text-accent-purple hover:underline">Back to login</a></p>
+  </div>`);
 }
 
 // ============================================================
@@ -492,7 +512,9 @@ document.addEventListener('click',async(e)=>{
   const a=e.target.closest('[data-action]'); if(!a)return;
   const act=a.getAttribute('data-action');
   try{
-    if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
+    if(act==='togglePw'){const inp=document.getElementById(a.getAttribute('data-target'));if(inp){const show=inp.type==='password';inp.type=show?'text':'password';a.innerHTML=show?EYE_OFF:EYE_ON;}}
+    else if(act==='resendOtp'){const em=a.getAttribute('data-email');if(em){const {error}=await sb.auth.resend({email:em,type:'signup'});if(error)toast(error.message,'err');else toast('Code resent — check your email!');}}
+    else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
     else if(act==='logout'){await sb.auth.signOut();ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='delGoal'){await sb.from('goals').delete().eq('id',a.getAttribute('data-id'));toast('Goal deleted');render();}
@@ -518,15 +540,48 @@ document.addEventListener('click',async(e)=>{
 document.addEventListener('change',async(e)=>{
   const a=e.target.closest('[data-action="setPlan"]'); if(a){try{await sb.rpc('admin_set_plan',{p_user:a.getAttribute('data-id'),p_plan:a.value});toast('Plan updated');}catch(err){toast(err.message,'err');}}
 });
-document.addEventListener('input',e=>{if(e.target.closest('[data-action="sim"]'))runSim();});
+document.addEventListener('input',e=>{
+  if(e.target.closest('[data-action="sim"]'))runSim();
+  if(e.target.getAttribute('data-action')==='pwStr')updatePwStr(e.target.value);
+  const otp=e.target.closest('#otpBoxes');
+  if(otp&&e.target.dataset.otp!=null){
+    const v=e.target.value.replace(/\D/g,'').slice(-1);e.target.value=v;
+    if(v&&+e.target.dataset.otp<5){const nxt=otp.querySelector(`[data-otp="${+e.target.dataset.otp+1}"]`);if(nxt)nxt.focus();}
+  }
+});
+document.addEventListener('keydown',e=>{
+  const otp=e.target.closest('#otpBoxes');if(!otp||e.target.dataset.otp==null)return;
+  if(e.key==='Backspace'&&!e.target.value&&+e.target.dataset.otp>0){const prev=otp.querySelector(`[data-otp="${+e.target.dataset.otp-1}"]`);if(prev){prev.value='';prev.focus();}}
+  if(e.key==='ArrowLeft'&&+e.target.dataset.otp>0){const p=otp.querySelector(`[data-otp="${+e.target.dataset.otp-1}"]`);if(p)p.focus();}
+  if(e.key==='ArrowRight'&&+e.target.dataset.otp<5){const n=otp.querySelector(`[data-otp="${+e.target.dataset.otp+1}"]`);if(n)n.focus();}
+});
+document.addEventListener('paste',e=>{
+  const otp=e.target.closest('#otpBoxes');if(!otp)return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+  if(!txt)return;e.preventDefault();
+  const boxes=otp.querySelectorAll('[data-otp]');[...txt].forEach((c,i)=>{if(boxes[i])boxes[i].value=c;});
+  const last=boxes[Math.min(txt.length,5)];if(last)last.focus();
+});
 
 document.addEventListener('submit',async(e)=>{
   const f=e.target; e.preventDefault();
   try{
-    if(f.id==='signupForm'){
+    if(f.id==='otpForm'){
+      const email=$('#otpEmail')?.value;
+      const token=[...document.querySelectorAll('[data-otp]')].map(b=>b.value).join('');
+      if(token.length!==6||!/^\d{6}$/.test(token))return toast('Enter the full 6-digit code','err');
+      const btn=$('#otpBtn');btn.disabled=true;btn.textContent='Verifying…';
+      const {error}=await sb.auth.verifyOtp({email,token,type:'signup'});
+      btn.disabled=false;btn.textContent='Verify →';
+      if(error)return toast(error.message,'err');
+      toast('Email verified! Welcome to Goalify 🎉');
+    }
+    else if(f.id==='signupForm'){
       const fd=new FormData(f);
       if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');
       if(!fd.get('tos'))return toast('Please accept the Terms','err');
+      const {score}=pwStrength(fd.get('password'));
+      if(score<4)return toast('Password too weak — add uppercase, a number, and a symbol','err');
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
       const {data,error}=await sb.auth.signUp({email:fd.get('email'),password:fd.get('password'),options:{emailRedirectTo:location.origin+location.pathname,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),dob:fd.get('dob'),country:fd.get('country'),tos_accepted:true,marketing_optin:!!fd.get('marketing')}}});
       btn.disabled=false;btn.textContent='Create account';
