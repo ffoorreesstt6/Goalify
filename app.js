@@ -28,7 +28,7 @@ const _m = new Date(), _mo = _m.toISOString().slice(0,7);
 const DEMO_ME = {
   id:'demo', first_name:'Forest', last_name:'', email:'demo@goalify.app',
   plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
-  monthly_income:3500, monthly_savings:700, xp:450, currency:'EUR',
+  monthly_income:3500, monthly_savings:700, xp:0, currency:'EUR',
   budget:{groceries:420,restaurants:250,shopping:180,entertainment:120,subscriptions:60,transportation:90},
   notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null
@@ -73,11 +73,38 @@ const PROMO_CODES={'FORESTPRO2026-FP2-PRP':'pro','FORESTPREMIUM2026-FP6-PP':'pre
 const ADMIN_CODE='ADMINFOREST2010-AF2-ADM';
 function isDemoAdmin(){return localStorage.getItem('goalify_admin')==='1';}
 const PLAN_FEATURES={
-  free:['Expense tracking','Basic analytics','Up to 3 goals','5 AI messages/day','Money personality'],
-  pro:['Unlimited goals','AI Assistant Lite','Spending predictions','Budget suggestions','Extra charts','50 AI messages/day'],
-  premium:['Everything in Pro','Advanced AI Coach','Future forecasting','Premium reports','AI insights','Unlimited AI'],
-  business:['Revenue tracking','Expense tracking','Profit calculations','Team management','Business analytics','Tax reports'],
+  free:['Up to 3 goals (archive, no delete)','Basic goal tracking','Basic profile & sharing','Follow / unfollow people','Simple, distraction-free'],
+  pro:['Unlimited goals','Advanced analytics & insights','Future Simulator','Focused pro dashboard','One signature red theme'],
+  premium:['Everything in Pro','Full social: feed, reactions, memories','Themes, banners & chat wallpapers','AI coach & smart reminders','Weekly & monthly reports','Streaks, challenges & badges'],
+  business:['A complete business OS','Companies, employees & assets','Invoices, payments & taxes','Cash flow, net worth & reports','Executive gold interface','No games — pure operations'],
 };
+// ── central capability map: the single source of truth for plan gating ──
+function caps(plan){
+  return {
+    goalLimit: plan==='free'?3:-1,
+    canDelete: plan!=='free',
+    themes: plan==='premium'?'full':plan==='pro'?'red':plan==='business'?'business':'none',
+    customization: plan==='premium',           // banners, chat wallpapers, profile styling
+    social: plan==='premium'?'full':(plan==='free'||plan==='pro')?'follow':'none',
+    gamify: plan==='premium',                   // XP, streaks, missions, challenges, badges
+    analytics: PLAN_ORDER.indexOf(plan)>=PLAN_ORDER.indexOf('pro'),
+    ai: plan==='premium',
+    reports: plan==='premium',
+  };
+}
+function planNav(plan){
+  const c=caps(plan);
+  const nav=[['dashboard','Dashboard','📊'],['goals','Goals','🎯']];
+  if(c.analytics){nav.push(['analytics','Analytics','📈'],['simulator','Future Simulator','🔮']);}
+  if(c.ai)nav.push(['ai','AI Coach','✨']);
+  if(c.gamify)nav.push(['challenges','Challenges','🏆']);
+  if(c.social!=='none')nav.push(['social','Social','👥']);
+  nav.push(['plans','Plans','💳']);
+  if(plan==='free')nav.push(['student','Student Verify','🎓']);
+  nav.push(['settings','Settings','⚙️']);
+  return nav;
+}
+
 
 const CATS={
   groceries:{l:'Groceries',c:'#22c55e',e:'🛒'}, gas:{l:'Gas/Fuel',c:'#f59e0b',e:'⛽'}, shopping:{l:'Shopping',c:'#ec4899',e:'🛍️'},
@@ -303,6 +330,14 @@ function seedDemoMissions(){
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
 function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+// Enforce per-plan theme rules without overwriting Premium's saved prefs.
+function enforcePlanTheme(plan){
+  const r=document.documentElement,c=caps(plan);
+  if(plan==='business')return; // gold executive handled via data-biz
+  if(c.themes==='full'){ applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
+  else if(c.themes==='red'){ r.classList.remove('light'); r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
+  else { r.classList.remove('light'); r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
+}
 // avatar (with badge ring)
 function avatarHTML(size=36){
   const b=[...earnedBadges()],badge=b.length?BADGES.find(x=>x.key===b[b.length-1]):null;
@@ -555,18 +590,19 @@ async function finishQuiz(inner){
 // ============================================================
 const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['squad','Squad','👥'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
 function shell(route,inner){
-  const isAdmin=ME?.role==='admin';
-  return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
-    <div class="px-5 py-6">${brand('#app/dashboard')}</div>
-    <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
-    ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
-    <div class="mx-3 mt-2 mb-1 rounded-2xl px-3 py-3" style="background:var(--glass);border:1px solid var(--border)">
+  const isAdmin=ME?.role==='admin';const NAV=planNav(ME?.plan||'free');const c=caps(ME?.plan||'free');
+  const themePicker = c.themes==='full' ? `<div class="mx-3 mt-2 mb-1 rounded-2xl px-3 py-3" style="background:var(--glass);border:1px solid var(--border)">
       <div class="mb-2 flex items-center justify-between">
         <p class="text-[10px] uppercase tracking-widest font-semibold" style="color:var(--muted)">Theme</p>
         ${(()=>{const m=localStorage.getItem('goalify_theme')||'dark';return `<button data-action="setTheme" data-mode="${m==='dark'?'light':'dark'}" class="rounded-lg px-2 py-0.5 text-[10px] hover:bg-white/10 transition" style="color:var(--muted)">${m==='dark'?'☀️ Light':'🌙 Dark'}</button>`;})()}
       </div>
       <div class="flex flex-wrap gap-2">${[['blue','#6366f1'],['green','#22c55e'],['yellow','#eab308'],['orange','#f97316'],['pink','#ec4899'],['red','#ef4444'],['grey','#6b7280']].map(([name,hex])=>{const active=(localStorage.getItem('goalify_color')||'blue')===name;return `<button data-action="setColor" data-color="${name}" title="${name[0].toUpperCase()+name.slice(1)}" class="h-6 w-6 rounded-full transition-all hover:scale-110 shrink-0" style="background:${hex};${active?'outline:2px solid rgba(255,255,255,.7);outline-offset:2px;transform:scale(1.15)':'opacity:.75'}"></button>`;}).join('')}</div>
-    </div>
+    </div>` : '';
+  return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
+    <div class="px-5 py-6">${brand('#app/dashboard')}</div>
+    <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
+    ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
+    ${themePicker}
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
@@ -639,27 +675,31 @@ function behaviourCardHTML(){
 }
 
 function dashboardView(){
-  const plan=ME.plan,s=snapshot(ME,EXPENSES),g=goalifyScore(s,GOALS,ME.xp),h=healthScore(s);
+  const plan=ME.plan,s=snapshot(ME,EXPENSES),g=goalifyScore(s,GOALS,ME.xp),h=healthScore(s);const c=caps(plan);
   const persona=ME.personality?PERSONAS[ME.personality]:null;
   const active=GOALS.filter(x=>!x.completed).slice(0,3);
-  const has=(p)=>PLAN_ORDER.indexOf(plan)>=PLAN_ORDER.indexOf(p);
-  let blocks=`<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  const tier=plan==='free'?'Simple starter':plan==='pro'?'Focused productivity':'Social productivity';
+  const header=`<div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="mt-1 text-sm text-slate-400">${PLANS[plan].name} · ${tier}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ New goal</a></div>`;
+  const statsGrid=`<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     ${statCard('Monthly income',fmt(s.income),'','💶')}${statCard('Monthly spending',fmt(s.spending),'','📉')}${statCard('Leftover',fmt(s.leftover),s.leftover>=0?'On track':'Over budget','🐖')}
-    ${statCard('Savings rate',s.savingsRate+'%','','📊')}${statCard('Active goals',GOALS.filter(x=>!x.completed).length,'','🎯')}${statCard('Level',levelFromXp(ME.xp).level,(ME.xp||0)+' XP','⭐')}
-  </div>
-  <div class="grid gap-6 lg:grid-cols-3"><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(g,'Goalify Score','/100')}</div><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(h.v,'Money Health',h.r)}</div>
-    <div class="glass-strong rounded-2xl p-6 flex flex-col"><div class="mb-3 flex items-center gap-2 font-semibold">✨ AI Insights ${!has('premium')?'<span class="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">Premium</span>':''}</div>${has('premium')?`<ul class="flex-1 space-y-3 text-sm text-slate-400" id="aiInsights"><li>Generating…</li></ul>`:`<p class="flex-1 text-sm text-slate-400">Upgrade to Premium for AI-generated insights on your spending and goals.</p>`}<a href="#app/ai" class="mt-4 text-sm font-medium text-accent-purple hover:underline">Open AI Coach →</a></div></div>
-  <div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
-  <div class="grid gap-6 lg:grid-cols-2"><div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Spending by category</h3><canvas id="catChart" height="180"></canvas></div>
-    <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Goal progress</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div>${active.length?active.map(gg=>{const p=pct(gg.saved_amount,gg.target_amount);return `<div class="mb-4"><div class="mb-1 flex justify-between text-sm"><span>${gg.emoji||'🎯'} ${esc(gg.name)}</span><span class="text-slate-400">${fmt(gg.saved_amount)} / ${fmt(gg.target_amount)}</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div>`;}).join(''):`<p class="py-8 text-center text-sm text-slate-400">No active goals. <a href="#app/goals" class="text-accent-purple hover:underline">Create one</a>.</p>`}</div></div>`;
-  // PRO+ predictions
-  if(has('pro')){const proj=s.spending*12;blocks+=`<div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Predictions <span class="rounded-full bg-accent-purple/20 px-2 py-0.5 text-[10px] text-accent-violet">Pro</span></div><p class="text-sm text-slate-400">At your current pace you'll spend about <b class="text-white">${fmt(proj)}</b> this year and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b>. ${s.savingsRate<20?'Raising your savings rate to 20% would add '+fmt(Math.max(0,(s.income*0.2-s.leftover)*12))+'/yr.':'Great pace — keep it up!'}</p></div>`;}
-  // BUSINESS
-  if(plan==='business'){const rev=s.income,profit=s.income-s.spending;blocks+=`<div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Revenue</p><p class="mt-2 text-2xl font-bold text-emerald-400">${fmt(rev)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Expenses</p><p class="mt-2 text-2xl font-bold text-orange-400">${fmt(s.spending)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Profit</p><p class="mt-2 text-2xl font-bold gtext">${fmt(profit)}</p></div></div><div class="glass rounded-2xl p-6"><div class="mb-2 font-semibold">🧾 Tax estimate (illustrative)</div><p class="text-sm text-slate-400">Estimated set-aside at 20%: <b class="text-white">${fmt(Math.max(0,profit*0.2))}</b>. Connect your accountant's rate in Settings.</p></div>`;}
-  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="mt-1 text-sm text-slate-400">${persona?`You're a ${persona.name} ${persona.emoji} on the ${PLANS[plan].name} plan.`:`${PLANS[plan].name} plan`}</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ New goal</a></div>
-  <div class="grid gap-6 lg:grid-cols-2">${todayMissionsHTML()}<div class="space-y-6">${weeklySummaryHTML()}${behaviourCardHTML()}</div></div>
-  <div class="grid gap-6 lg:grid-cols-2">${goalOverviewHTML()}${whatToReduceHTML()}</div>
-  ${blocks}</div>`;
+    ${statCard('Savings rate',s.savingsRate+'%','','📊')}${statCard('Active goals',GOALS.filter(x=>!x.completed).length,'','🎯')}${c.gamify?statCard('Level',levelFromXp(ME.xp).level,(ME.xp||0)+' XP','⭐'):statCard('Goals completed',GOALS.filter(x=>x.completed).length,'all-time','✅')}
+  </div>`;
+  const thirdCard = c.ai
+   ? `<div class="glass-strong rounded-2xl p-6 flex flex-col"><div class="mb-3 flex items-center gap-2 font-semibold">✨ AI Insights</div><ul class="flex-1 space-y-3 text-sm text-slate-400" id="aiInsights"><li>Generating…</li></ul><a href="#app/ai" class="mt-4 text-sm font-medium text-accent-purple hover:underline">Open AI Coach →</a></div>`
+   : c.analytics
+   ? `<div class="glass-strong rounded-2xl p-6 flex flex-col"><div class="mb-3 flex items-center gap-2 font-semibold">🔮 Forecast</div><p class="flex-1 text-sm text-slate-400">At this pace you'll save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b> this year. ${s.savingsRate<20?'Lifting your savings rate to 20% adds '+fmt(Math.max(0,(s.income*0.2-s.leftover)*12))+'/yr.':'Strong savings rate — keep going!'}</p><a href="#app/simulator" class="mt-4 text-sm font-medium text-accent-purple hover:underline">Open Simulator →</a></div>`
+   : `<div class="glass-strong rounded-2xl p-6 flex flex-col"><div class="mb-3 flex items-center gap-2 font-semibold">🚀 Grow with Goalify</div><p class="flex-1 text-sm text-slate-400">Free covers up to 3 goals and the basics. Upgrade to <b class="text-white">Pro</b> for advanced analytics and the Future Simulator, or <b class="text-white">Premium</b> for social, themes and AI.</p><a href="#app/plans" class="mt-4 text-sm font-medium text-accent-purple hover:underline">See plans →</a></div>`;
+  const rings=`<div class="grid gap-6 lg:grid-cols-3"><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(g,'Goalify Score','/100')}</div><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(h.v,'Money Health',h.r)}</div>${thirdCard}</div>`;
+  const gamifyRow=c.gamify?`<div class="grid gap-6 lg:grid-cols-2">${todayMissionsHTML()}<div class="space-y-6">${weeklySummaryHTML()}${behaviourCardHTML()}</div></div>`:'';
+  const overview=`<div class="grid gap-6 lg:grid-cols-2">${goalOverviewHTML()}${whatToReduceHTML()}</div>`;
+  let analytics='';
+  if(c.analytics){
+    analytics=`<div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
+    <div class="grid gap-6 lg:grid-cols-2"><div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Spending by category</h3><canvas id="catChart" height="180"></canvas></div>
+    <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Goal progress</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div>${active.length?active.map(gg=>{const p=pct(gg.saved_amount,gg.target_amount);return `<div class="mb-4"><div class="mb-1 flex justify-between text-sm"><span>${gg.emoji||'🎯'} ${esc(gg.name)}</span><span class="text-slate-400">${fmt(gg.saved_amount)} / ${fmt(gg.target_amount)}</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>`;}).join(''):`<p class="py-8 text-center text-sm text-slate-400">No active goals.</p>`}</div></div>
+    <div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Predictions</div><p class="text-sm text-slate-400">At your current pace you'll spend about <b class="text-white">${fmt(s.spending*12)}</b> this year and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b>.</p></div>`;
+  }
+  return `<div class="space-y-6">${header}${gamifyRow}${statsGrid}${rings}${overview}${analytics}</div>`;
 }
 
 function missionRow(m){
@@ -678,24 +718,25 @@ function missionRow(m){
     </div></div>`;
 }
 function goalCard(g){
-  const prog=goalProgress(g),lvl=goalLevel(g),ms=g.missions||[];
-  const canAddMission = PLANS[ME.plan].goalLimit!==-1 ? ms.length<2 : true; // free: 2 missions/goal
-  const canDelete = ME.plan!=='free'; // Free plan: archive only, no delete
+  const prog=goalProgress(g),lvl=goalLevel(g),ms=g.missions||[];const c=caps(ME.plan);
+  const canAddMission=true;
+  const canDelete=c.canDelete; // Free plan: archive only, no delete
   const archived = g.status==='archived';
+  const missionsBlock = c.gamify ? `<div class="mt-4"><div class="mb-2 flex items-center justify-between"><p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--muted)">Missions (${ms.length})</p><span class="text-[11px]" style="color:var(--muted)">${lvl.xp} XP${lvl.next?` · ${lvl.next-lvl.xp} to Lv.${lvl.idx+1}`:' · max'}</span></div>
+      <div class="space-y-2">${ms.length?ms.map(missionRow).join(''):`<p class="rounded-xl p-3 text-center text-xs" style="background:var(--glass);color:var(--muted)">No missions yet — add the weekly actions that drive this goal.</p>`}</div>
+      <button class="btn btn-ghost mt-2 w-full !py-2 text-sm" data-action="newMission" data-goal="${g.id}">+ Add mission</button>
+    </div>` : '';
   return `<div class="glass rounded-2xl overflow-hidden anim" style="${archived?'opacity:.6':''}">${g.image_url?`<img src="${esc(g.image_url)}" class="h-28 w-full object-cover">`:''}
   <div class="p-5">
     <div class="flex items-start justify-between gap-2">
       <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':archived?'📦 Archived':'Active'}</span></div></div>
-      <div class="flex items-center gap-2"><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx} ${lvl.name}</span>
+      <div class="flex items-center gap-2">${c.gamify?`<span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx}</span>`:''}
       <button data-action="archiveGoal" data-id="${g.id}" class="text-sm" style="color:var(--muted)" title="${archived?'Restore':'Archive'}">${archived?'♻️':'📦'}</button>
       ${canDelete?`<button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400" title="Delete">🗑</button>`:''}</div>
     </div>
     <div class="mt-4"><div class="mb-1 flex justify-between text-xs" style="color:var(--muted)"><span>Goal progress</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
     ${g.target_amount?`<div class="mt-3 flex items-center gap-2"><input type="number" class="input !py-1.5 text-sm" placeholder="Add €" id="c-${g.id}"><button class="btn btn-primary !px-3 !py-1.5 text-sm shrink-0" data-action="contrib" data-id="${g.id}">Save</button><span class="text-xs shrink-0" style="color:var(--muted)">${fmt(g.saved_amount)}/${fmt(g.target_amount)}</span></div>`:''}
-    <div class="mt-4"><div class="mb-2 flex items-center justify-between"><p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--muted)">Missions (${ms.length})</p><span class="text-[11px]" style="color:var(--muted)">${lvl.xp} XP${lvl.next?` · ${lvl.next-lvl.xp} to Lv.${lvl.idx+1}`:' · max'}</span></div>
-      <div class="space-y-2">${ms.length?ms.map(missionRow).join(''):`<p class="rounded-xl p-3 text-center text-xs" style="background:var(--glass);color:var(--muted)">No missions yet — add the weekly actions that drive this goal.</p>`}</div>
-      <button class="btn btn-ghost mt-2 w-full !py-2 text-sm" data-action="newMission" data-goal="${g.id}" ${canAddMission?'':'disabled'}>${canAddMission?'+ Add mission':'🔒 Upgrade for more missions'}</button>
-    </div>
+    ${missionsBlock}
   </div></div>`;
 }
 function goalsView(){
@@ -779,17 +820,20 @@ function studentView(){
   <p class="text-xs text-slate-500">An admin reviews every request. On approval your plan upgrades to Pro for 2 years automatically.</p></div>`;
 }
 
-function squadView(){
-  const has=PLAN_ORDER.indexOf(ME.plan)>=PLAN_ORDER.indexOf('premium');
-  // Real social requires the live backend + real friends. No fake members.
-  const yourCard=`<div class="glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Your stats</h3>
-    <div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);box-shadow:0 0 0 1px var(--accent2)"><span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${esc((ME.first_name||'Y')[0].toUpperCase())}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(ME.first_name||'You')} ${planBadge(ME.plan)}</p><p class="text-[11px]" style="color:var(--muted)">${weekCheckins()} check-ins this week</p></div><span class="text-sm font-bold" style="color:${streakHealth(userStreak()).c}">${streakHealth(userStreak()).e} ${userStreak()}</span></div></div>`;
-  const empty=`<div class="glass rounded-2xl p-10 text-center"><div class="text-5xl">👥</div><h3 class="mt-4 text-lg font-semibold">No squad members yet</h3><p class="mx-auto mt-1 max-w-sm text-sm text-slate-400">Invite friends to build an accountability squad. Once they join, you'll see a real leaderboard, send support, and run challenges together.</p><button class="btn btn-primary mt-5 text-sm" data-action="copyInvite">🔗 Copy invite link</button></div>`;
-  const challenge=`<div class="glass-strong rounded-2xl p-6"><h3 class="font-semibold">⚔️ Group challenges</h3><p class="mt-2 text-sm" style="color:var(--muted)">Run 1v1 or group streak challenges with your squad. Available once you have at least one squad member.</p></div>`;
-  const inner = has
-    ? `${yourCard}${empty}${challenge}<p class="text-xs text-slate-500">Real followers, friends and leaderboards populate from the database once friends join — no placeholder numbers.</p>`
-    : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div><h3 class="font-semibold">👥 Accountability squads <span class="text-base">🔒</span></h3><p class="mt-1 text-sm text-slate-400">Groups of 2–10, real leaderboards, support and 1v1/group challenges are a Premium feature.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">Unlock Premium</a></div>${yourCard}`;
-  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Squad</h1><p class="mt-1 text-sm text-slate-400">Stay accountable with friends — a little pressure goes a long way.</p></div>${inner}</div>`;
+function socialView(){
+  const c=caps(ME.plan);const full=c.social==='full';
+  const completed=GOALS.filter(g=>g.completed);
+  const me=`<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${esc(ME.username||(ME.first_name||'you').toLowerCase())}</p></div></div>
+    <div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div></div>`;
+  const find=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">Find people</h3><div class="flex gap-2"><input class="input" placeholder="Search by username…" id="findUser"><button class="btn btn-primary shrink-0" data-action="findUser">Search</button></div><p class="mt-3 text-sm text-center py-6" style="color:var(--muted)">No profiles to show yet. Real people appear here once accounts go live — no placeholder users.</p></div>`;
+  const shared = completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Your achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p><button class="btn !bg-white/20 !text-white mt-3 !py-1.5 text-xs" data-action="shareCard">📤 Share</button></div>`).join('')}</div></div>`:`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">🏆 Achievement cards</h3><p class="text-sm text-center py-6" style="color:var(--muted)">Complete a goal to unlock a shareable achievement card.</p></div>`;
+  if(!full){
+    return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">Follow people and share your wins. Upgrade to Premium for the full feed, reactions and goal memories.</p></div>${me}${find}${shared}
+    <a href="#app/plans" class="block glass rounded-2xl p-5 text-center text-sm" style="border:1px solid var(--border)">✨ <b>Premium</b> unlocks the social feed, reactions, profile banners and goal memories. <span class="text-accent-purple">See plans →</span></a></div>`;
+  }
+  const feed=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">📰 Feed</h3><p class="text-sm text-center py-10" style="color:var(--muted)">Your feed is empty. When people you follow share goals, their updates show here — with reactions. No fake posts.</p></div>`;
+  const memories=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🧠 Goal memories <span class="text-[10px] align-middle rounded-full px-2 py-0.5" style="background:var(--glass);color:var(--muted)">progress history</span></h3>${GOALS.length?`<div class="space-y-3">${GOALS.slice(0,6).map(g=>{const p=pct(g.saved_amount,g.target_amount);return `<div class="flex items-center gap-3"><span class="text-xl">${g.emoji||'🎯'}</span><div class="flex-1"><div class="flex justify-between text-sm"><span>${esc(g.name)}</span><span style="color:var(--muted)">${p}%</span></div><div class="h-2 rounded-full mt-1" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>`;}).join('')}</div>`:`<p class="text-sm text-center py-6" style="color:var(--muted)">Your progress history builds here as you work toward goals.</p>`}</div>`;
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">Your network, feed, achievement cards and goal memories.</p></div>${me}<div class="grid gap-6 lg:grid-cols-2">${feed}${find}</div>${shared}${memories}</div>`;
 }
 
 function plansView(){
@@ -813,12 +857,18 @@ function settingsView(){
   const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Blue','#6366f1'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
-  const canCustomize=PLAN_ORDER.indexOf(p.plan)>=PLAN_ORDER.indexOf('pro');
-  const appearance = canCustomize ? `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎨 Appearance</h2><span class="rounded-full px-2.5 py-1 text-[10px] font-medium" style="background:var(--glass);color:var(--muted)">${PLANS[p.plan].name}</span></div>
+  const themes=caps(p.plan).themes;
+  const appearance = themes==='business'
+   ? `<div class="biz-card p-6"><h2 class="text-xl font-bold">🎨 Appearance</h2><p class="mt-1 text-sm" style="color:var(--muted)">Business uses a fixed executive gold theme — no customization, by design.</p></div>`
+   : themes==='red'
+   ? `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎨 Appearance</h2><span class="rounded-full px-2.5 py-1 text-[10px] font-medium" style="background:var(--glass);color:var(--muted)">Pro</span></div><div class="mt-4 flex items-center gap-3"><span class="h-10 w-10 rounded-full" style="background:#ef4444;box-shadow:0 0 0 3px var(--bg),0 0 0 5px #ef4444"></span><div><p class="text-sm font-semibold">Signature Red</p><p class="text-sm" style="color:var(--muted)">Pro ships with one focused theme. Full theme + wallpaper customization is a Premium feature.</p></div></div><a href="#app/plans" class="btn btn-ghost mt-4 text-sm">Compare with Premium</a></div>`
+   : themes==='none'
+   ? `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--border)"><div><h2 class="text-xl font-bold">🎨 Appearance <span class="ml-1 align-middle text-base">🔒</span></h2><p class="mt-1 text-sm text-slate-400">Free keeps things simple — themes, wallpapers and customization start on Pro & Premium.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">See plans</a></div>`
+   : `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎨 Appearance</h2><span class="rounded-full px-2.5 py-1 text-[10px] font-medium" style="background:var(--glass);color:var(--muted)">${PLANS[p.plan].name}</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="flex gap-2">${[['dark','🌙 Dark'],['light','☀️ Light']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="rounded-xl px-4 py-2.5 text-sm ${curMode===m[0]?'text-white':''}" style="${curMode===m[0]?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Background design</p><div class="grid grid-cols-3 gap-3 sm:grid-cols-6">${BGS.map(b=>{const on=curBg===b[0];return `<button data-action="setBg" data-bg="${b[0]}" class="flex flex-col items-center gap-1 rounded-xl p-3 text-xs transition" style="background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':''}"><span class="text-xl">${b[2].startsWith('#')?'⬛':b[2]}</span><span class="${on?'font-semibold':''}" style="${on?'':'color:var(--muted)'}">${b[1]}</span></button>`;}).join('')}</div></div>
-  </div>` : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--border)"><div><h2 class="text-xl font-bold">🎨 Appearance <span class="ml-1 align-middle text-base">🔒</span></h2><p class="mt-1 text-sm text-slate-400">Theme colors, light mode and background designs are a Pro feature.</p></div><a href="#app/student" class="btn btn-primary text-sm shrink-0">Unlock Pro</a></div>`;
+  </div>`;
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Settings</h1><p class="mt-1 text-sm text-slate-400">Manage your account and preferences.</p></div>
   ${appearance}
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Profile</h2>
@@ -1023,21 +1073,26 @@ async function render(){
     AIUSED=u?.count||0;}
     // ── BUSINESS PLAN → entirely separate Business OS ──
     if(ME.plan==='business'){
-      document.documentElement.setAttribute('data-biz','1');
-      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,ai:bizAi,team:bizTeam,marketplace:bizMarketplace,reports:bizReports,settings:settingsView,plans:plansView};
+      document.documentElement.setAttribute('data-biz','1');document.documentElement.classList.remove('light');
+      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,ai:bizAi,team:bizTeam,marketplace:bizMarketplace,profile:bizProfile,reports:bizReports,settings:settingsView,plans:plansView};
       root.innerHTML=bizShell(route,(bviews[route]||bizDashboard)());
       window.scrollTo(0,0);
       bizAfterRender(route);
       return;
     }
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,squad:squadView,plans:plansView,student:studentView,settings:settingsView};
-    root.innerHTML=shell(route,(views[route]||dashboardView)());
+    enforcePlanTheme(ME.plan);
+    const c=caps(ME.plan);
+    // plan-gated routes fall back to dashboard if not allowed for this plan
+    const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
+    const route2=(allowed.has(route)||route==='student')?route:'dashboard';
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,social:socialView,plans:plansView,student:studentView,settings:settingsView};
+    root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
-    if(route==='dashboard'){drawSpend('year');drawCat();if(ME.plan==='premium'||ME.plan==='business')loadAiInsights();}
-    if(route==='analytics'){drawSpend('year');}
-    if(route==='simulator'){runSim();}
-    if(route==='ai'){chat=[{role:'ai',text:"Hi! I'm your AI coach. Ask me about saving, spending, or a plan."}];renderChat();}
-    if(route==='student'){renderSVStatus();}
+    if(route2==='dashboard'){drawSpend('year');drawCat();if(c.ai)loadAiInsights();}
+    if(route2==='analytics'){drawSpend('year');}
+    if(route2==='simulator'){runSim();}
+    if(route2==='ai'){chat=[{role:'ai',text:"Hi! I'm your AI coach. Ask me about saving, spending, or a plan."}];renderChat();}
+    if(route2==='student'){renderSVStatus();}
     return;
   }
   location.hash='#home';
@@ -1051,7 +1106,7 @@ async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MO
 // calendar, cash flow, net worth, AI advisor, team, marketplace.
 // All data persists in localStorage (demo). Distinct gold theme.
 // ============================================================
-const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['ai','AI Advisor','🤖'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['reports','Reports','📄'],['settings','Settings','⚙️']];
+const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['ai','AI Advisor','🤖'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['profile','Profile','🪪'],['reports','Reports','📄'],['settings','Settings','⚙️']];
 
 const BIZ_SPECS={
  businesses:{title:'Company',required:['name'],fields:[{key:'name',label:'Company name',type:'text',wide:true},{key:'logo',label:'Logo (emoji)',type:'text',default:'🏢'},{key:'industry',label:'Industry',type:'select',options:['Restaurant','Construction','Real Estate','Retail','Online Store','Services','Other']},{key:'founded',label:'Founded (year)',type:'number',default:new Date().getFullYear()},{key:'cash',label:'Cash balance',type:'number'},{key:'revenue',label:'Core sales / mo',type:'number'}]},
@@ -1340,6 +1395,15 @@ function bizMarketplace(){
   const listings=[{e:'🤝',t:'Find business partners',d:'Connect with founders in your industry looking to collaborate.'},{e:'👔',t:'Hire talent',d:'Post roles and reach verified professionals on Goalify Business.'},{e:'🛠️',t:'Offer your services',d:'List what your company does and get discovered by other businesses.'},{e:'📦',t:'Sell products',d:'Move surplus inventory or list your catalogue to other companies.'},{e:'🌐',t:'Network',d:'Join industry circles and grow your professional network.'},{e:'📣',t:'Promote your brand',d:'Feature your company to the Goalify Business community.'}];
   return bizHead('Business Marketplace','🌐','Find partners, talent, services and customers')+`<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${listings.map(l=>`<div class="biz-card p-5"><div class="text-3xl">${l.e}</div><h3 class="font-semibold mt-3">${l.t}</h3><p class="text-sm mt-1" style="color:var(--muted)">${l.d}</p><button class="btn btn-ghost mt-4 w-full !py-2 text-sm" data-action="bizInvite">Explore</button></div>`).join('')}</div><div class="biz-card p-4 mt-4 text-xs" style="color:var(--muted)">The marketplace connects Goalify Business accounts. Live matching activates when you go online with real accounts.</div>`;
 }
+function bizProfile(){
+  const m=bizMetrics();const b=bizActive();const years=b?.founded?Math.max(0,new Date().getFullYear()-(+b.founded)):0;
+  const idRows=[['Company',esc(b?.name||'')],['Industry',esc(b?.industry||'')],['Founded',esc(b?.founded||'—')],['Years active',years],['Plan','BUSINESS'],['Status','Verified ✔']];
+  return bizHead('Business Profile','🪪','Your company at a glance')+
+  `<div class="biz-card p-6 mb-5"><div class="flex flex-wrap items-center gap-4"><span class="text-5xl">${b?.logo||'🏢'}</span><div><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold gold-text">${esc(b?.name||'Your Company')}</h2><span class="biz-tag" style="background:#22c55e22;color:#22c55e">✔ Verified Business</span></div><p class="text-sm mt-1" style="color:var(--muted)">${esc(b?.industry||'')} · Est. ${esc(b?.founded||'—')} · ${years} year${years===1?'':'s'} active</p></div><a href="#app/companies" class="btn btn-ghost !py-2 text-sm ml-auto">Edit details</a></div></div>
+  <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-5">${bizStat('Employees',m.empCount,'active','👔')}${bizStat('Properties',m.propCount,fmt(m.propVal),'🏠')}${bizStat('Total assets',fmt(m.netWorth),'net worth','💎','gold')}${bizStat('Monthly revenue',fmt(m.revenue),'','💰','gold')}</div>
+  <div class="grid gap-4 lg:grid-cols-2"><div class="biz-card p-5"><h3 class="font-semibold mb-3">Identity</h3>${tableWrap(['Field','Value'],idRows.map(r=>`<tr class="biz-tr"><td class="py-2.5" style="color:var(--muted)">${r[0]}</td><td class="font-medium">${r[1]}</td></tr>`).join(''))}</div>
+  <div class="biz-card p-5"><h3 class="font-semibold mb-3">Achievements</h3><div class="grid grid-cols-4 gap-3">${bizAchievements().map(a=>`<div class="text-center ${a.got?'':'opacity-30'}"><div class="text-2xl">${a.e}</div><p class="text-[9px] mt-1" style="color:var(--muted)">${a.name}</p></div>`).join('')}</div><a href="#app/goals" class="text-sm gold-text mt-4 inline-block">View all →</a></div></div>`;
+}
 function bizReports(){
   const sets=[['summary','Financial summary'],['invoices','Invoices'],['payments','Payments'],['employees','Employees'],['properties','Properties'],['investments','Investments'],['vehicles','Fleet'],['inventory','Inventory'],['taxes','Taxes'],['clients','Clients']];
   return bizHead('Reports & Export','📄','Download CSV reports or print a PDF')+bizPanel('Export data',`<div class="grid gap-2 sm:grid-cols-2">${sets.map(s=>`<button class="btn btn-ghost !py-2.5 text-sm" data-action="bizExport" data-coll="${s[0]}" style="justify-content:space-between"><span>${s[1]}</span><span>⬇️ CSV</span></button>`).join('')}</div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">📑 PDF report</h3><p class="text-sm mb-3" style="color:var(--muted)">Generate a printable financial overview (use your browser's "Save as PDF").</p><button class="btn btn-primary !py-2 text-sm" data-action="bizPrint">🖨️ Print / Save as PDF</button></div>`;
@@ -1440,6 +1504,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='support'){toast('👏 You sent support to '+a.getAttribute('data-name')+'!');}
     else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
     else if(act==='copyInvite'){const link=location.origin+location.pathname+'#invite';try{await navigator.clipboard.writeText(link);toast('🔗 Invite link copied!');}catch(e){toast('Invite link: '+link);}}
+    else if(act==='findUser'){toast('No matching profiles yet — live once accounts are enabled.');}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='chalFilter'){CHAL_FILTER=+a.getAttribute('data-d');render();}
     else if(act==='joinChal'){const k=a.getAttribute('data-key');const arr=chalState();if(!arr.find(c=>c.key===k)){arr.push({key:k,start:todayISO(),proofs:[],status:'active'});setChalState(arr);}toast('Challenge started — log proof daily 💪');render();}
@@ -1624,7 +1689,6 @@ loadTheme();
     SESSION=null; ME=DEMO_ME;
     // restore saved avatar; seed a streak so badges feel alive in the demo
     ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
-    if(!localStorage.getItem('goalify_streak_demo')){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);localStorage.setItem('goalify_streak_demo',JSON.stringify({count:6,last:y}));}
     seedDemoMissions();
     if(!localStorage.getItem('goalify_bg'))localStorage.setItem('goalify_bg','aurora');
     applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
