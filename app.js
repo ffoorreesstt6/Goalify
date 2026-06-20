@@ -197,22 +197,17 @@ function resetView(){
     <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><div class="relative"><input id="rpw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="rpw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="rpw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="rpw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
 }
 function verifyView(email){
-  return authWrap(`<div class="glass-strong rounded-2xl p-7">
-    <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">📧</div>
-    <h1 class="text-2xl font-bold text-center">Enter your code</h1>
-    <p class="mt-2 text-center text-sm text-slate-400">We sent a 6-digit code to <b class="text-white">${esc(email||'your email')}</b>.</p>
-    <form id="otpForm" class="mt-6 space-y-5">
-      <input type="hidden" id="otpEmail" value="${esc(email||'')}">
-      <div>
-        <label class="label text-center block mb-3">6-digit code</label>
-        <div class="flex justify-center gap-2" id="otpBoxes">
-          ${[0,1,2,3,4,5].map(i=>`<input type="text" inputmode="numeric" maxlength="1" data-otp="${i}" class="h-14 w-11 rounded-xl border border-white/10 bg-white/5 text-center text-xl font-bold outline-none focus:border-accent-purple focus:bg-accent-purple/10 transition"${i===0?' autocomplete="one-time-code"':''}>`).join('')}
-        </div>
-      </div>
-      <button class="btn btn-primary w-full" id="otpBtn">Verify →</button>
-    </form>
-    <div class="mt-4 text-center text-sm text-slate-400">Didn't get it? <button type="button" class="text-accent-purple hover:underline" data-action="resendOtp" data-email="${esc(email||'')}">Resend code</button></div>
-    <p class="mt-3 text-center text-sm text-slate-400"><a href="#login" class="text-accent-purple hover:underline">Back to login</a></p>
+  return authWrap(`<div class="glass-strong rounded-2xl p-7 text-center">
+    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">📧</div>
+    <h1 class="text-2xl font-bold">Check your email</h1>
+    <p class="mt-3 text-sm text-slate-400">We sent a confirmation link to<br><b class="text-white">${esc(email||'your email')}</b></p>
+    <div class="mt-5 glass rounded-xl p-4 text-left text-sm text-slate-300 space-y-2.5">
+      <p class="flex items-center gap-2"><span class="text-accent-purple">1</span> Open the email from Goalify / Supabase</p>
+      <p class="flex items-center gap-2"><span class="text-accent-purple">2</span> Click <b>"Confirm your email address"</b></p>
+      <p class="flex items-center gap-2"><span class="text-accent-purple">3</span> You'll be redirected back automatically</p>
+    </div>
+    <p class="mt-5 text-sm text-slate-400">Didn't get it? <button type="button" class="text-accent-purple hover:underline" data-action="resendVerify" data-email="${esc(email||'')}">Resend email</button></p>
+    <a href="#login" class="btn btn-ghost mt-4 w-full text-sm">Back to login</a>
   </div>`);
 }
 
@@ -472,6 +467,34 @@ async function render(){
   destroyCharts();
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
+
+  // ── Supabase auth callback (email confirmation / password reset / magic link) ──
+  // The hash will contain access_token=... when Supabase redirects back after email confirm.
+  if(hash.startsWith('access_token=')||hash.includes('&access_token=')){
+    if(hash.includes('type=recovery')){location.hash='#reset';return;}
+    // Show a spinner — onAuthStateChange SIGNED_IN will redirect once the session is ready.
+    root.innerHTML=`<div class="flex min-h-screen flex-col items-center justify-center gap-4">
+      <div class="animate-float text-5xl">✨</div>
+      <p class="text-slate-300 font-medium">Verifying your account…</p>
+      <p class="text-sm text-slate-500">You'll be redirected in a moment.</p>
+    </div>`;
+    return;
+  }
+  // Supabase error callback (e.g. expired link)
+  if(hash.startsWith('error=')||hash.includes('error_description=')){
+    const raw=hash.match(/error_description=([^&]*)/)?.[1]||'Link+expired+or+already+used.';
+    const msg=decodeURIComponent(raw.replace(/\+/g,' '));
+    root.innerHTML=authWrap(`<div class="glass-strong rounded-2xl p-7 text-center">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl" style="background:rgba(239,68,68,.15)">⚠️</div>
+      <h1 class="text-2xl font-bold">Link expired</h1>
+      <p class="mt-3 text-sm text-slate-400">${esc(msg)}</p>
+      <p class="mt-2 text-sm text-slate-400">Please sign up again or request a new link.</p>
+      <a href="#signup" class="btn btn-primary mt-6 w-full">Sign up again</a>
+      <a href="#login" class="btn btn-ghost mt-2 w-full text-sm">Back to login</a>
+    </div>`);
+    return;
+  }
+
   // public routes
   if(hash==='home'){root.innerHTML=landing();window.scrollTo(0,0);return;}
   if(hash==='login'){root.innerHTML=loginView();return;}
@@ -513,7 +536,7 @@ document.addEventListener('click',async(e)=>{
   const act=a.getAttribute('data-action');
   try{
     if(act==='togglePw'){const inp=document.getElementById(a.getAttribute('data-target'));if(inp){const show=inp.type==='password';inp.type=show?'text':'password';a.innerHTML=show?EYE_OFF:EYE_ON;}}
-    else if(act==='resendOtp'){const em=a.getAttribute('data-email');if(em){const {error}=await sb.auth.resend({email:em,type:'signup'});if(error)toast(error.message,'err');else toast('Code resent — check your email!');}}
+    else if(act==='resendVerify'){const em=a.getAttribute('data-email');if(em){const {error}=await sb.auth.resend({email:em,type:'signup'});if(error)toast(error.message,'err');else toast('Confirmation email resent — check your inbox!');}}
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
     else if(act==='logout'){await sb.auth.signOut();ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
@@ -543,40 +566,12 @@ document.addEventListener('change',async(e)=>{
 document.addEventListener('input',e=>{
   if(e.target.closest('[data-action="sim"]'))runSim();
   if(e.target.getAttribute('data-action')==='pwStr')updatePwStr(e.target.value);
-  const otp=e.target.closest('#otpBoxes');
-  if(otp&&e.target.dataset.otp!=null){
-    const v=e.target.value.replace(/\D/g,'').slice(-1);e.target.value=v;
-    if(v&&+e.target.dataset.otp<5){const nxt=otp.querySelector(`[data-otp="${+e.target.dataset.otp+1}"]`);if(nxt)nxt.focus();}
-  }
-});
-document.addEventListener('keydown',e=>{
-  const otp=e.target.closest('#otpBoxes');if(!otp||e.target.dataset.otp==null)return;
-  if(e.key==='Backspace'&&!e.target.value&&+e.target.dataset.otp>0){const prev=otp.querySelector(`[data-otp="${+e.target.dataset.otp-1}"]`);if(prev){prev.value='';prev.focus();}}
-  if(e.key==='ArrowLeft'&&+e.target.dataset.otp>0){const p=otp.querySelector(`[data-otp="${+e.target.dataset.otp-1}"]`);if(p)p.focus();}
-  if(e.key==='ArrowRight'&&+e.target.dataset.otp<5){const n=otp.querySelector(`[data-otp="${+e.target.dataset.otp+1}"]`);if(n)n.focus();}
-});
-document.addEventListener('paste',e=>{
-  const otp=e.target.closest('#otpBoxes');if(!otp)return;
-  const txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-  if(!txt)return;e.preventDefault();
-  const boxes=otp.querySelectorAll('[data-otp]');[...txt].forEach((c,i)=>{if(boxes[i])boxes[i].value=c;});
-  const last=boxes[Math.min(txt.length,5)];if(last)last.focus();
 });
 
 document.addEventListener('submit',async(e)=>{
   const f=e.target; e.preventDefault();
   try{
-    if(f.id==='otpForm'){
-      const email=$('#otpEmail')?.value;
-      const token=[...document.querySelectorAll('[data-otp]')].map(b=>b.value).join('');
-      if(token.length!==6||!/^\d{6}$/.test(token))return toast('Enter the full 6-digit code','err');
-      const btn=$('#otpBtn');btn.disabled=true;btn.textContent='Verifying…';
-      const {error}=await sb.auth.verifyOtp({email,token,type:'signup'});
-      btn.disabled=false;btn.textContent='Verify →';
-      if(error)return toast(error.message,'err');
-      toast('Email verified! Welcome to Goalify 🎉');
-    }
-    else if(f.id==='signupForm'){
+    if(f.id==='signupForm'){
       const fd=new FormData(f);
       if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');
       if(!fd.get('tos'))return toast('Please accept the Terms','err');
