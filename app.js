@@ -17,6 +17,38 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage },
 });
 
+// ============================================================
+// DEMO MODE — set to false when auth is ready
+// ============================================================
+const DEMO_MODE = true;
+const _m = new Date(), _mo = _m.toISOString().slice(0,7);
+const DEMO_ME = {
+  id:'demo', first_name:'Forest', last_name:'', email:'demo@goalify.app',
+  plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
+  monthly_income:3500, monthly_savings:700, xp:450, currency:'EUR',
+  budget:{groceries:420,restaurants:250,shopping:180,entertainment:120,subscriptions:60,transportation:90},
+  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en'
+};
+const DEMO_GOALS = [
+  {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,created_at:'2024-01-01'},
+  {id:'g2',user_id:'demo',name:'New MacBook Pro',emoji:'💻',image_url:null,target_amount:2499,saved_amount:850,monthly_contribution:200,completed:false,created_at:'2024-02-01'},
+  {id:'g3',user_id:'demo',name:'Summer Trip 🇬🇷',emoji:'✈️',image_url:null,target_amount:1500,saved_amount:1500,monthly_contribution:0,completed:true,created_at:'2024-03-01'},
+];
+const DEMO_EXPENSES = [
+  {id:'e1',user_id:'demo',amount:420,category:'groceries',merchant:'Lidl',spent_at:`${_mo}-02`},
+  {id:'e2',user_id:'demo',amount:85,category:'restaurants',merchant:'Sushi House',spent_at:`${_mo}-04`},
+  {id:'e3',user_id:'demo',amount:120,category:'shopping',merchant:'Zara',spent_at:`${_mo}-06`},
+  {id:'e4',user_id:'demo',amount:9.99,category:'subscriptions',merchant:'Netflix',spent_at:`${_mo}-01`},
+  {id:'e5',user_id:'demo',amount:65,category:'transportation',merchant:'Bus Pass',spent_at:`${_mo}-01`},
+  {id:'e6',user_id:'demo',amount:110,category:'restaurants',merchant:'Various',spent_at:`${_mo}-10`},
+  {id:'e7',user_id:'demo',amount:180,category:'shopping',merchant:'Online',spent_at:`${_mo}-12`},
+  {id:'e8',user_id:'demo',amount:45,category:'entertainment',merchant:'Cinema',spent_at:`${_mo}-14`},
+  {id:'e9',user_id:'demo',amount:12.99,category:'subscriptions',merchant:'Spotify',spent_at:`${_mo}-01`},
+  {id:'e10',user_id:'demo',amount:90,category:'transportation',merchant:'Fuel',spent_at:`${_mo}-08`},
+  {id:'e11',user_id:'demo',amount:55,category:'fastfood',merchant:'McDonald\'s',spent_at:`${_mo}-09`},
+  {id:'e12',user_id:'demo',amount:38,category:'entertainment',merchant:'Bowling',spent_at:`${_mo}-16`},
+];
+
 // -------------------- constants --------------------
 const PLANS = {
   free:{name:'Free',price:0,goalLimit:3,ai:5},
@@ -80,6 +112,7 @@ function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch
 
 // -------------------- data layer --------------------
 async function loadProfile(){
+  if(DEMO_MODE){ME=DEMO_ME;return DEMO_ME;}
   if(!SESSION) return null;
   let { data } = await sb.from('profiles').select('*').eq('id',SESSION.user.id).maybeSingle();
   if(!data){ // safety: create if trigger didn't
@@ -88,8 +121,8 @@ async function loadProfile(){
   }
   ME=data; return data;
 }
-const getGoals=async()=>(await sb.from('goals').select('*').order('created_at',{ascending:false})).data||[];
-const getExpenses=async()=>(await sb.from('expenses').select('*').order('spent_at',{ascending:false}).limit(1000)).data||[];
+const getGoals=async()=>DEMO_MODE?DEMO_GOALS:(await sb.from('goals').select('*').order('created_at',{ascending:false})).data||[];
+const getExpenses=async()=>DEMO_MODE?DEMO_EXPENSES:(await sb.from('expenses').select('*').order('spent_at',{ascending:false}).limit(1000)).data||[];
 
 // -------------------- scoring --------------------
 function snapshot(profile,expenses){
@@ -152,9 +185,11 @@ function authView(){
 // VIEWS — LANDING
 // ============================================================
 function landing(){
+  const cta=DEMO_MODE?'#quiz':'#signup';
+  const loginHref=DEMO_MODE?'#quiz':'#login';
   return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4"><div class="mx-auto max-w-7xl"><div class="glass-strong flex items-center justify-between rounded-2xl px-4 py-3">${brand()}
     <nav class="hidden gap-8 md:flex text-sm text-slate-300"><a href="#home" data-scroll="feat" class="hover:text-white">Features</a><a href="#home" data-scroll="pricing" class="hover:text-white">Pricing</a><a href="#home" data-scroll="faq" class="hover:text-white">FAQ</a></nav>
-    <div class="flex items-center gap-3">${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="text-sm text-slate-300 hover:text-white">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Get started</a>`}</div>
+    <div class="flex items-center gap-3">${DEMO_MODE?`<a href="#quiz" class="btn btn-primary !py-2 !px-4 text-sm">Get started →</a>`:SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="text-sm text-slate-300 hover:text-white">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Get started</a>`}</div>
   </div></div></header>
   <main>
     <section class="relative overflow-hidden pt-40 pb-24">
@@ -165,7 +200,7 @@ function landing(){
         <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-slate-300">✨ AI-powered financial coaching</div>
         <h1 class="text-5xl font-extrabold leading-tight sm:text-6xl md:text-7xl">Turn Every Euro<br>Into <span class="gtext">Progress.</span></h1>
         <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-400">Track spending, reach goals faster, and receive AI-powered financial coaching — all in one beautifully simple platform.</p>
-        <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"><a href="#signup" class="btn btn-primary">Start for free →</a><a href="#login" class="btn btn-ghost">Log in</a></div>
+        <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"><a href="${cta}" class="btn btn-primary">Start for free →</a><a href="${loginHref}" class="btn btn-ghost">Log in</a></div>
         <p class="mt-4 text-sm text-slate-500">No credit card required · Students get Pro free</p>
       </div>
     </section>
@@ -177,13 +212,13 @@ function landing(){
     </section>
     <section id="sec-pricing" class="py-20 mx-auto max-w-7xl px-4">
       <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Pricing</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Simple, honest pricing</h2></div>
-      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id];return `<div class="relative flex flex-col rounded-2xl p-6 ${p.highlight?'glass-strong':'glass'}" ${p.highlight?'style="box-shadow:0 0 40px -10px rgba(99,102,241,.5)"':''}>${p.highlight?'<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,#3b82f6,#8b5cf6)">Most popular</span>':''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm text-slate-400">/mo</span></div><a href="#signup" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-5 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul></div>`;}).join('')}</div>
+      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id];return `<div class="relative flex flex-col rounded-2xl p-6 ${p.highlight?'glass-strong':'glass'}" ${p.highlight?'style="box-shadow:0 0 40px -10px rgba(99,102,241,.5)"':''}>${p.highlight?'<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,#3b82f6,#8b5cf6)">Most popular</span>':''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm text-slate-400">/mo</span></div><a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-5 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul></div>`;}).join('')}</div>
     </section>
     <section id="sec-faq" class="py-20 mx-auto max-w-3xl px-4">
       <div class="text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">FAQ</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Questions, answered</h2></div>
       <div class="mt-10 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, analytics, your money personality and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once an admin approves it, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['How does the AI work?','A secure server function calls a real AI model using your financial context, with per-plan daily limits.']].map((f,i)=>`<div class="glass rounded-2xl overflow-hidden"><button class="flex w-full items-center justify-between px-6 py-5 text-left font-medium" data-action="faq" data-i="${i}">${f[0]}<span id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm text-slate-400">${f[1]}</div></div>`).join('')}</div>
     </section>
-    <section class="py-20 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="#signup" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
+    <section class="py-20 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="${cta}" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
     <footer class="border-t border-white/10 py-12 mx-auto max-w-7xl px-4 text-center text-sm text-slate-500">© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
   </main>`;
 }
@@ -303,6 +338,10 @@ async function finishQuiz(inner){
   const savings=QA.savings||Math.max(0,income-spend);
   const rate=income>0?Math.max(0,Math.round((income-spend)/income*100)):0;
   const persona=computePersona();
+  if(DEMO_MODE){
+    // In demo mode, just update the in-memory DEMO_ME object
+    Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:QA.budget,personality:persona,onboarded:true});
+  } else {
   // save profile
   await sb.from('profiles').update({
     monthly_income:income, monthly_savings:savings, budget:QA.budget,
@@ -312,6 +351,7 @@ async function finishQuiz(inner){
   // seed real expenses for this month from the budget (their own data)
   const rows=QUIZ_CATS.filter(c=>(+QA.budget[c]||0)>0).map(c=>({user_id:SESSION.user.id,amount:+QA.budget[c],category:c,source:'quiz',spent_at:todayISO()}));
   if(rows.length) await sb.from('expenses').insert(rows);
+  }
   await loadProfile();
   const p=PERSONAS[persona];
   inner.innerHTML=`<div class="glass-strong rounded-2xl p-7 text-center anim">
@@ -406,7 +446,7 @@ function aiView(){
 
 function challengesView(){
   const {level,inLvl}=levelFromXp(ME.xp);
-  const activeKeys=JSON.parse(localStorage.getItem('goalify_chal_'+SESSION.user.id)||'[]');
+  const activeKeys=JSON.parse(localStorage.getItem('goalify_chal_'+(DEMO_MODE?'demo':SESSION.user.id))||'[]');
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Challenges</h1><p class="mt-1 text-sm text-slate-400">Build habits, earn real XP, level up.</p></div>
   <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-extrabold text-white" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">${level}</span><div><p class="font-semibold">Level ${level}</p><p class="text-sm text-slate-400">${ME.xp||0} XP total</p></div></div><div class="w-full sm:w-64"><div class="mb-1 flex justify-between text-xs text-slate-400"><span>${inLvl} XP</span><span>100 XP</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${inLvl}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div></div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${CHALLENGES.map(t=>{const joined=activeKeys.includes(t.key);return `<div class="glass rounded-2xl p-6 flex flex-col"><div class="text-3xl">${t.emoji}</div><h3 class="mt-3 font-semibold">${t.title}</h3><p class="mt-1 flex-1 text-sm text-slate-400">${t.desc}</p><div class="mt-3 text-xs text-accent-violet">+${t.xp} XP</div>${joined?`<button class="btn btn-primary mt-3 w-full !py-2 text-sm" data-action="doneChal" data-key="${t.key}" data-xp="${t.xp}">✓ Complete (+${t.xp} XP)</button>`:`<button class="btn btn-ghost mt-3 w-full !py-2 text-sm" data-action="startChal" data-key="${t.key}">Start</button>`}</div>`;}).join('')}</div></div>`;
@@ -479,6 +519,12 @@ function renderChat(){const log=$('#chatLog');if(!log)return;log.innerHTML=chat.
 async function sendChat(q,mode='coach'){
   chat.push({role:'user',text:q});renderChat();
   chat.push({role:'ai',text:'…'});renderChat();
+  if(DEMO_MODE){
+    await new Promise(r=>setTimeout(r,900));
+    chat.pop();
+    const demoReplies={coach:"Great question! Based on your spending, you're doing well. Focus on building that emergency fund and keeping food costs under €420/month.",roast:"Okay, €180 on shopping?! Do you even NEED all that? Your emergency fund says you don't. 😤",report:"📊 3 insights: 1) Your savings rate is ~20% — solid! 2) Restaurants are your biggest flex category. 3) You're 42% to your emergency fund — keep going!"};
+    chat.push({role:'ai',text:demoReplies[mode]||demoReplies.coach});renderChat();return;
+  }
   try{
     const {data,error}=await sb.functions.invoke('ai',{body:{messages:chat.filter(m=>m.text!=='…').map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text})),mode}});
     chat.pop();
@@ -489,6 +535,10 @@ async function sendChat(q,mode='coach'){
 }
 async function loadAiInsights(){
   const el=$('#aiInsights');if(!el)return;
+  if(DEMO_MODE){
+    el.innerHTML=['Your savings rate is ~20% — keep it up!','Restaurant spending is high — try cooking more at home.','You\'re 42% toward your Emergency Fund goal.','No impulse buys this week — great discipline!'].map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${esc(t)}</li>`).join('');
+    return;
+  }
   try{const {data,error}=await sb.functions.invoke('ai',{body:{mode:'report',messages:[{role:'user',content:'Give me 3 short insights about my finances as bullet lines.'}]}});
     if(error){el.innerHTML='<li class="text-slate-500">AI not configured yet.</li>';return;}
     el.innerHTML=(data.reply||'').split('\n').filter(x=>x.trim()).slice(0,4).map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${esc(t.replace(/^[-*•\d.\s]+/,''))}</li>`).join('')||'<li>All good!</li>';
@@ -502,6 +552,11 @@ async function render(){
   destroyCharts();
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
+
+  // In demo mode, block any auth-related hash immediately
+  if(DEMO_MODE && (hash==='login'||hash==='signup'||hash==='forgot'||hash==='verify'||hash.startsWith('access_token')||hash.startsWith('error='))){
+    location.hash='#quiz'; return;
+  }
 
   // ── Supabase auth callback (email confirmation / password reset / magic link) ──
   // The hash will contain access_token=... when Supabase redirects back after email confirm.
@@ -532,19 +587,23 @@ async function render(){
 
   // public routes
   if(hash==='home'){root.innerHTML=landing();window.scrollTo(0,0);return;}
-  if(hash==='login'||hash==='signup'){root.innerHTML=authView();return;}
+  if(hash==='login'||hash==='signup'){
+    if(DEMO_MODE){location.hash='#quiz';return;}
+    root.innerHTML=authView();return;
+  }
   if(hash==='reset'){root.innerHTML=resetView();return;}
   // need session below
-  if(!SESSION){location.hash='#login';return;}
+  if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
   if(!ME) await loadProfile();
   if(hash==='admin'){ if(ME?.role!=='admin'){toast('Admins only',' err');location.hash='#app/dashboard';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
   if(hash==='quiz'){ QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
   if(hash.startsWith('app/')){
-    if(!ME.onboarded){location.hash='#quiz';return;}
+    if(!ME?.onboarded){location.hash='#quiz';return;}
     const route=hash.split('/')[1]||'dashboard';
     [GOALS,EXPENSES]=await Promise.all([getGoals(),getExpenses()]);
+    if(DEMO_MODE){AIUSED=0;} else {
     const {data:u}=await sb.from('ai_usage').select('count').eq('user_id',SESSION.user.id).eq('day',todayISO()).maybeSingle();
-    AIUSED=u?.count||0;
+    AIUSED=u?.count||0;}
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route,(views[route]||dashboardView)());
     window.scrollTo(0,0);
@@ -557,7 +616,7 @@ async function render(){
   }
   location.hash='#home';
 }
-async function renderSVStatus(){const el=$('#svStatus');if(!el)return;const {data}=await sb.from('student_verifications').select('*').order('created_at',{ascending:false}).limit(1);const v=data?.[0];if(v){const c=v.status==='approved'?'text-emerald-400':v.status==='rejected'?'text-red-400':'text-amber-300';el.innerHTML=`<div class="glass rounded-2xl p-5"><p class="text-sm">Latest request: <b class="${c}">${v.status}</b> · ${esc(v.university)}</p></div>`;}}
+async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MODE){el.innerHTML='<div class="glass rounded-2xl p-5 text-sm text-slate-400">Student verification is not available in demo mode.</div>';return;}const {data}=await sb.from('student_verifications').select('*').order('created_at',{ascending:false}).limit(1);const v=data?.[0];if(v){const c=v.status==='approved'?'text-emerald-400':v.status==='rejected'?'text-red-400':'text-amber-300';el.innerHTML=`<div class="glass rounded-2xl p-5"><p class="text-sm">Latest request: <b class="${c}">${v.status}</b> · ${esc(v.university)}</p></div>`;}}
 
 // ============================================================
 // EVENTS
@@ -576,20 +635,20 @@ document.addEventListener('click',async(e)=>{
     else if(act==='togglePw'){const inp=document.getElementById(a.getAttribute('data-target'));if(inp){const show=inp.type==='password';inp.type=show?'text':'password';a.innerHTML=show?EYE_OFF:EYE_ON;}}
     else if(act==='resendVerify'){const em=a.getAttribute('data-email');if(em){const {error}=await sb.auth.resend({email:em,type:'signup'});if(error)toast(error.message,'err');else toast('Confirmation email resent — check your inbox!');}}
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
-    else if(act==='logout'){await sb.auth.signOut();ME=null;location.hash='#home';}
+    else if(act==='logout'){if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
-    else if(act==='delGoal'){await sb.from('goals').delete().eq('id',a.getAttribute('data-id'));toast('Goal deleted');render();}
-    else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}
-    else if(act==='delExp'){await sb.from('expenses').delete().eq('id',a.getAttribute('data-id'));render();}
+    else if(act==='delGoal'){const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted (demo)');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
+    else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done){DEMO_ME.xp=(DEMO_ME.xp||0)+100;toast('🎉 Goal completed! +100 XP (demo)');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}}
+    else if(act==='delExp'){const eid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_EXPENSES.findIndex(x=>x.id===eid);if(idx>-1)DEMO_EXPENSES.splice(idx,1);render();}else{await sb.from('expenses').delete().eq('id',eid);render();}}
     else if(act==='tf'){a.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='';b.classList.remove('text-white');b.classList.add('text-slate-400');});a.style.background='linear-gradient(90deg,#3b82f6,#8b5cf6)';a.classList.add('text-white');a.classList.remove('text-slate-400');drawSpend(a.getAttribute('data-tf'));}
     else if(act==='ask'){const q=a.getAttribute('data-q');sendChat(q,q.toLowerCase().includes('roast')?'roast':'coach');}
-    else if(act==='startChal'){const k=a.getAttribute('data-key');const key='goalify_chal_'+SESSION.user.id;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
-    else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const key='goalify_chal_'+SESSION.user.id;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));await sb.rpc('award_xp',{p_amount:xp});await loadProfile();toast('+'+xp+' XP!');render();}
-    else if(act==='export'){const [{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
+    else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
+    else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP!');render();}
+    else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
     else if(act==='connected'){toast('Connected accounts coming soon');}
-    else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}
+    else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
     else if(act==='lang'){toast('Language preference saved');}
-    else if(act==='delAcct'){if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
+    else if(act==='delAcct'){if(DEMO_MODE){toast('Account deletion is disabled in demo mode','err');return;}if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
     else if(act==='qback'){captureQuizStep();QSTEP=Math.max(0,QSTEP-1);renderQuiz();}
     else if(act==='qnext'){captureQuizStep();QSTEP++;renderQuiz();}
     else if(act==='qradio'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
@@ -632,11 +691,12 @@ document.addEventListener('submit',async(e)=>{
     }
     else if(f.id==='forgotForm'){const fd=new FormData(f);const {error}=await sb.auth.resetPasswordForEmail(fd.get('email'),{redirectTo:location.origin+location.pathname+'#reset'});if(error)return toast(error.message,'err');toast('Reset link sent — check your email.');}
     else if(f.id==='resetForm'){const fd=new FormData(f);if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');location.hash='#app/dashboard';}
-    else if(f.id==='expForm'){const fd=new FormData(f);await sb.from('expenses').insert({user_id:SESSION.user.id,amount:+fd.get('amount'),category:fd.get('category'),merchant:fd.get('merchant'),spent_at:fd.get('date')||todayISO()});toast('Expense added');render();}
-    else if(f.id==='profForm'){const fd=new FormData(f);await sb.from('profiles').update({first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')}).eq('id',SESSION.user.id);await loadProfile();toast('Profile saved');render();}
-    else if(f.id==='pwForm'){const fd=new FormData(f);if(!fd.get('password'))return;if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');f.reset();}
+    else if(f.id==='expForm'){const fd=new FormData(f);if(DEMO_MODE){const exp={id:'e'+Date.now(),user_id:'demo',amount:+fd.get('amount'),category:fd.get('category'),merchant:fd.get('merchant'),spent_at:fd.get('date')||todayISO()};DEMO_EXPENSES.unshift(exp);toast('Expense added (demo)');render();}else{await sb.from('expenses').insert({user_id:SESSION.user.id,amount:+fd.get('amount'),category:fd.get('category'),merchant:fd.get('merchant'),spent_at:fd.get('date')||todayISO()});toast('Expense added');render();}}
+    else if(f.id==='profForm'){const fd=new FormData(f);if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')});toast('Profile saved (demo)');render();}else{await sb.from('profiles').update({first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')}).eq('id',SESSION.user.id);await loadProfile();toast('Profile saved');render();}}
+    else if(f.id==='pwForm'){if(DEMO_MODE){toast('Password change is not available in demo mode','err');return;}const fd=new FormData(f);if(!fd.get('password'))return;if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');f.reset();}
     else if(f.id==='chatForm'){const inp=$('#chatInput');const v=inp.value.trim();if(v){inp.value='';sendChat(v);}}
     else if(f.id==='svForm'){
+      if(DEMO_MODE){toast('Student verification is not available in demo mode','err');return;}
       const fd=new FormData(f);const file=fd.get('document');let docUrl=null;
       if(file&&file.size){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('documents').upload(path,file);if(!upErr)docUrl=path;}
       const {error}=await sb.from('student_verifications').insert({user_id:SESSION.user.id,university:fd.get('university'),student_email:fd.get('student_email'),document_url:docUrl});
@@ -662,6 +722,10 @@ function openGoalModal(){
     if(limit!==-1&&active>=limit){$('#gmErr').textContent='Free plan limit reached.';return;}
     $('#gmSave').disabled=true;$('#gmSave').textContent='Saving…';
     let imgUrl=null;
+    if(DEMO_MODE){
+      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,created_at:new Date().toISOString(),image_url:null};
+      DEMO_GOALS.unshift(newGoal);close();toast('Goal created (demo)');render();return;
+    }
     if(file){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('goal-images').upload(path,file);if(!upErr){imgUrl=sb.storage.from('goal-images').getPublicUrl(path).data.publicUrl;}}
     const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,image_url:imgUrl});
     if(error){$('#gmErr').textContent=error.message;$('#gmSave').disabled=false;$('#gmSave').textContent='Create goal';return;}
@@ -673,6 +737,7 @@ function openGoalModal(){
 // INIT
 // ============================================================
 sb.auth.onAuthStateChange(async (event,session)=>{
+  if(DEMO_MODE) return; // demo mode ignores all real auth events
   SESSION=session; ME=null;
   if(event==='PASSWORD_RECOVERY'){location.hash='#reset';return;}
   if(event==='SIGNED_IN'){ await loadProfile(); location.hash = ME && ME.onboarded ? '#app/dashboard' : '#quiz'; return; }
@@ -680,4 +745,13 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   render();
 });
 window.addEventListener('hashchange',render);
-(async()=>{ const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render(); })();
+(async()=>{
+  if(DEMO_MODE){
+    // Wipe any real Supabase session from storage so the SDK stops making auth/DB calls
+    const key='sb-jcskgasaocfueneyahrk-auth-token';
+    localStorage.removeItem(key); sessionStorage.removeItem(key);
+    localStorage.removeItem(REMEMBER);
+    SESSION=null; ME=DEMO_ME; render(); return;
+  }
+  const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();
+})();
