@@ -153,12 +153,18 @@ const SAVINGS_MODES={
 const REDUCIBLE=['restaurants','fastfood','shopping','entertainment','subscriptions','cigarettes','gas'];
 // -------------------- badges --------------------
 const BADGES=[
-  {key:'starter',name:'Goal Starter',emoji:'🚀',desc:'Created your first goal'},
-  {key:'saver7',name:'7-Day Saver',emoji:'🔥',desc:'7-day check-in streak'},
-  {key:'cutter',name:'Expense Cutter',emoji:'✂️',desc:'Completed a savings challenge'},
-  {key:'finisher',name:'Goal Finisher',emoji:'🎯',desc:'Completed a goal'},
-  {key:'leveled',name:'Level Up',emoji:'⭐',desc:'Reached level 5'},
-  {key:'consistency',name:'Consistency Master',emoji:'🏆',desc:'30-day streak'},
+  {key:'starter',name:'Goal Starter',emoji:'🚀',desc:'Create your first goal'},
+  {key:'triple',name:'Triple Threat',emoji:'🎲',desc:'Track 3 goals at once'},
+  {key:'halfway',name:'Halfway There',emoji:'⛰️',desc:'Get a goal to 50%'},
+  {key:'finisher',name:'Goal Finisher',emoji:'🎯',desc:'Complete a goal'},
+  {key:'completionist',name:'Completionist',emoji:'👑',desc:'Complete 3 goals'},
+  {key:'saver1k',name:'Saver',emoji:'💰',desc:'Save €1,000 in total'},
+  {key:'saver5k',name:'Big Saver',emoji:'💎',desc:'Save €5,000 in total'},
+  {key:'budgeter',name:'Budgeter',emoji:'📊',desc:'Hit a 20% savings rate'},
+  {key:'saver7',name:'7-Day Streak',emoji:'🔥',desc:'7-day check-in streak'},
+  {key:'leveled',name:'Level 5',emoji:'⭐',desc:'Reach level 5'},
+  {key:'consistency',name:'Consistency',emoji:'🏅',desc:'30-day streak'},
+  {key:'cutter',name:'Challenger',emoji:'✂️',desc:'Win a challenge'},
 ];
 
 // -------------------- helpers --------------------
@@ -243,14 +249,27 @@ function joinedChal(key){return chalState().find(c=>c.key===key);}
 function chalDayNum(c){return Math.min((CHALLENGES.find(x=>x.key===c.key)||{days:1}).days,Math.floor((Date.now()-new Date(c.start))/864e5)+1);}
 function completedChals(){return chalState().filter(c=>c.status==='approved').map(c=>c.key);}
 function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done=completedChals(),set=new Set();
+  const saved=(GOALS||[]).reduce((a,g)=>a+Number(g.saved_amount||0),0);
+  const snap=ME?snapshot(ME,EXPENSES):{savingsRate:0};
   if(GOALS.length>0)set.add('starter');
-  if(s.count>=7)set.add('saver7');
-  if(done.length>0)set.add('cutter');
+  if(GOALS.length>=3)set.add('triple');
+  if(GOALS.some(g=>pct(g.saved_amount,g.target_amount)>=50))set.add('halfway');
   if(GOALS.some(g=>g.completed))set.add('finisher');
+  if(GOALS.filter(g=>g.completed).length>=3)set.add('completionist');
+  if(saved>=1000)set.add('saver1k');
+  if(saved>=5000)set.add('saver5k');
+  if(snap.savingsRate>=20)set.add('budgeter');
+  if(s.count>=7||allMissions().some(m=>missionStreak(m.id)>=7))set.add('saver7');
   if(lvl>=5)set.add('leveled');
   if(s.count>=30)set.add('consistency');
-  if(allMissions().some(m=>missionStreak(m.id)>=7))set.add('saver7');
+  if(done.length>0)set.add('cutter');
   return set;}
+function badgesPanel(){
+  const got=earnedBadges(),total=BADGES.length,n=got.size,next=BADGES.find(b=>!got.has(b.key));
+  return `<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Achievements</h3><span class="text-xs" style="color:var(--muted)">${n}/${total} unlocked</span></div>
+  <div class="grid grid-cols-4 sm:grid-cols-6 gap-3">${BADGES.map(b=>{const on=got.has(b.key);return `<div class="flex flex-col items-center text-center rounded-xl p-2" title="${esc(b.desc)}" style="${on?'background:var(--glass)':''}"><div class="text-2xl ${on?'badge-pop':'grayscale opacity-30'}">${b.emoji}</div><p class="text-[9px] mt-1 ${on?'font-semibold':''}" style="color:var(--muted)">${esc(b.name)}</p></div>`;}).join('')}</div>
+  ${next?`<p class="mt-3 text-xs" style="color:var(--muted)">Next up: <b>${next.emoji} ${esc(next.name)}</b> — ${esc(next.desc)}.</p>`:`<p class="mt-3 text-xs text-emerald-400">🎉 Every achievement unlocked — legend!</p>`}</div>`;
+}
 
 // ============================================================
 // MISSIONS ENGINE — Goals → Missions → Check-ins
@@ -342,7 +361,8 @@ function enforcePlanTheme(plan){
 function avatarHTML(size=36){
   const b=[...earnedBadges()],badge=b.length?BADGES.find(x=>x.key===b[b.length-1]):null;
   const inner=ME?.avatar_url?`<img src="${esc(ME.avatar_url)}" class="h-full w-full object-cover">`:ini(ME);
-  return `<span class="relative inline-flex shrink-0"><span class="flex items-center justify-center overflow-hidden rounded-full text-sm font-semibold text-white" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${inner}</span>${badge?`<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px]" style="background:var(--bg);border:1px solid var(--border)" title="${esc(badge.name)}">${badge.emoji}</span>`:''}</span>`;
+  const fx=ME?.plan==='premium'?'av-premium':(ME?.plan==='pro'?'av-pro':''); // animated ring on Pro & Premium
+  return `<span class="relative inline-flex shrink-0 ${fx}" style="border-radius:9999px"><span class="flex items-center justify-center overflow-hidden rounded-full text-sm font-semibold text-white" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${inner}</span>${badge?`<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px]" style="background:var(--bg);border:1px solid var(--border)" title="${esc(badge.name)}">${badge.emoji}</span>`:''}</span>`;
 }
 // grounded demo AI reply (uses real computed numbers, adapts to coach mode)
 function demoCoachReply(q,mode){
@@ -591,18 +611,12 @@ async function finishQuiz(inner){
 const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['squad','Squad','👥'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
 function shell(route,inner){
   const isAdmin=ME?.role==='admin';const NAV=planNav(ME?.plan||'free');const c=caps(ME?.plan||'free');
-  const themePicker = c.themes==='full' ? `<div class="mx-3 mt-2 mb-1 rounded-2xl px-3 py-3" style="background:var(--glass);border:1px solid var(--border)">
-      <div class="mb-2 flex items-center justify-between">
-        <p class="text-[10px] uppercase tracking-widest font-semibold" style="color:var(--muted)">Theme</p>
-        ${(()=>{const m=localStorage.getItem('goalify_theme')||'dark';return `<button data-action="setTheme" data-mode="${m==='dark'?'light':'dark'}" class="rounded-lg px-2 py-0.5 text-[10px] hover:bg-white/10 transition" style="color:var(--muted)">${m==='dark'?'☀️ Light':'🌙 Dark'}</button>`;})()}
-      </div>
-      <div class="flex flex-wrap gap-2">${[['blue','#6366f1'],['green','#22c55e'],['yellow','#eab308'],['orange','#f97316'],['pink','#ec4899'],['red','#ef4444'],['grey','#6b7280']].map(([name,hex])=>{const active=(localStorage.getItem('goalify_color')||'blue')===name;return `<button data-action="setColor" data-color="${name}" title="${name[0].toUpperCase()+name.slice(1)}" class="h-6 w-6 rounded-full transition-all hover:scale-110 shrink-0" style="background:${hex};${active?'outline:2px solid rgba(255,255,255,.7);outline-offset:2px;transform:scale(1.15)':'opacity:.75'}"></button>`;}).join('')}</div>
-    </div>` : '';
+  const themeBtn = (c.themes==='full'||c.themes==='red') ? `<a href="#app/settings" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5"><span>🎨</span>Theme<span class="ml-auto text-[10px]" style="color:var(--muted)">${c.themes==='full'?'customize':'red'}</span></a>` : '';
   return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
     <div class="px-5 py-6">${brand('#app/dashboard')}</div>
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
+    ${themeBtn}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
-    ${themePicker}
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
@@ -699,7 +713,8 @@ function dashboardView(){
     <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Goal progress</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div>${active.length?active.map(gg=>{const p=pct(gg.saved_amount,gg.target_amount);return `<div class="mb-4"><div class="mb-1 flex justify-between text-sm"><span>${gg.emoji||'🎯'} ${esc(gg.name)}</span><span class="text-slate-400">${fmt(gg.saved_amount)} / ${fmt(gg.target_amount)}</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>`;}).join(''):`<p class="py-8 text-center text-sm text-slate-400">No active goals.</p>`}</div></div>
     <div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Predictions</div><p class="text-sm text-slate-400">At your current pace you'll spend about <b class="text-white">${fmt(s.spending*12)}</b> this year and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b>.</p></div>`;
   }
-  return `<div class="space-y-6">${header}${gamifyRow}${statsGrid}${rings}${overview}${analytics}</div>`;
+  const freePerk = ME.plan==='free' ? `<div class="glass-strong rounded-2xl p-6" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🎁 Free perk: Achievements</h3><p class="mt-1 text-sm text-slate-400">Earn badges as you hit milestones — collect them all. Pro adds advanced analytics & the Future Simulator; Premium adds streaks, social and themes.</p></div><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">Explore Pro →</a></div></div>` : '';
+  return `<div class="space-y-6">${header}${gamifyRow}${statsGrid}${rings}${freePerk}${badgesPanel()}${overview}${analytics}</div>`;
 }
 
 function missionRow(m){

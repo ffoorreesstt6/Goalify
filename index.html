@@ -120,12 +120,20 @@
     .biz-tag{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-weight:600;padding:.1rem .55rem;border-radius:9999px}
     .biz-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.3),transparent)}
     @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+    /* ---- achievement badges + profile ring effects (Pro/Premium) ---- */
+    @keyframes badgePop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+    .badge-pop{display:inline-block;animation:badgePop .45s ease both}
+    @keyframes avSpin{to{transform:rotate(360deg)}}
+    @keyframes avPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent2) 50%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+    .av-pro::before,.av-premium::before{content:"";position:absolute;inset:-3px;border-radius:9999px;padding:2px;background:conic-gradient(from 0deg,var(--accent1),var(--accent2),var(--accent3),var(--accent1));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:avSpin 5s linear infinite;pointer-events:none}
+    .av-premium::before{animation:avSpin 3s linear infinite}
+    .av-premium{animation:avPulse 2.6s ease-in-out infinite;border-radius:9999px}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=18"></script>
+  <script type="module" src="./app.js?v=19"></script>
 </body>
 </html>
