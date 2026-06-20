@@ -64,10 +64,10 @@ const PLANS = {
   free:{name:'Free',price:0,goalLimit:3,ai:5},
   pro:{name:'Pro',price:3,goalLimit:-1,ai:50,highlight:true},
   premium:{name:'Premium',price:5,goalLimit:-1,ai:-1},
-  business:{name:'Business',price:5,goalLimit:-1,ai:-1},
+  business:{name:'Business',price:10,goalLimit:-1,ai:-1},
 };
 // monthly + yearly pricing (yearly = a few months free)
-const PRICING={pro:{mo:3,yr:30},premium:{mo:5,yr:50},business:{mo:5,yr:100}};
+const PRICING={pro:{mo:3,yr:30},premium:{mo:5,yr:50},business:{mo:10,yr:100}};
 // referral reward tiers
 const REWARD_TIERS=[[10,'1 month Pro free'],[25,'3 months Pro free'],[50,'1 year Pro free'],[100,'1 year Premium free']];
 const PLAN_ORDER=['free','pro','premium','business'];
@@ -749,8 +749,9 @@ function goalCard(g){
   return `<div class="glass rounded-2xl overflow-hidden anim" style="${archived?'opacity:.6':''}">${g.image_url?`<img src="${esc(g.image_url)}" class="h-28 w-full object-cover">`:''}
   <div class="p-5">
     <div class="flex items-start justify-between gap-2">
-      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':archived?'📦 Archived':'Active'}</span></div></div>
+      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)} ${g.private?'<span title="Private goal" class="text-xs align-middle">🔒</span>':''}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':archived?'📦 Archived':g.private?'Active · Private':'Active'}</span></div></div>
       <div class="flex items-center gap-2">${c.gamify?`<span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx}</span>`:''}
+      <button data-action="togglePrivate" data-id="${g.id}" class="text-sm" style="color:var(--muted)" title="${g.private?'Make public':'Make private'}">${g.private?'🔒':'🌍'}</button>
       <button data-action="archiveGoal" data-id="${g.id}" class="text-sm" style="color:var(--muted)" title="${archived?'Restore':'Archive'}">${archived?'♻️':'📦'}</button>
       ${canDelete?`<button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400" title="Delete">🗑</button>`:''}</div>
     </div>
@@ -842,7 +843,7 @@ function studentView(){
 
 function socialView(){
   const c=caps(ME.plan);const full=c.social==='full';
-  const completed=GOALS.filter(g=>g.completed);
+  const completed=GOALS.filter(g=>g.completed&&!g.private); // private goals never appear on social
   const nm=`${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}`.trim();
   const un=esc(ME.username||(ME.first_name||'you').toLowerCase());
   const got=[...earnedBadges()];
@@ -851,7 +852,7 @@ function socialView(){
   const banner=bannerCls?`<div class="relative h-24 ${bannerCls}">${ME.plan==='premium'?'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">✨ Premium</span><a href="#app/settings" class="absolute right-3 bottom-3 rounded-lg bg-black/25 px-2.5 py-1 text-[11px] text-white hover:bg-black/40">🎨 Customize</a>':'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">PRO</span>'}</div>`:'';
   const stats=`<div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div>`;
   const me = bannerCls
-   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6 -mt-10"><div class="flex items-end gap-4"><span class="inline-flex h-20 w-20 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(72)}</span><div class="flex-1 min-w-0 pb-1"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
+   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6"><div class="-mt-12 mb-3"><span class="inline-flex h-24 w-24 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(80)}</span></div><div class="flex items-center gap-2 flex-wrap"><h2 class="text-xl font-bold">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
    : `<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${stats}</div>`;
   const find=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">Find people</h3><div class="flex gap-2"><input class="input" placeholder="Search by username…" id="findUser"><button class="btn btn-primary shrink-0" data-action="findUser">Search</button></div><p class="mt-3 text-sm text-center py-6" style="color:var(--muted)">No profiles to show yet. Real people appear here once accounts go live — no placeholder users.</p></div>`;
   const shared = completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Your achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p><button class="btn !bg-white/20 !text-white mt-3 !py-1.5 text-xs" data-action="shareCard">📤 Share</button></div>`).join('')}</div></div>`:`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">🏆 Achievement cards</h3><p class="text-sm text-center py-6" style="color:var(--muted)">Complete a goal to unlock a shareable achievement card.</p></div>`;
@@ -875,8 +876,8 @@ function planCard(id,cur){
   else if(!paid){action=`<button class="btn btn-ghost mt-4 w-full text-sm" data-action="demoPlan" data-plan="free">Switch to Free</button>`;}
   else{
     const opts=[`<button class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff" data-action="demoPlan" data-plan="${id}"><span>Monthly</span><span class="font-bold">€${pr.mo}/mo</span></button>`,
-      `<button class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)" data-action="demoPlan" data-plan="${id}"><span>Yearly <span class="text-[10px] rounded-full px-1.5 py-0.5 ml-1" style="background:var(--accent2);color:#fff">best value</span></span><span class="font-bold">€${pr.yr}/yr</span></button>`];
-    if(id==='pro')opts.push(`<a href="#app/student" class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)"><span>🎓 Student Verification</span><span class="font-bold text-emerald-400">Free 2 yrs</span></a>`);
+      `<button class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)" data-action="demoPlan" data-plan="${id}"><span>Yearly <span class="text-[10px] rounded-full px-1.5 py-0.5 ml-1" style="background:var(--accent2);color:#fff">best value</span></span><span class="font-bold">€${pr.yr}/year</span></button>`];
+    if(id==='pro')opts.push(`<a href="#app/student" class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)"><span>🎓 Student Verification</span><span class="font-bold text-emerald-400">Free 2 years</span></a>`);
     opts.push(`<a href="#app/rewards" class="w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm hover:brightness-110" style="background:var(--glass);border:1px solid var(--border)"><span>🎁 Referral Reward</span><span class="font-bold text-emerald-400">Invite & earn</span></a>`);
     action=`<button class="btn ${hl?'btn-primary':'btn-ghost'} mt-4 w-full text-sm" data-action="togglePay" data-id="${id}">${PLAN_ORDER.indexOf(id)>PLAN_ORDER.indexOf(cur)?'Upgrade':'Switch'} to ${p.name} <span class="ml-1">▼</span></button>
       <div id="pay-${id}" class="hidden mt-2 space-y-2 anim">${opts.join('')}<p class="text-[11px] text-center" style="color:var(--muted)">1-week free trial · cancel anytime</p></div>`;
@@ -1543,6 +1544,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
     else if(act==='pauseMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const m=(g.missions||[]).find(x=>x.id===id);if(m){m.status=m.status==='paused'?'active':'paused';break;}}render();}
     else if(act==='delMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const i=(g.missions||[]).findIndex(x=>x.id===id);if(i>-1){g.missions.splice(i,1);break;}}const o=mlogs();delete o[id];setMlogs(o);toast('Mission removed');render();}
+    else if(act==='togglePrivate'){const gid=a.getAttribute('data-id');const g=GOALS.find(x=>x.id===gid);if(g){g.private=!g.private;if(!DEMO_MODE){await sb.from('goals').update({private:g.private}).eq('id',gid);}toast(g.private?'Goal is now private 🔒':'Goal is now public 🌍');render();}}
     else if(act==='archiveGoal'){const gid=a.getAttribute('data-id');const g=GOALS.find(x=>x.id===gid);if(!g)return;const ns=g.status==='archived'?'active':'archived';g.status=ns;if(!DEMO_MODE){await sb.from('goals').update({status:ns}).eq('id',gid);}toast(ns==='archived'?'Goal archived 📦':'Goal restored ♻️');render();}
     else if(act==='delGoal'){if(ME.plan==='free'){toast('Free plan: archive goals instead of deleting. Upgrade to delete.','err');return;}const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
     else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done){DEMO_ME.xp=(DEMO_ME.xp||0)+100;toast('🎉 Goal completed! +100 XP (demo)');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}}
@@ -1717,25 +1719,25 @@ function openProofModal(key){
 function openGoalModal(){
   const EMO=['🎯','📱','💻','🚗','✈️','🏠','🛡️','🎓','💍','🎮','🏝️','💰'];let emo='🎯',file=null;
   const m=document.getElementById('modal');
-  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div class="grid grid-cols-2 gap-3"><div><label class="label">Target (€)</label><input id="gmTarget" type="number" class="input" placeholder="1200"></div><div><label class="label">Monthly (€)</label><input id="gmMonthly" type="number" class="input" placeholder="150"></div></div><div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div class="grid grid-cols-2 gap-3"><div><label class="label">Target (€)</label><input id="gmTarget" type="number" class="input" placeholder="1200"></div><div><label class="label">Monthly (€)</label><input id="gmMonthly" type="number" class="input" placeholder="150"></div></div><div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><label class="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer" style="background:var(--glass)"><input id="gmPrivate" type="checkbox" class="h-4 w-4"><span><span class="text-sm font-medium">🔒 Make this goal private</span><span class="block text-xs" style="color:var(--muted)">Private goals stay off your social profile and feed.</span></span></label><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
   const close=()=>m.innerHTML='';
   $('#gmBack').addEventListener('click',e=>{if(e.target.id==='gmBack')close();});
   $('#gmX').addEventListener('click',close);
   $('#gmImg').addEventListener('change',e=>file=e.target.files[0]);
   $('#gmEmo').addEventListener('click',e=>{const b=e.target.closest('[data-e]');if(!b)return;emo=b.getAttribute('data-e');m.querySelectorAll('#gmEmo button').forEach(x=>x.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg bg-white/5');b.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg ring-1 ring-accent-purple bg-accent-purple/20';});
   $('#gmSave').addEventListener('click',async()=>{
-    const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,monthly=+$('#gmMonthly').value||0;
+    const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,monthly=+$('#gmMonthly').value||0,priv=!!$('#gmPrivate')?.checked;
     const limit=PLANS[ME.plan].goalLimit,total=GOALS.length;
     if(!name||!target){$('#gmErr').textContent='Enter a name and target.';return;}
     if(limit!==-1&&total>=limit){$('#gmErr').innerHTML='Free plan allows '+limit+' goals (archived included). <a href="#app/plans" class="text-accent-purple underline">Upgrade</a> for unlimited.';return;}
     $('#gmSave').disabled=true;$('#gmSave').textContent='Saving…';
     let imgUrl=null;
     if(DEMO_MODE){
-      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,status:'active',created_at:new Date().toISOString(),image_url:null,missions:[]};
-      DEMO_GOALS.unshift(newGoal);close();toast('Goal created');render();return;
+      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,status:'active',private:priv,created_at:new Date().toISOString(),image_url:null,missions:[]};
+      DEMO_GOALS.unshift(newGoal);close();toast(priv?'Private goal created 🔒':'Goal created');render();return;
     }
     if(file){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('goal-images').upload(path,file);if(!upErr){imgUrl=sb.storage.from('goal-images').getPublicUrl(path).data.publicUrl;}}
-    const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,image_url:imgUrl});
+    const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,image_url:imgUrl,private:priv});
     if(error){$('#gmErr').textContent=error.message;$('#gmSave').disabled=false;$('#gmSave').textContent='Create goal';return;}
     close();toast('Goal created');render();
   });
