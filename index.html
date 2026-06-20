@@ -25,12 +25,14 @@
       --glass:rgba(255,255,255,.04); --glass-strong:rgba(255,255,255,.07); --border:rgba(255,255,255,.10);
       --accent1:#4f46e5; --accent2:#8b5cf6; --accent3:#a855f7;
     }
-    /* color themes (accent only) */
-    html[data-accent="blue"]  {--accent1:#4f46e5;--accent2:#8b5cf6;--accent3:#a855f7}
-    html[data-accent="green"] {--accent1:#059669;--accent2:#22c55e;--accent3:#4ade80}
-    html[data-accent="yellow"]{--accent1:#d97706;--accent2:#f59e0b;--accent3:#fbbf24}
-    html[data-accent="pink"]  {--accent1:#db2777;--accent2:#ec4899;--accent3:#f472b6}
-    html[data-accent="red"]   {--accent1:#dc2626;--accent2:#ef4444;--accent3:#f87171}
+    /* full-color modes — accent + a tinted background for dark mode */
+    html[data-accent="blue"]  {--accent1:#4f46e5;--accent2:#8b5cf6;--accent3:#a855f7;--bg:#070a14}
+    html[data-accent="green"] {--accent1:#059669;--accent2:#22c55e;--accent3:#4ade80;--bg:#06140d}
+    html[data-accent="yellow"]{--accent1:#ca8a04;--accent2:#eab308;--accent3:#facc15;--bg:#15120a}
+    html[data-accent="orange"]{--accent1:#ea580c;--accent2:#f97316;--accent3:#fb923c;--bg:#160c06}
+    html[data-accent="pink"]  {--accent1:#db2777;--accent2:#ec4899;--accent3:#f472b6;--bg:#170a12}
+    html[data-accent="red"]   {--accent1:#dc2626;--accent2:#ef4444;--accent3:#f87171;--bg:#180809}
+    html[data-accent="grey"]  {--accent1:#4b5563;--accent2:#6b7280;--accent3:#9ca3af;--bg:#0e0f12}
     /* light mode */
     html.light{
       color-scheme:light;
@@ -93,6 +95,6 @@
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=9"></script>
+  <script type="module" src="./app.js?v=10"></script>
 </body>
 </html>
