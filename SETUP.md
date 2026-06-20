@@ -57,19 +57,32 @@ supabase functions deploy ai --no-verify-jwt
 
 ---
 
-## Step 4 — Set your OpenAI API key
+## Step 4 — Set your OpenAI API key (server-side secret)
+
+⚠️ **Never put the key in `app.js` or any file you commit.** It lives only on
+Supabase as a secret. If a key was ever pasted in chat, a screenshot, or code,
+revoke it at https://platform.openai.com/api-keys and create a new one first.
 
 ```bash
-supabase secrets set OPENAI_API_KEY=sk-your-key-here
+supabase secrets set OPENAI_API_KEY=sk-your-NEW-key-here
 ```
 
-You can also optionally override the model (default: `gpt-4o-mini`):
+Optionally override the model (default: `gpt-4o-mini`, cheapest good option):
 
 ```bash
 supabase secrets set OPENAI_MODEL=gpt-4o
 ```
 
-Get your key at: https://platform.openai.com/api-keys
+### How the AI works
+
+The browser calls the `ai` Edge Function, which holds the key and calls OpenAI.
+There are two paths:
+
+- **Logged-in users** — per-plan daily limits (Free 5, Pro 50, Premium/Business unlimited), context built from their real profile in the database.
+- **Demo mode (no login)** — a global daily cap (`DEMO_DAILY_CAP = 200` in `functions/ai/index.ts`) keeps OpenAI costs bounded while you test. The financial context is sent from the browser (the demo profile). Lower the cap or set `USE_REAL_AI = false` in `app.js` to turn the live AI off.
+
+If the function isn't deployed yet, the app automatically falls back to sample
+coaching replies, so nothing looks broken.
 
 ---
 

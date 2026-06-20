@@ -233,6 +233,26 @@ create policy "docs_write_own" on storage.objects for insert
   with check (bucket_id = 'documents' and auth.uid()::text = (storage.foldername(name))[1]);
 
 -- ============================================================
+-- Demo AI usage counter (global daily cap for the no-login demo path).
+-- Only the Edge Function (service role) touches this; RLS with no policy
+-- blocks all browser access.
+-- ============================================================
+create table if not exists public.demo_ai_usage (
+  day date primary key,
+  count int not null default 0
+);
+alter table public.demo_ai_usage enable row level security;
+
+-- Optional columns used by the app's appearance + coaching settings.
+-- Safe to run repeatedly.
+alter table public.profiles add column if not exists coach_mode text default 'fun';
+alter table public.profiles add column if not exists savings_mode text default 'fun';
+alter table public.profiles add column if not exists theme text default 'dark';
+alter table public.profiles add column if not exists theme_color text default 'blue';
+alter table public.profiles add column if not exists bg text default 'none';
+alter table public.profiles add column if not exists avatar_url text;
+
+-- ============================================================
 -- DONE. Next: make yourself an admin AFTER you sign up once:
 --   update public.profiles set role='admin' where email = 'YOUR_EMAIL_HERE';
 -- ============================================================

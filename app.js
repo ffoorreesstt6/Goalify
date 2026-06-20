@@ -21,6 +21,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
 // DEMO MODE — set to false when auth is ready
 // ============================================================
 const DEMO_MODE = true;
+// Use the real OpenAI-backed Edge Function (key stays on Supabase, never here).
+// If the function isn't deployed yet, the app gracefully falls back to sample replies.
+const USE_REAL_AI = true;
 const _m = new Date(), _mo = _m.toISOString().slice(0,7);
 const DEMO_ME = {
   id:'demo', first_name:'Forest', last_name:'', email:'demo@goalify.app',
@@ -650,32 +653,49 @@ function runSim(){const inc=+($('#simIncome')?.value||0),exp=+($('#simExp')?.val
 // ============================================================
 let chat=[];
 function renderChat(){const log=$('#chatLog');if(!log)return;log.innerHTML=chat.map(m=>`<div class="flex ${m.role==='user'?'justify-end':'justify-start'}"><div class="max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm ${m.role==='user'?'text-white':'glass'}" style="${m.role==='user'?'background:linear-gradient(135deg,#4f46e5,#8b5cf6)':''}">${esc(m.text)}</div></div>`).join('');log.scrollTop=log.scrollHeight;}
+// real financial context sent to the AI (real numbers, never invented)
+function aiContext(){return {income:ME.monthly_income,savings:ME.monthly_savings,personality:ME.personality,budget:monthCatSpend()};}
+// call the secure edge function; throws on any failure so callers can fall back
+async function aiInvoke(messages,mode){
+  const apiMode=(mode==='roast'||ME.coach_mode==='roast')?'roast':(mode==='report'?'report':(ME.plan==='pro'?'lite':'coach'));
+  const {data,error}=await sb.functions.invoke('ai',{body:{messages,mode:apiMode,tone:ME.coach_mode||'fun',context:aiContext()}});
+  if(error){let msg='AI request failed.';try{msg=(await error.context.json()).error||msg;}catch(e){}throw new Error(msg);}
+  if(!data||!data.reply)throw new Error('No reply');
+  return data;
+}
 async function sendChat(q,mode='coach'){
   chat.push({role:'user',text:q});renderChat();
   chat.push({role:'ai',text:'…'});renderChat();
-  if(DEMO_MODE){
-    await new Promise(r=>setTimeout(r,800));
-    chat.pop();
-    chat.push({role:'ai',text:demoCoachReply(q,mode)});renderChat();return;
+  if(USE_REAL_AI){
+    try{
+      const msgs=chat.filter(m=>m.text!=='…').map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
+      const data=await aiInvoke(msgs,mode);
+      chat.pop();chat.push({role:'ai',text:data.reply});
+      if(data.used!=null&&$('#aiCount'))$('#aiCount').textContent=data.used;
+      renderChat();return;
+    }catch(e){
+      chat.pop();
+      if(DEMO_MODE){chat.push({role:'ai',text:demoCoachReply(q,mode)});renderChat();return;}
+      chat.push({role:'ai',text:e.message||'AI service unavailable.'});renderChat();return;
+    }
   }
-  try{
-    const {data,error}=await sb.functions.invoke('ai',{body:{messages:chat.filter(m=>m.text!=='…').map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text})),mode}});
-    chat.pop();
-    if(error){ let msg='AI request failed.'; try{msg=(await error.context.json()).error||msg;}catch(e){} chat.push({role:'ai',text:msg}); }
-    else { chat.push({role:'ai',text:data.reply}); if(data.used!=null&&$('#aiCount'))$('#aiCount').textContent=data.used; }
-  }catch(e){ chat.pop(); chat.push({role:'ai',text:'Network error talking to the AI service.'}); }
-  renderChat();
+  // sample-reply mode (USE_REAL_AI off)
+  await new Promise(r=>setTimeout(r,700));chat.pop();chat.push({role:'ai',text:demoCoachReply(q,mode)});renderChat();
 }
 async function loadAiInsights(){
   const el=$('#aiInsights');if(!el)return;
-  if(DEMO_MODE){
-    el.innerHTML=['Your savings rate is ~20% — keep it up!','Restaurant spending is high — try cooking more at home.','You\'re 42% toward your Emergency Fund goal.','No impulse buys this week — great discipline!'].map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${esc(t)}</li>`).join('');
-    return;
+  if(USE_REAL_AI){
+    try{
+      const data=await aiInvoke([{role:'user',content:'Give me 3 short insights about my finances as bullet lines.'}],'report');
+      el.innerHTML=(data.reply||'').split('\n').filter(x=>x.trim()).slice(0,4).map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${esc(t.replace(/^[-*•\d.\s]+/,''))}</li>`).join('')||'<li>All good!</li>';
+      return;
+    }catch(e){/* fall through to sample insights */}
   }
-  try{const {data,error}=await sb.functions.invoke('ai',{body:{mode:'report',messages:[{role:'user',content:'Give me 3 short insights about my finances as bullet lines.'}]}});
-    if(error){el.innerHTML='<li class="text-slate-500">AI not configured yet.</li>';return;}
-    el.innerHTML=(data.reply||'').split('\n').filter(x=>x.trim()).slice(0,4).map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${esc(t.replace(/^[-*•\d.\s]+/,''))}</li>`).join('')||'<li>All good!</li>';
-  }catch(e){el.innerHTML='<li class="text-slate-500">AI unavailable.</li>';}
+  const wr=whatToReduce(),s=snapshot(ME,EXPENSES),tips=[`Your savings rate is ${s.savingsRate}% this month.`];
+  if(wr[0]){const m=CATS[wr[0].cat]||CATS.other;tips.push(`Biggest cut: ${m.l} — save ${fmt(wr[0].save)}/mo.`);}
+  const g=topGoal();if(g)tips.push(`You're ${pct(g.saved_amount,g.target_amount)}% toward “${esc(g.name)}”.`);
+  tips.push('Check in today to keep your streak alive.');
+  el.innerHTML=tips.slice(0,4).map(t=>`<li class="flex gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-accent-purple shrink-0"></span>${t}</li>`).join('');
 }
 
 // ============================================================
