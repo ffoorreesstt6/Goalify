@@ -204,7 +204,8 @@ function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done
   return set;}
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
-function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');}
+function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
 // avatar (with badge ring)
 function avatarHTML(size=36){
   const b=[...earnedBadges()],badge=b.length?BADGES.find(x=>x.key===b[b.length-1]):null;
@@ -580,13 +581,17 @@ function studentView(){
 
 function settingsView(){
   const p=ME;
-  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue';
-  const COLORS=[['blue','Blue','#6366f1'],['green','Green','#22c55e'],['yellow','Yellow','#f59e0b'],['pink','Pink','#ec4899'],['white','Graphite','#64748b']];
-  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Settings</h1><p class="mt-1 text-sm text-slate-400">Manage your account and preferences.</p></div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🎨 Appearance</h2>
+  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
+  const COLORS=[['blue','Blue','#6366f1'],['green','Green','#22c55e'],['yellow','Yellow','#f59e0b'],['pink','Pink','#ec4899'],['red','Red','#ef4444']];
+  const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
+  const canCustomize=PLAN_ORDER.indexOf(p.plan)>=PLAN_ORDER.indexOf('pro');
+  const appearance = canCustomize ? `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎨 Appearance</h2><span class="rounded-full px-2.5 py-1 text-[10px] font-medium" style="background:var(--glass);color:var(--muted)">${PLANS[p.plan].name}</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="flex gap-2">${[['dark','🌙 Dark'],['light','☀️ Light']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="rounded-xl px-4 py-2.5 text-sm ${curMode===m[0]?'text-white':''}" style="${curMode===m[0]?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
-  </div>
+    <div class="mt-5"><p class="label">Background design</p><div class="grid grid-cols-3 gap-3 sm:grid-cols-6">${BGS.map(b=>{const on=curBg===b[0];return `<button data-action="setBg" data-bg="${b[0]}" class="flex flex-col items-center gap-1 rounded-xl p-3 text-xs transition" style="background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':''}"><span class="text-xl">${b[2].startsWith('#')?'⬛':b[2]}</span><span class="${on?'font-semibold':''}" style="${on?'':'color:var(--muted)'}">${b[1]}</span></button>`;}).join('')}</div></div>
+  </div>` : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--border)"><div><h2 class="text-xl font-bold">🎨 Appearance <span class="ml-1 align-middle text-base">🔒</span></h2><p class="mt-1 text-sm text-slate-400">Theme colors, light mode and background designs are a Pro feature.</p></div><a href="#app/student" class="btn btn-primary text-sm shrink-0">Unlock Pro</a></div>`;
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Settings</h1><p class="mt-1 text-sm text-slate-400">Manage your account and preferences.</p></div>
+  ${appearance}
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Profile</h2>
     <div class="mt-4 flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div><label class="btn btn-ghost text-sm cursor-pointer">📷 Upload photo<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>${p.avatar_url?'<button class="btn btn-ghost text-sm ml-2" data-action="rmAvatar">Remove</button>':''}</div></div>
     <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
@@ -597,7 +602,7 @@ function settingsView(){
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Security · Password</h2><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly AI reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b></p>${p.plan==='free'?`<a href="#app/student" class="btn btn-primary mt-4 text-sm">Unlock Pro (students)</a>`:`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`}</div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Privacy & Data</h2><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><button class="btn btn-ghost text-sm" data-action="connected">🔗 Connected accounts</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Privacy & Data</h2><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
   <div class="glass rounded-2xl p-6" style="border:1px solid rgba(239,68,68,.3)"><h2 class="text-xl font-bold text-red-300">Delete account</h2><p class="mt-1 text-sm text-slate-400">Permanently delete your data. This cannot be undone.</p><button class="btn mt-4 text-sm" style="background:rgba(239,68,68,.9);color:#fff" data-action="delAcct">Delete my data</button></div></div>`;
 }
 
@@ -778,14 +783,13 @@ document.addEventListener('click',async(e)=>{
     else if(act==='setCoachMode'){const m=a.getAttribute('data-mode');ME.coach_mode=m;if(!DEMO_MODE){await sb.from('profiles').update({coach_mode:m}).eq('id',SESSION.user.id);}toast(COACH_MODES[m].emoji+' '+COACH_MODES[m].name);render();}
     else if(act==='setTheme'){applyTheme(a.getAttribute('data-mode'),null);if(!DEMO_MODE){await sb.from('profiles').update({theme:ME.theme}).eq('id',SESSION.user.id);}render();}
     else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
+    else if(act==='setBg'){applyBg(a.getAttribute('data-bg'));if(!DEMO_MODE){await sb.from('profiles').update({bg:ME.bg}).eq('id',SESSION.user.id);}render();}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
     else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const u=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+u;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));const dk='goalify_chaldone_'+u;const dn=JSON.parse(localStorage.getItem(dk)||'[]');if(!dn.includes(k))dn.push(k);localStorage.setItem(dk,JSON.stringify(dn));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP earned!');render();}
     else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
-    else if(act==='connected'){toast('Connected accounts coming soon');}
     else if(act==='rmAvatar'){ME.avatar_url=null;localStorage.removeItem('goalify_avatar_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({avatar_url:null}).eq('id',SESSION.user.id);}toast('Photo removed');render();}
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
-    else if(act==='lang'){toast('Language preference saved');}
     else if(act==='delAcct'){if(DEMO_MODE){toast('Account deletion is disabled in demo mode','err');return;}if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
     else if(act==='qback'){captureQuizStep();QSTEP=Math.max(0,QSTEP-1);renderQuiz();}
     else if(act==='qnext'){captureQuizStep();QSTEP++;renderQuiz();}
@@ -904,7 +908,8 @@ loadTheme();
     // restore saved avatar; seed a streak so badges feel alive in the demo
     ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
     if(!localStorage.getItem('goalify_streak_demo')){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);localStorage.setItem('goalify_streak_demo',JSON.stringify({count:6,last:y}));}
-    applyTheme(ME.theme||'dark',ME.theme_color||'blue');
+    if(!localStorage.getItem('goalify_bg'))localStorage.setItem('goalify_bg','aurora');
+    applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
     render(); return;
   }
   const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();

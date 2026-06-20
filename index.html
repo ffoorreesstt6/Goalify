@@ -30,7 +30,7 @@
     html[data-accent="green"] {--accent1:#059669;--accent2:#22c55e;--accent3:#4ade80}
     html[data-accent="yellow"]{--accent1:#d97706;--accent2:#f59e0b;--accent3:#fbbf24}
     html[data-accent="pink"]  {--accent1:#db2777;--accent2:#ec4899;--accent3:#f472b6}
-    html[data-accent="white"] {--accent1:#475569;--accent2:#64748b;--accent3:#94a3b8}
+    html[data-accent="red"]   {--accent1:#dc2626;--accent2:#ef4444;--accent3:#f87171}
     /* light mode */
     html.light{
       color-scheme:light;
@@ -67,12 +67,32 @@
     html.light .bg-white\/10{background:rgba(15,23,42,.07)!important}
     html.light .border-white\/10,html.light .border-white\/5{border-color:rgba(15,23,42,.10)!important}
     html.light aside{background:rgba(255,255,255,.85)!important}
+    /* ---- decorative background designs (paid plans) ---- */
+    body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:var(--bg);transition:opacity .5s}
+    body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .5s;background:transparent}
+    html[data-bg="aurora"] body::after{opacity:.55;filter:blur(60px);background:
+      radial-gradient(38% 38% at 12% 18%, color-mix(in srgb,var(--accent1) 60%,transparent), transparent 70%),
+      radial-gradient(42% 42% at 88% 14%, color-mix(in srgb,var(--accent2) 55%,transparent), transparent 70%),
+      radial-gradient(46% 46% at 72% 88%, color-mix(in srgb,var(--accent3) 50%,transparent), transparent 70%)}
+    html[data-bg="mesh"] body::after{opacity:.40;background:
+      radial-gradient(at 18% 22%, color-mix(in srgb,var(--accent1) 55%,transparent), transparent 45%),
+      radial-gradient(at 82% 26%, color-mix(in srgb,var(--accent2) 50%,transparent), transparent 45%),
+      radial-gradient(at 48% 82%, color-mix(in srgb,var(--accent3) 48%,transparent), transparent 45%),
+      radial-gradient(at 92% 90%, color-mix(in srgb,var(--accent1) 40%,transparent), transparent 45%)}
+    html[data-bg="glow"] body::after{opacity:.6;background:
+      radial-gradient(70% 55% at 50% -8%, color-mix(in srgb,var(--accent2) 45%,transparent), transparent 72%),
+      radial-gradient(55% 45% at 100% 100%, color-mix(in srgb,var(--accent3) 38%,transparent), transparent 70%)}
+    html[data-bg="grid"] body::after{opacity:.5;background-image:
+      linear-gradient(color-mix(in srgb,var(--accent2) 22%,transparent) 1px,transparent 1px),
+      linear-gradient(90deg,color-mix(in srgb,var(--accent2) 22%,transparent) 1px,transparent 1px);
+      background-size:42px 42px;-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 78%);mask-image:radial-gradient(ellipse at center,#000 30%,transparent 78%)}
+    html[data-bg="dots"] body::after{opacity:.5;background-image:radial-gradient(color-mix(in srgb,var(--accent2) 40%,transparent) 1.4px,transparent 1.4px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%)}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=7"></script>
+  <script type="module" src="./app.js?v=8"></script>
 </body>
 </html>
