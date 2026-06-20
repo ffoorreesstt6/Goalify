@@ -455,7 +455,7 @@ async function finishQuiz(inner){
 // ============================================================
 // APP SHELL
 // ============================================================
-const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
+const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
 function shell(route,inner){
   const isAdmin=ME?.role==='admin';
   return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
@@ -580,6 +580,22 @@ function studentView(){
   <div id="svStatus"></div>
   <div class="glass rounded-2xl p-6"><form id="svForm" class="space-y-4"><div><label class="label">University / Institution</label><input name="university" class="input" required></div><div><label class="label">Student email</label><input name="student_email" type="email" class="input" placeholder="you@university.edu" required></div><div><label class="label">Student document (optional)</label><input name="document" type="file" accept="image/*,application/pdf" class="input"></div><button class="btn btn-primary text-sm">Submit for verification</button></form></div>
   <p class="text-xs text-slate-500">An admin reviews requests. On approval your plan upgrades to Pro automatically.</p></div>`;
+}
+
+function plansView(){
+  const cur=ME.plan;
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Plans</h1><p class="mt-1 text-sm text-slate-400">Pick the plan that fits your goals. You're currently on <b class="text-white">${PLANS[cur].name}</b>.</p></div>
+  <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id],isCur=id===cur,hl=p.highlight;
+    return `<div class="relative flex flex-col rounded-2xl p-6 ${hl?'glass-strong':'glass'}" style="${isCur?'box-shadow:0 0 0 2px var(--accent2)':(hl?'box-shadow:0 0 40px -10px rgba(99,102,241,.4)':'')}">
+      ${isCur?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Your plan</span>`:(hl?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:'')}
+      <h3 class="text-lg font-semibold">${p.name}</h3>
+      <div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm text-slate-400">/mo</span></div>
+      <p class="mt-1 text-xs text-slate-400">${p.ai===-1?'Unlimited AI':p.ai+' AI msgs/day'} · ${p.goalLimit===-1?'Unlimited goals':p.goalLimit+' goals'}</p>
+      <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul>
+      ${isCur?`<button class="btn btn-ghost mt-5 w-full text-sm" disabled>Current plan</button>`:`<button class="btn ${hl?'btn-primary':'btn-ghost'} mt-5 w-full text-sm" data-action="demoPlan" data-plan="${id}">${PLAN_ORDER.indexOf(id)>PLAN_ORDER.indexOf(cur)?'Upgrade':'Switch'} to ${p.name}</button>`}
+    </div>`;}).join('')}</div>
+  ${DEMO_MODE?`<p class="text-xs text-slate-500">Demo: switching plans here lets you preview how each tier looks (e.g. Appearance customization is Pro and up). No payment is taken.</p>`:`<p class="text-xs text-slate-500">Students can unlock Pro for free via <a href="#app/student" class="text-accent-purple hover:underline">Student Verification</a>.</p>`}
+  </div>`;
 }
 
 function settingsView(){
@@ -761,7 +777,7 @@ async function render(){
     if(DEMO_MODE){AIUSED=0;} else {
     const {data:u}=await sb.from('ai_usage').select('count').eq('user_id',SESSION.user.id).eq('day',todayISO()).maybeSingle();
     AIUSED=u?.count||0;}
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route,(views[route]||dashboardView)());
     window.scrollTo(0,0);
     if(route==='dashboard'){drawSpend('monthly');drawCat();if(ME.plan==='premium'||ME.plan==='business')loadAiInsights();}
@@ -804,6 +820,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='setTheme'){applyTheme(a.getAttribute('data-mode'),null);if(!DEMO_MODE){await sb.from('profiles').update({theme:ME.theme}).eq('id',SESSION.user.id);}render();}
     else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
     else if(act==='setBg'){applyBg(a.getAttribute('data-bg'));if(!DEMO_MODE){await sb.from('profiles').update({bg:ME.bg}).eq('id',SESSION.user.id);}render();}
+    else if(act==='demoPlan'){const pl=a.getAttribute('data-plan');if(DEMO_MODE){DEMO_ME.plan=pl;ME.plan=pl;toast('Now previewing '+PLANS[pl].name+' plan (demo)');render();}else{toast('Upgrades are handled by an admin or via student verification.');}}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
     else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const u=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+u;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));const dk='goalify_chaldone_'+u;const dn=JSON.parse(localStorage.getItem(dk)||'[]');if(!dn.includes(k))dn.push(k);localStorage.setItem(dk,JSON.stringify(dn));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP earned!');render();}
