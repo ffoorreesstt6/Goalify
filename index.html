@@ -89,12 +89,43 @@
       linear-gradient(90deg,color-mix(in srgb,var(--accent2) 22%,transparent) 1px,transparent 1px);
       background-size:42px 42px;-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 78%);mask-image:radial-gradient(ellipse at center,#000 30%,transparent 78%)}
     html[data-bg="dots"] body::after{opacity:.5;background-image:radial-gradient(color-mix(in srgb,var(--accent2) 40%,transparent) 1.4px,transparent 1.4px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%)}
+    /* ============================================================
+       BUSINESS OS — luxury executive theme (Business plan only)
+       data-biz="1" overrides accent tokens to gold; placed AFTER
+       data-accent rules so it always wins regardless of chosen color.
+       ============================================================ */
+    html[data-biz="1"]{
+      color-scheme:dark;
+      --bg:#07070b; --text:#f7f3e8; --muted:#a39b86;
+      --glass:rgba(212,175,55,.045); --glass-strong:rgba(212,175,55,.08);
+      --border:rgba(212,175,55,.16);
+      --accent1:#a9842b; --accent2:#d4af37; --accent3:#f3d97c;
+    }
+    html[data-biz="1"] body{
+      background:
+        radial-gradient(60% 50% at 85% -5%, rgba(212,175,55,.10), transparent 70%),
+        radial-gradient(45% 40% at 0% 100%, rgba(212,175,55,.07), transparent 70%),
+        #07070b;
+    }
+    html[data-biz="1"] aside{background:linear-gradient(180deg,rgba(20,17,8,.96),rgba(8,8,12,.96))!important;border-color:rgba(212,175,55,.18)!important}
+    .gold-text{background:linear-gradient(135deg,#f3d97c,#d4af37,#b8860b);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .biz-card{background:linear-gradient(160deg,rgba(212,175,55,.07),rgba(255,255,255,.015));border:1px solid rgba(212,175,55,.16);border-radius:1rem;backdrop-filter:blur(18px);transition:transform .25s,border-color .25s,box-shadow .25s}
+    .biz-card:hover{transform:translateY(-2px);border-color:rgba(212,175,55,.4);box-shadow:0 16px 40px -20px rgba(212,175,55,.5)}
+    .biz-kpi{position:relative;overflow:hidden}
+    .biz-kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:9999px;background:radial-gradient(circle,rgba(212,175,55,.16),transparent 70%);pointer-events:none}
+    .biz-ring{box-shadow:0 0 0 1px rgba(212,175,55,.25),0 8px 30px -12px rgba(212,175,55,.4)}
+    html[data-biz="1"] .nav-link.active{background:linear-gradient(90deg,rgba(212,175,55,.22),rgba(212,175,55,.05));border:1px solid rgba(212,175,55,.3)}
+    .biz-pill{font-size:.6rem;letter-spacing:.12em;font-weight:800;text-transform:uppercase;color:#0a0a0f;background:linear-gradient(135deg,#f3d97c,#d4af37);padding:.15rem .5rem;border-radius:9999px}
+    .biz-tr{border-bottom:1px solid rgba(212,175,55,.10)}
+    .biz-tag{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-weight:600;padding:.1rem .55rem;border-radius:9999px}
+    .biz-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.3),transparent)}
+    @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=14"></script>
+  <script type="module" src="./app.js?v=17"></script>
 </body>
 </html>

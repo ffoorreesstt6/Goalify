@@ -560,6 +560,13 @@ function shell(route,inner){
     <div class="px-5 py-6">${brand('#app/dashboard')}</div>
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
+    <div class="mx-3 mt-2 mb-1 rounded-2xl px-3 py-3" style="background:var(--glass);border:1px solid var(--border)">
+      <div class="mb-2 flex items-center justify-between">
+        <p class="text-[10px] uppercase tracking-widest font-semibold" style="color:var(--muted)">Theme</p>
+        ${(()=>{const m=localStorage.getItem('goalify_theme')||'dark';return `<button data-action="setTheme" data-mode="${m==='dark'?'light':'dark'}" class="rounded-lg px-2 py-0.5 text-[10px] hover:bg-white/10 transition" style="color:var(--muted)">${m==='dark'?'☀️ Light':'🌙 Dark'}</button>`;})()}
+      </div>
+      <div class="flex flex-wrap gap-2">${[['blue','#6366f1'],['green','#22c55e'],['yellow','#eab308'],['orange','#f97316'],['pink','#ec4899'],['red','#ef4444'],['grey','#6b7280']].map(([name,hex])=>{const active=(localStorage.getItem('goalify_color')||'blue')===name;return `<button data-action="setColor" data-color="${name}" title="${name[0].toUpperCase()+name.slice(1)}" class="h-6 w-6 rounded-full transition-all hover:scale-110 shrink-0" style="background:${hex};${active?'outline:2px solid rgba(255,255,255,.7);outline-offset:2px;transform:scale(1.15)':'opacity:.75'}"></button>`;}).join('')}</div>
+    </div>
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
@@ -711,7 +718,12 @@ function simulatorView(){
   <div class="grid gap-6 lg:grid-cols-3"><div class="glass rounded-2xl p-6 h-fit space-y-5"><h3 class="font-semibold">Your inputs</h3>
   ${[['simIncome','Monthly income',Math.round(ME.monthly_income)||2000,0,10000,50],['simExp','Monthly expenses',Math.round(snapshot(ME,EXPENSES).spending)||1400,0,10000,50],['simGoal','Savings goal',10000,500,100000,500]].map(x=>`<div><div class="mb-1 flex justify-between text-sm"><span class="text-slate-400">${x[1]}</span><span id="${x[0]}V" class="font-medium"></span></div><input id="${x[0]}" type="range" min="${x[3]}" max="${x[4]}" step="${x[5]}" value="${x[2]}" class="w-full" style="accent-color:#8b5cf6" data-action="sim"></div>`).join('')}
   <div><div class="mb-1 flex justify-between text-sm"><span class="text-slate-400">Annual growth</span><span id="simRateV" class="font-medium">2%</span></div><input id="simRate" type="range" min="0" max="10" step="0.5" value="2" class="w-full" style="accent-color:#8b5cf6" data-action="sim"></div></div>
-  <div class="lg:col-span-2 space-y-6"><div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Monthly savings</p><p id="simSave" class="mt-2 text-2xl font-bold text-emerald-400"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Goal reached in</p><p id="simMonths" class="mt-2 text-2xl font-bold"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">In 5 years</p><p id="sim5y" class="mt-2 text-2xl font-bold gtext"></p></div></div><div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">5-year projection</h3><canvas id="simChart" height="110"></canvas></div></div></div></div>`;
+  <div class="lg:col-span-2 space-y-5"><div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Monthly savings</p><p id="simSave" class="mt-2 text-2xl font-bold text-emerald-400"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Goal reached in</p><p id="simMonths" class="mt-2 text-2xl font-bold"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">In 5 years</p><p id="sim5y" class="mt-2 text-2xl font-bold gtext"></p></div></div>
+  <div class="glass rounded-2xl p-4 sm:p-5"><h3 class="font-semibold mb-3">5-year projection</h3><div style="height:200px;max-height:38vh"><canvas id="simChart"></canvas></div></div>
+  <div id="simInsight" class="glass-strong rounded-2xl p-5 text-sm"></div>
+  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">🏁 Milestones on the way</h3><div id="simMilestones" class="grid gap-3 sm:grid-cols-2"></div></div>
+  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">⚡ Try a scenario</h3><div class="flex flex-wrap gap-2">${[['Cut €100/mo more','cut100'],['Save aggressively','aggressive'],['Invest at 7%','invest'],['Reset','reset']].map(s=>`<button class="rounded-full px-3 py-1.5 text-xs" style="background:var(--glass);color:var(--muted)" data-action="simPreset" data-preset="${s[1]}">${s[0]}</button>`).join('')}</div></div>
+  </div></div></div>`;
 }
 
 function aiView(){
@@ -875,8 +887,25 @@ function runSim(){const inc=+($('#simIncome')?.value||0),exp=+($('#simExp')?.val
   if($('#simIncomeV'))$('#simIncomeV').textContent=fmt(inc);if($('#simExpV'))$('#simExpV').textContent=fmt(exp);if($('#simGoalV'))$('#simGoalV').textContent=fmt(goal);if($('#simRateV'))$('#simRateV').textContent=rate+'%';
   const monthly=Math.max(0,inc-exp),mr=rate/100/12;let bal=0;const pts=[];for(let m=0;m<=60;m++){pts.push(Math.round(bal));bal=bal*(1+mr)+monthly;}
   let months=null,b=0;for(let m=1;m<=600;m++){b=b*(1+mr)+monthly;if(b>=goal){months=m;break;}}
-  if($('#simSave'))$('#simSave').textContent=fmt(monthly);if($('#simMonths'))$('#simMonths').textContent=months?months+' mo':'—';if($('#sim5y'))$('#sim5y').textContent=fmt(pts[pts.length-1]);
-  const el=$('#simChart');if(el){if(charts.sim)charts.sim.destroy();charts.sim=new Chart(el,{type:'line',data:{labels:pts.map((_,i)=>i%12===0?(i===0?'Now':'Y'+i/12):''),datasets:[{data:pts,borderColor:'#a855f7',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.3,pointRadius:0,borderWidth:2.5}]},options:chartOpts()});}}
+  if($('#simSave'))$('#simSave').textContent=fmt(monthly);if($('#simMonths'))$('#simMonths').textContent=months?(months<12?months+' mo':Math.floor(months/12)+'y '+(months%12)+'m'):'—';if($('#sim5y'))$('#sim5y').textContent=fmt(pts[pts.length-1]);
+  const el=$('#simChart');if(el){if(charts.sim)charts.sim.destroy();charts.sim=new Chart(el,{type:'line',data:{labels:pts.map((_,i)=>i%12===0?(i===0?'Now':'Y'+i/12):''),datasets:[{data:pts,borderColor:'#a855f7',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.3,pointRadius:0,borderWidth:2.5}]},options:chartOpts()});}
+  // live insight
+  const ins=$('#simInsight');if(ins){const fiveY=pts[pts.length-1],growth=fiveY-monthly*60;
+    if(monthly<=0)ins.innerHTML='💡 Your expenses meet or exceed your income — trim spending to start building savings.';
+    else ins.innerHTML=`💡 Saving <b class="text-emerald-400">${fmt(monthly)}/mo</b> reaches your <b>${fmt(goal)}</b> goal ${months?`in <b>${months<12?months+' months':Math.floor(months/12)+'y '+(months%12)+'m'}</b>`:'eventually'}. Over 5 years you'd have <b class="gtext">${fmt(fiveY)}</b>${rate>0?` — ${fmt(growth)} of it from ${rate}% growth 📈`:''}.`;
+  }
+  // milestones
+  const mil=$('#simMilestones');if(mil){const marks=[1000,5000,10000,25000,50000].filter(x=>x<=Math.max(goal,fiveYMax(pts)));if(goal&&!marks.includes(goal))marks.push(goal);marks.sort((a,b)=>a-b);
+    const monthsTo=(t)=>{let bb=0;for(let m=1;m<=600;m++){bb=bb*(1+mr)+monthly;if(bb>=t)return m;}return null;};
+    mil.innerHTML=marks.slice(0,6).map(t=>{const mo=monthsTo(t);const lbl=mo?(mo<12?mo+' mo':Math.floor(mo/12)+'y '+(mo%12)+'m'):'—';const isGoal=t===goal;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${isGoal?'box-shadow:0 0 0 1px var(--accent2)':''}"><span class="text-xl">${isGoal?'🎯':t>=25000?'🏆':t>=10000?'💎':'⭐'}</span><div class="min-w-0 flex-1"><p class="text-sm font-semibold">${fmt(t)}${isGoal?' · your goal':''}</p><p class="text-[11px]" style="color:var(--muted)">${mo?'in '+lbl:'out of range'}</p></div></div>`;}).join('')||'<p class="text-sm" style="color:var(--muted)">Increase your monthly saving to unlock milestones.</p>';
+  }}
+function fiveYMax(pts){return pts[pts.length-1]||0;}
+function simPreset(p){const inc=$('#simIncome'),exp=$('#simExp'),goal=$('#simGoal'),rate=$('#simRate');if(!inc)return;
+  if(p==='cut100'){exp.value=Math.max(0,+exp.value-100);}
+  else if(p==='aggressive'){exp.value=Math.round(+inc.value*0.5);}
+  else if(p==='invest'){rate.value=7;}
+  else if(p==='reset'){inc.value=Math.round(ME.monthly_income)||2000;exp.value=Math.round(snapshot(ME,EXPENSES).spending)||1400;goal.value=10000;rate.value=2;}
+  runSim();}
 
 // ============================================================
 // AI
@@ -933,6 +962,7 @@ async function loadAiInsights(){
 // ============================================================
 async function render(){
   destroyCharts();
+  document.documentElement.removeAttribute('data-biz');
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
 
@@ -991,6 +1021,15 @@ async function render(){
     if(DEMO_MODE){AIUSED=0;} else {
     const {data:u}=await sb.from('ai_usage').select('count').eq('user_id',SESSION.user.id).eq('day',todayISO()).maybeSingle();
     AIUSED=u?.count||0;}
+    // ── BUSINESS PLAN → entirely separate Business OS ──
+    if(ME.plan==='business'){
+      document.documentElement.setAttribute('data-biz','1');
+      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,ai:bizAi,team:bizTeam,marketplace:bizMarketplace,reports:bizReports,settings:settingsView,plans:plansView};
+      root.innerHTML=bizShell(route,(bviews[route]||bizDashboard)());
+      window.scrollTo(0,0);
+      bizAfterRender(route);
+      return;
+    }
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,squad:squadView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route,(views[route]||dashboardView)());
     window.scrollTo(0,0);
@@ -1004,6 +1043,347 @@ async function render(){
   location.hash='#home';
 }
 async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MODE){el.innerHTML='<div class="glass rounded-2xl p-5 text-sm text-slate-400">Student verification is not available in demo mode.</div>';return;}const {data}=await sb.from('student_verifications').select('*').order('created_at',{ascending:false}).limit(1);const v=data?.[0];if(v){const c=v.status==='approved'?'text-emerald-400':v.status==='rejected'?'text-red-400':'text-amber-300';el.innerHTML=`<div class="glass rounded-2xl p-5"><p class="text-sm">Latest request: <b class="${c}">${v.status}</b> · ${esc(v.university)}</p></div>`;}}
+
+// ============================================================
+// ███ BUSINESS OS — a separate product for the Business plan ███
+// Multi-company operating system: dashboard, properties, employees,
+// payments, invoices, CRM, investments, fleet, inventory, taxes,
+// calendar, cash flow, net worth, AI advisor, team, marketplace.
+// All data persists in localStorage (demo). Distinct gold theme.
+// ============================================================
+const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['ai','AI Advisor','🤖'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['reports','Reports','📄'],['settings','Settings','⚙️']];
+
+const BIZ_SPECS={
+ businesses:{title:'Company',required:['name'],fields:[{key:'name',label:'Company name',type:'text',wide:true},{key:'logo',label:'Logo (emoji)',type:'text',default:'🏢'},{key:'industry',label:'Industry',type:'select',options:['Restaurant','Construction','Real Estate','Retail','Online Store','Services','Other']},{key:'founded',label:'Founded (year)',type:'number',default:new Date().getFullYear()},{key:'cash',label:'Cash balance',type:'number'},{key:'revenue',label:'Core sales / mo',type:'number'}]},
+ properties:{title:'Property',required:['name'],fields:[{key:'name',label:'Name',type:'text',wide:true},{key:'kind',label:'Type',type:'select',options:['Apartment','Office','Shop','Warehouse','Building','Land']},{key:'occupancy',label:'Status',type:'select',options:['occupied','vacant']},{key:'price',label:'Purchase price',type:'number'},{key:'value',label:'Current value',type:'number'},{key:'rent',label:'Rent / mo',type:'number'},{key:'expenses',label:'Expenses / mo',type:'number'},{key:'notes',label:'Notes',type:'textarea',wide:true}]},
+ employees:{title:'Employee',required:['name'],fields:[{key:'name',label:'Name',type:'text'},{key:'position',label:'Position',type:'text'},{key:'salary',label:'Salary / mo',type:'number'},{key:'hired',label:'Hire date',type:'date'},{key:'status',label:'Status',type:'select',options:['active','on leave','former']},{key:'notes',label:'Notes',type:'textarea',wide:true}]},
+ payments:{title:'Payment',required:['name'],fields:[{key:'name',label:'Name',type:'text',wide:true},{key:'type',label:'Type',type:'select',options:['Salary','Rent','Tax','Bill','Invoice','Loan']},{key:'amount',label:'Amount',type:'number'},{key:'due',label:'Due date',type:'date'},{key:'status',label:'Status',type:'select',options:['paid','pending','overdue']},{key:'recurring',label:'Recurring',type:'select',options:['yes','no']}]},
+ invoices:{title:'Invoice',required:['client'],fields:[{key:'client',label:'Client',type:'text'},{key:'desc',label:'Description',type:'text'},{key:'amount',label:'Amount',type:'number'},{key:'due',label:'Due date',type:'date'},{key:'status',label:'Status',type:'select',options:['unpaid','paid']}]},
+ clients:{title:'Client',required:['name'],fields:[{key:'name',label:'Name',type:'text'},{key:'company',label:'Company',type:'text'},{key:'phone',label:'Phone',type:'text'},{key:'email',label:'Email',type:'text'},{key:'value',label:'Contract value',type:'number'},{key:'notes',label:'Notes',type:'textarea',wide:true}]},
+ investments:{title:'Investment',required:['name'],fields:[{key:'name',label:'Name',type:'text'},{key:'type',label:'Type',type:'select',options:['Real estate','Stocks','Crypto','Business','Vehicle','Equipment']},{key:'invested',label:'Invested',type:'number'},{key:'value',label:'Current value',type:'number'}]},
+ vehicles:{title:'Vehicle',required:['name'],fields:[{key:'name',label:'Name',type:'text'},{key:'type',label:'Type',type:'select',options:['Car','Truck','Van','Boat']},{key:'value',label:'Value',type:'number'},{key:'monthly',label:'Running cost / mo',type:'number'},{key:'notes',label:'Notes',type:'textarea',wide:true}]},
+ inventory:{title:'Warehouse',required:['name'],fields:[{key:'name',label:'Name',type:'text',wide:true},{key:'capacity',label:'Capacity (units)',type:'number'},{key:'used',label:'Used (units)',type:'number'},{key:'value',label:'Stock value',type:'number'},{key:'notes',label:'Notes',type:'text',wide:true}]},
+ taxes:{title:'Tax',required:['name'],fields:[{key:'name',label:'Name',type:'text',wide:true},{key:'period',label:'Period',type:'select',options:['Monthly','Quarterly','Annual']},{key:'amount',label:'Amount',type:'number'},{key:'due',label:'Due date',type:'date'},{key:'status',label:'Status',type:'select',options:['pending','paid']}]},
+ events:{title:'Event',required:['title'],fields:[{key:'title',label:'Title',type:'text',wide:true},{key:'date',label:'Date',type:'date'},{key:'type',label:'Type',type:'select',options:['Meeting','Tax','Salary','Payment','Deadline']}]},
+ goals:{title:'Goal',required:['title'],fields:[{key:'title',label:'Title',type:'text',wide:true},{key:'kind',label:'Type',type:'select',options:['Revenue','Property','Hiring','Equipment','Expansion']},{key:'target',label:'Target',type:'number'},{key:'current',label:'Current',type:'number'}]},
+ team:{title:'Member',required:['name'],fields:[{key:'name',label:'Name',type:'text'},{key:'email',label:'Email',type:'text'},{key:'role',label:'Role',type:'select',options:['Read only','Editor','Manager','Full access']}]},
+};
+
+function defaultBiz(){
+  const d=(off)=>{const x=new Date();x.setDate(x.getDate()+off);return x.toISOString().slice(0,10);};
+  const mk=(biz,pfx,arr)=>arr.map((r,i)=>({id:pfx+'_'+biz+'_'+i,biz,...r}));
+  const businesses=[
+    {id:'b1',name:'Lumen Bistro',logo:'🍽️',industry:'Restaurant',founded:2019,cash:48000,revenue:45000},
+    {id:'b2',name:'Apex Construction',logo:'🏗️',industry:'Construction',founded:2016,cash:215000,revenue:60000},
+    {id:'b3',name:'Nova Realty',logo:'🏢',industry:'Real Estate',founded:2021,cash:95000,revenue:6000},
+  ];
+  return {active:'b1',businesses,
+    properties:[
+      ...mk('b1','prop',[{name:'Bistro Building',kind:'Building',occupancy:'occupied',price:620000,value:735000,rent:0,expenses:2200,notes:'Owner-occupied premises'},{name:'Upstairs Apartment',kind:'Apartment',occupancy:'occupied',price:140000,value:182000,rent:1100,expenses:160,notes:'Let to tenant'}]),
+      ...mk('b2','prop',[{name:'Equipment Yard',kind:'Warehouse',occupancy:'occupied',price:300000,value:345000,rent:0,expenses:1200,notes:''},{name:'Spec House #4',kind:'Building',occupancy:'vacant',price:280000,value:410000,rent:0,expenses:800,notes:'For sale'}]),
+      ...mk('b3','prop',[{name:'Apt 12B',kind:'Apartment',occupancy:'occupied',price:185000,value:232000,rent:1450,expenses:200,notes:''},{name:'Office Suite 3',kind:'Office',occupancy:'occupied',price:390000,value:480000,rent:3200,expenses:400,notes:''},{name:'Retail Unit A',kind:'Shop',occupancy:'vacant',price:260000,value:310000,rent:2100,expenses:300,notes:'Seeking tenant'},{name:'Warehouse North',kind:'Warehouse',occupancy:'occupied',price:420000,value:540000,rent:4100,expenses:600,notes:''}]),
+    ],
+    employees:[
+      ...mk('b1','emp',[{name:'Marco Rossi',position:'Head Chef',salary:3200,hired:'2019-06-01',status:'active'},{name:'Lena Fischer',position:'Sous Chef',salary:2400,hired:'2020-03-15',status:'active'},{name:'Tom Byrne',position:'Manager',salary:2800,hired:'2019-09-01',status:'active'},{name:'Aoife Walsh',position:'Waiter',salary:1900,hired:'2022-01-10',status:'active'},{name:'Pavel Novak',position:'Dishwasher',salary:1700,hired:'2023-05-20',status:'on leave'}]),
+      ...mk('b2','emp',[{name:'John Doyle',position:'Site Manager',salary:4200,hired:'2016-04-01',status:'active'},{name:'Sean Murphy',position:'Foreman',salary:3100,hired:'2018-07-12',status:'active'},{name:'Karl Weber',position:'Laborer',salary:2600,hired:'2021-02-01',status:'active'}]),
+      ...mk('b3','emp',[{name:'Grace Lynch',position:'Property Manager',salary:2900,hired:'2021-03-01',status:'active'},{name:'Eoin Kelly',position:'Leasing Agent',salary:2200,hired:'2022-08-15',status:'active'}]),
+    ],
+    payments:[
+      ...mk('b1','pay',[{name:'Gas & Electric',type:'Bill',amount:900,due:d(8),status:'pending',recurring:'yes'},{name:'Building Loan',type:'Loan',amount:3100,due:d(20),status:'paid',recurring:'yes'},{name:'Metro Supplies',type:'Bill',amount:5200,due:d(-3),status:'overdue',recurring:'yes'},{name:'Ingredients & stock',type:'Bill',amount:8400,due:d(6),status:'pending',recurring:'yes'}]),
+      ...mk('b2','pay',[{name:'Plant Lease',type:'Loan',amount:6200,due:d(15),status:'paid',recurring:'yes'},{name:'Insurance',type:'Bill',amount:2400,due:d(2),status:'pending',recurring:'yes'}]),
+      ...mk('b3','pay',[{name:'Portfolio Mortgage',type:'Loan',amount:9800,due:d(10),status:'paid',recurring:'yes'}]),
+    ],
+    invoices:[
+      ...mk('b1','inv',[{client:'TechCorp',desc:'Office party catering',amount:1800,due:d(-10),status:'paid'},{client:'Garcia Family',desc:'Wedding catering',amount:4200,due:d(-5),status:'unpaid'},{client:'City Hall',desc:'Civic event',amount:2600,due:d(18),status:'unpaid'},{client:'Lumen Corp',desc:'Corporate lunch',amount:950,due:d(-20),status:'paid'}]),
+      ...mk('b2','inv',[{client:'Riverside Dev',desc:'Phase 1 build',amount:85000,due:d(-15),status:'paid'},{client:'Doyle Family',desc:'Home extension',amount:22000,due:d(7),status:'unpaid'}]),
+      ...mk('b3','inv',[{client:'Suite 3 Tenant',desc:'Monthly rent',amount:3200,due:d(-2),status:'paid'},{client:'Apt 12B Tenant',desc:'Late rent',amount:1450,due:d(-8),status:'unpaid'}]),
+    ],
+    clients:[
+      ...mk('b1','cli',[{name:'Sarah Chen',company:'TechCorp',phone:'+353 1 555 0100',email:'sarah@techcorp.io',value:1800,notes:'Repeat catering client'},{name:'Maria Garcia',company:'',phone:'+353 87 555 2244',email:'m.garcia@email.com',value:4200,notes:'Wedding in June'},{name:'City Hall Events',company:'Municipality',phone:'+353 1 555 0199',email:'events@cityhall.gov',value:2600,notes:''}]),
+      ...mk('b2','cli',[{name:'Riverside Dev',company:'Riverside Holdings',phone:'+353 1 555 7700',email:'build@riverside.dev',value:85000,notes:'Large multi-phase contract'},{name:'Pat Doyle',company:'',phone:'+353 86 555 1212',email:'pat.doyle@email.com',value:22000,notes:'Home extension'}]),
+      ...mk('b3','cli',[{name:'Lawson & Co',company:'Lawson & Co',phone:'+353 1 555 3030',email:'office@lawson.co',value:38400,notes:'12-month office lease'}]),
+    ],
+    investments:[
+      ...mk('b1','ivst',[{name:'S&P 500 ETF',type:'Stocks',invested:20000,value:24500},{name:'Bitcoin',type:'Crypto',invested:8000,value:6900}]),
+      ...mk('b2','ivst',[{name:'Commercial Plot',type:'Real estate',invested:150000,value:195000}]),
+      ...mk('b3','ivst',[{name:'REIT Fund',type:'Stocks',invested:60000,value:71000}]),
+    ],
+    vehicles:[
+      ...mk('b1','veh',[{name:'Delivery Van',type:'Van',value:28000,monthly:650,notes:''},{name:"Owner's Car",type:'Car',value:35000,monthly:480,notes:''}]),
+      ...mk('b2','veh',[{name:'CAT Excavator',type:'Truck',value:120000,monthly:1800,notes:'Heavy plant'},{name:'Flatbed Truck',type:'Truck',value:65000,monthly:1100,notes:''}]),
+      ...mk('b3','veh',[{name:'Company Car',type:'Car',value:42000,monthly:520,notes:''}]),
+    ],
+    inventory:[
+      ...mk('b1','wh',[{name:'Main Storeroom',capacity:1000,used:920,value:18000,notes:'Fresh + frozen'},{name:'Dry Goods',capacity:500,used:300,value:6000,notes:''}]),
+      ...mk('b2','wh',[{name:'Materials Depot',capacity:5000,used:3200,value:88000,notes:'Cement, steel, timber'}]),
+      ...mk('b3','wh',[]),
+    ],
+    taxes:[
+      ...mk('b1','tax',[{name:'Quarterly VAT',period:'Quarterly',amount:4200,due:d(12),status:'pending'},{name:'Payroll Tax',period:'Monthly',amount:1800,due:d(5),status:'pending'},{name:'Income Tax',period:'Annual',amount:12000,due:d(120),status:'pending'}]),
+      ...mk('b2','tax',[{name:'Corporation Tax',period:'Annual',amount:45000,due:d(90),status:'pending'}]),
+      ...mk('b3','tax',[{name:'Property Tax',period:'Annual',amount:8800,due:d(60),status:'pending'}]),
+    ],
+    events:[
+      ...mk('b1','ev',[{title:'Supplier meeting — Metro',date:d(3),type:'Meeting'},{title:'Wedding event — Garcia',date:d(14),type:'Deadline'},{title:'Staff review',date:d(21),type:'Meeting'}]),
+      ...mk('b2','ev',[{title:'Site inspection — Riverside',date:d(4),type:'Meeting'}]),
+      ...mk('b3','ev',[{title:'Viewing — Retail Unit A',date:d(6),type:'Meeting'}]),
+    ],
+    goals:[
+      ...mk('b1','goal',[{title:'Open second location',kind:'Expansion',target:150000,current:48000},{title:'Reach €30k monthly revenue',kind:'Revenue',target:30000,current:8500},{title:'Buy new combi oven',kind:'Equipment',target:9000,current:3500}]),
+      ...mk('b2','goal',[{title:'Win €500k contract',kind:'Revenue',target:500000,current:107000}]),
+      ...mk('b3','goal',[{title:'Acquire 5th property',kind:'Property',target:300000,current:95000}]),
+    ],
+    team:[
+      ...mk('b1','team',[{name:'Anna Schmidt',email:'anna@lumenbistro.com',role:'Manager'},{name:'David Kim (Accountant)',email:'david@accountancy.io',role:'Read only'}]),
+      ...mk('b2','team',[]),
+      ...mk('b3','team',[]),
+    ],
+  };
+}
+function bizStore(){let s;try{s=JSON.parse(localStorage.getItem('goalify_biz'));}catch(e){}if(!s||!s.businesses||!s.businesses.length){s=defaultBiz();localStorage.setItem('goalify_biz',JSON.stringify(s));}return s;}
+function setBizStore(s){localStorage.setItem('goalify_biz',JSON.stringify(s));}
+function bizActive(){const s=bizStore();return s.businesses.find(b=>b.id===s.active)||s.businesses[0];}
+function bizRecs(coll){const s=bizStore();return (s[coll]||[]).filter(r=>r.biz===s.active);}
+function daysTo(d){return Math.round((new Date(d)-new Date())/86400000);}
+
+function bizMetrics(){
+  const b=bizActive();const cash=+b?.cash||0;
+  const core=+b?.revenue||0;
+  const revInv=bizRecs('invoices').filter(i=>i.status==='paid').reduce((a,i)=>a+(+i.amount||0),0);
+  const revRent=bizRecs('properties').filter(p=>p.occupancy==='occupied').reduce((a,p)=>a+(+p.rent||0),0);
+  const revenue=core+revInv+revRent;
+  const sal=bizRecs('employees').filter(e=>e.status==='active').reduce((a,e)=>a+(+e.salary||0),0);
+  const recPay=bizRecs('payments').filter(p=>p.recurring==='yes').reduce((a,p)=>a+(+p.amount||0),0);
+  const pExp=bizRecs('properties').reduce((a,p)=>a+(+p.expenses||0),0);
+  const vExp=bizRecs('vehicles').reduce((a,v)=>a+(+v.monthly||0),0);
+  const expenses=sal+recPay+pExp+vExp;
+  const profit=revenue-expenses;
+  const taxMonthly=bizRecs('taxes').filter(t=>t.status==='pending').reduce((a,t)=>a+((+t.amount||0)/(t.period==='Annual'?12:t.period==='Quarterly'?3:1)),0);
+  const net=profit-taxMonthly;
+  const propVal=bizRecs('properties').reduce((a,p)=>a+(+p.value||0),0);
+  const invVal=bizRecs('investments').reduce((a,i)=>a+(+i.value||0),0);
+  const vehVal=bizRecs('vehicles').reduce((a,v)=>a+(+v.value||0),0);
+  const stockVal=bizRecs('inventory').reduce((a,w)=>a+(+w.value||0),0);
+  const netWorth=cash+propVal+invVal+vehVal+stockVal;
+  const outInv=bizRecs('invoices').filter(i=>i.status==='unpaid').reduce((a,i)=>a+(+i.amount||0),0);
+  const outPay=bizRecs('payments').filter(p=>p.status==='pending'||p.status==='overdue').reduce((a,p)=>a+(+p.amount||0),0);
+  const outstanding=outInv+outPay;
+  const props=bizRecs('properties');
+  const occ=props.length?props.filter(p=>p.occupancy==='occupied').length/props.length:1;
+  const overdue=bizRecs('payments').filter(p=>p.status==='overdue').length;
+  const margin=revenue>0?profit/revenue:0;
+  const runway=expenses>0?cash/expenses:12;
+  const health=Math.max(0,Math.min(100,Math.round(40*Math.max(0,Math.min(1,(margin+0.2)/0.6))+25*occ+20*Math.max(0,Math.min(1,runway/6))+15*Math.max(0,1-overdue*0.25))));
+  return {b,cash,revenue,expenses,profit,net,taxMonthly,netWorth,propVal,invVal,vehVal,stockVal,outstanding,occ,overdue,margin,runway,health,empCount:bizRecs('employees').filter(e=>e.status==='active').length,propCount:props.length};
+}
+function bizAlerts(){
+  const a=[];const today=todayISO();
+  bizRecs('payments').filter(p=>p.status==='overdue').forEach(p=>a.push({icon:'⚠️',tone:'#ef4444',text:`Payment overdue: ${esc(p.name)} — ${fmt(p.amount)}`,href:'#app/payments'}));
+  bizRecs('invoices').filter(i=>i.status==='unpaid'&&i.due&&i.due<today).forEach(i=>a.push({icon:'🧾',tone:'#ef4444',text:`Invoice overdue: ${esc(i.client)} — ${fmt(i.amount)}`,href:'#app/invoices'}));
+  bizRecs('taxes').filter(t=>t.status==='pending').forEach(t=>{const soon=t.due&&daysTo(t.due)<=14;a.push({icon:'🏛️',tone:soon?'#ef4444':'#f59e0b',text:`Tax ${soon?'due soon':'upcoming'}${t.due?' ('+t.due+')':''}: ${esc(t.name)} — ${fmt(t.amount)}`,href:'#app/taxes'});});
+  bizRecs('properties').filter(p=>p.occupancy==='vacant').forEach(p=>a.push({icon:'🏚️',tone:'#f59e0b',text:`${esc(p.name)} is vacant — ${fmt(p.rent||0)}/mo potential income lost`,href:'#app/properties'}));
+  bizRecs('inventory').filter(w=>w.capacity&&w.used/w.capacity>=0.9).forEach(w=>a.push({icon:'📦',tone:'#ef4444',text:`${esc(w.name)} at ${Math.round(w.used/w.capacity*100)}% capacity`,href:'#app/inventory'}));
+  return a;
+}
+function bizInsights(){
+  const m=bizMetrics();const out=[];
+  out.push(m.profit>=0?{i:'📈',t:`Operating profit is ${fmt(m.profit)}/mo — a ${Math.round(m.margin*100)}% margin.`}:{i:'📉',t:`Running at a loss of ${fmt(-m.profit)}/mo — expenses exceed revenue.`});
+  const sal=bizRecs('employees').filter(e=>e.status==='active').reduce((a,e)=>a+(+e.salary||0),0);
+  if(m.expenses>0)out.push({i:'👔',t:`Salaries are ${Math.round(sal/m.expenses*100)}% of monthly expenses (${fmt(sal)}).`});
+  const vac=bizRecs('properties').filter(p=>p.occupancy==='vacant');
+  if(vac.length)out.push({i:'🏚️',t:`${vac.length} propert${vac.length>1?'ies are':'y is'} vacant — ${fmt(vac.reduce((a,p)=>a+(+p.rent||0),0))}/mo of income left on the table.`});
+  if(bizRecs('investments').length){const gain=bizRecs('investments').reduce((a,i)=>a+((+i.value||0)-(+i.invested||0)),0);out.push({i:gain>=0?'💎':'⚠️',t:`Investments are ${gain>=0?'up':'down'} ${fmt(Math.abs(gain))} versus cost basis.`});}
+  const full=bizRecs('inventory').filter(w=>w.capacity&&w.used/w.capacity>=0.9);
+  if(full.length)out.push({i:'📦',t:`${esc(full[0].name)} is ${Math.round(full[0].used/full[0].capacity*100)}% full — plan storage or fulfilment.`});
+  out.push({i:'🏦',t:`At current burn, cash covers ${m.runway>=12?'12+':m.runway.toFixed(1)} months of expenses.`});
+  return out;
+}
+function bizAchievements(){
+  const m=bizMetrics();const s=bizStore();
+  return [{e:'🏢',name:'First Company',got:s.businesses.length>=1},{e:'🏘️',name:'First Property',got:m.propCount>=1},{e:'👔',name:'10 Employees',got:m.empCount>=10},{e:'🚗',name:'First Vehicle',got:bizRecs('vehicles').length>=1},{e:'💎',name:'First Investment',got:bizRecs('investments').length>=1},{e:'💰',name:'€100k Revenue',got:m.revenue>=100000},{e:'🏦',name:'€1M Net Worth',got:m.netWorth>=1000000},{e:'🌍',name:'Multi-Company',got:s.businesses.length>=2}];
+}
+
+// ---------- render helpers ----------
+function statusColor(s){return ({paid:'#22c55e',occupied:'#22c55e',active:'#22c55e',unpaid:'#f59e0b',pending:'#f59e0b',vacant:'#ef4444',overdue:'#ef4444',former:'#94a3b8','on leave':'#a78bfa'})[s]||'#94a3b8';}
+function bizTag(text,color){return `<span class="biz-tag" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
+function bizStat(label,val,sub,emoji,tone){const style=tone&&tone!=='gold'?`style="color:${tone}"`:'';return `<div class="biz-card biz-kpi p-5"><div class="flex items-center justify-between"><span class="text-[11px] uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2 text-2xl font-extrabold ${tone==='gold'?'gold-text':''}" ${style}>${val}</p>${sub?`<p class="mt-1 text-[11px]" style="color:var(--muted)">${esc(sub)}</p>`:''}</div>`;}
+function bizPanel(title,body,actions){return `<div class="biz-card p-5"><div class="mb-4 flex items-center justify-between gap-3"><h3 class="font-semibold">${title}</h3><div class="flex gap-2">${actions||''}</div></div>${body}</div>`;}
+function bizHead(title,emoji,sub){return `<div class="mb-6 flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-2xl font-bold flex items-center gap-2"><span>${emoji}</span><span class="gold-text">${title}</span></h1>${sub?`<p class="mt-1 text-sm" style="color:var(--muted)">${sub}</p>`:''}</div><span class="biz-pill">Business</span></div>`;}
+function bizEmpty(msg){return `<p class="py-10 text-center text-sm" style="color:var(--muted)">${msg}</p>`;}
+function addBtn(coll,label){return `<button class="btn btn-primary !py-1.5 !px-3 text-xs" data-action="bizAdd" data-coll="${coll}">+ ${label}</button>`;}
+function rowActions(coll,id){return `<button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizEdit" data-coll="${coll}" data-id="${id}" title="Edit">✏️</button><button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizDel" data-coll="${coll}" data-id="${id}" title="Delete">🗑</button>`;}
+function tableWrap(headers,rowsHTML){return `<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-[11px] uppercase tracking-wider" style="color:var(--muted)">${headers.map(h=>`<th class="pb-2 font-medium pr-3">${h}</th>`).join('')}</tr></thead><tbody>${rowsHTML}</tbody></table></div>`;}
+
+// ---------- charts ----------
+function lastMonths(n){const out=[],dt=new Date();for(let i=n-1;i>=0;i--){out.push(new Date(dt.getFullYear(),dt.getMonth()-i,1).toLocaleString('en',{month:'short'}));}return out;}
+function bizSeries(base,n=6){return Array.from({length:n},(_,i)=>{const t=i/(n-1);const wave=1+0.05*Math.sin(i*1.7);return Math.round(base*(0.78+0.22*t)*wave);});}
+function bizChartOpts(){return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#a39b86',boxWidth:12}}},scales:{x:{ticks:{color:'#a39b86'},grid:{color:'rgba(212,175,55,.08)'}},y:{ticks:{color:'#a39b86'},grid:{color:'rgba(212,175,55,.08)'}}}};}
+function drawBizRevExp(id){const el=document.getElementById(id);if(!el)return;const m=bizMetrics();charts[id]=new Chart(el,{type:'bar',data:{labels:lastMonths(6),datasets:[{label:'Revenue',data:bizSeries(m.revenue),backgroundColor:'#d4af37',borderRadius:5},{label:'Expenses',data:bizSeries(m.expenses),backgroundColor:'rgba(239,68,68,.55)',borderRadius:5}]},options:bizChartOpts()});}
+function drawBizCashflow(id){const el=document.getElementById(id);if(!el)return;const m=bizMetrics();charts[id]=new Chart(el,{type:'line',data:{labels:lastMonths(6),datasets:[{label:'Money in',data:bizSeries(m.revenue),borderColor:'#d4af37',backgroundColor:'rgba(212,175,55,.12)',fill:true,tension:.35},{label:'Money out',data:bizSeries(m.expenses),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',fill:true,tension:.35}]},options:bizChartOpts()});}
+function drawBizDonut(id){const el=document.getElementById(id);if(!el)return;const m=bizMetrics();charts[id]=new Chart(el,{type:'doughnut',data:{labels:['Cash','Property','Investments','Fleet','Inventory'],datasets:[{data:[m.cash,m.propVal,m.invVal,m.vehVal,m.stockVal],backgroundColor:['#d4af37','#b8860b','#f3d97c','#8a6d1f','#5c4a14'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#a39b86',boxWidth:12}}}}});}
+function bizAfterRender(route){if(route==='dashboard'){drawBizRevExp('bizRevExp');drawBizDonut('bizAssets');}if(route==='cashflow'){drawBizCashflow('bizCash');}if(route==='networth'){drawBizDonut('nwDonut');}}
+
+// ---------- shell ----------
+function bizShell(route,inner){
+  const s=bizStore();const b=s.businesses.find(x=>x.id===s.active)||s.businesses[0];
+  const navLinks=BIZ_NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium ${route===n[0]?'text-white':''}" style="${route===n[0]?'':'color:var(--muted)'}"><span>${n[2]}</span>${n[1]}</a>`).join('');
+  const switcher=s.businesses.length>1?`<select id="bizSwitch" class="input !py-1.5 mt-2 text-xs">${s.businesses.map(x=>`<option value="${x.id}" ${x.id===s.active?'selected':''}>${x.logo} ${esc(x.name)}</option>`).join('')}</select>`:'';
+  return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r lg:flex">
+    <div class="px-5 pt-5 pb-3"><a href="#app/dashboard" class="flex items-center gap-2"><span class="text-2xl">⬢</span><div><p class="font-extrabold gold-text leading-none text-lg">GOALIFY</p><p class="text-[9px] tracking-[.25em] mt-0.5" style="color:var(--muted)">BUSINESS OS</p></div></a></div>
+    <div class="mx-3 mb-2 biz-card p-3"><p class="text-[9px] uppercase tracking-widest mb-1.5" style="color:var(--muted)">Active company</p><div class="flex items-center gap-2"><span class="text-xl">${b?.logo||'🏢'}</span><div class="min-w-0"><p class="truncate text-sm font-bold">${esc(b?.name||'—')}</p><p class="text-[10px]" style="color:var(--muted)">${esc(b?.industry||'')}</p></div></div>${switcher}</div>
+    <nav class="flex-1 space-y-0.5 px-3 overflow-y-auto">${navLinks}</nav>
+    <div class="border-t p-3" style="border-color:var(--border)"><div class="flex items-center gap-3 px-2 py-1.5">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge('business')}</p><p class="text-xs" style="color:var(--muted)">Owner</p></div></div><a href="#app/plans" class="block rounded-lg px-3 py-1.5 text-left text-xs hover:bg-white/5" style="color:var(--muted)">Switch plan</a><button class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/5" style="color:var(--muted)" data-action="logout">Sign out</button></div>
+  </aside>
+  <div class="lg:pl-64"><div class="flex items-center justify-between border-b px-4 py-3 lg:hidden" style="border-color:var(--border)"><a href="#app/dashboard" class="font-extrabold gold-text">GOALIFY</a><div class="flex gap-2">${s.businesses.length>1?`<select id="bizSwitch" class="input !w-auto !py-1.5 text-xs">${s.businesses.map(x=>`<option value="${x.id}" ${x.id===s.active?'selected':''}>${x.logo}</option>`).join('')}</select>`:''}<select onchange="location.hash='#app/'+this.value" class="input !w-auto !py-1.5 text-sm">${BIZ_NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[1]}</option>`).join('')}</select></div></div><main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
+}
+
+// ---------- views ----------
+function bizDashboard(){
+  const m=bizMetrics();const al=bizAlerts();const ins=bizInsights();const b=bizActive();
+  const header=`<div class="mb-6 flex flex-wrap items-end justify-between gap-3"><div class="flex items-center gap-3"><span class="text-4xl">${b?.logo||'🏢'}</span><div><div class="flex items-center gap-2"><h1 class="text-2xl font-bold gold-text">${esc(b?.name||'Your Company')}</h1><span class="biz-pill">Business</span></div><p class="text-sm mt-0.5" style="color:var(--muted)">${esc(b?.industry||'')} · Founded ${esc(b?.founded||'—')} · ${m.empCount} staff</p></div></div><a href="#app/reports" class="btn btn-primary !py-2 text-sm">📄 Export report</a></div>`;
+  const k=`<div class="grid gap-3 grid-cols-2 lg:grid-cols-5 mb-5">${bizStat('Total revenue',fmt(m.revenue),'this month','💰','gold')}${bizStat('Monthly profit',fmt(m.profit),Math.round(m.margin*100)+'% margin','📈',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Expenses',fmt(m.expenses),'this month','📉')}${bizStat('Net income',fmt(m.net),'after tax set-aside','🧮',m.net>=0?'#22c55e':'#ef4444')}${bizStat('Cash balance',fmt(m.cash),'available','🏦')}${bizStat('Outstanding',fmt(m.outstanding),'unpaid in/out','⏳','#f59e0b')}${bizStat('Employees',m.empCount,'active staff','👔')}${bizStat('Properties',m.propCount,fmt(m.propVal),'🏠')}${bizStat('Investments',fmt(m.invVal),'current value','💎','gold')}${bizStat('Health score',m.health+'/100',m.health>=75?'Strong':m.health>=50?'Stable':'At risk','❤️',m.health>=75?'#22c55e':m.health>=50?'#f59e0b':'#ef4444')}</div>`;
+  const alerts=al.length?`<div class="biz-card p-4 mb-5"><p class="text-xs uppercase tracking-wider mb-2" style="color:var(--muted)">⚡ Smart alerts</p><div class="space-y-1.5">${al.slice(0,5).map(x=>`<a href="${x.href}" class="flex items-center gap-2 text-sm hover:underline"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></a>`).join('')}</div></div>`:'';
+  const chartsRow=`<div class="grid gap-4 lg:grid-cols-3 mb-5"><div class="biz-card p-5 lg:col-span-2"><h3 class="font-semibold mb-3">Revenue vs Expenses</h3><div style="height:240px"><canvas id="bizRevExp"></canvas></div></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Asset allocation</h3><div style="height:240px"><canvas id="bizAssets"></canvas></div></div></div>`;
+  const u=bizRecs('invoices').filter(i=>i.status==='unpaid');
+  const ai=`<div class="grid gap-4 lg:grid-cols-2 mb-5"><div class="biz-card p-5"><h3 class="font-semibold mb-3">🤖 AI advisor</h3><ul class="space-y-2 text-sm" style="color:var(--muted)">${ins.slice(0,4).map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul><a href="#app/ai" class="mt-3 inline-block text-sm gold-text font-medium">Full analysis →</a></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Quick actions</h3><div class="grid grid-cols-2 gap-2">${[['invoices','🧾 New invoice'],['payments','💳 New payment'],['employees','👔 Add employee'],['properties','🏠 Add property']].map(q=>`<button class="btn btn-ghost !py-2 text-xs" data-action="bizAdd" data-coll="${q[0]}">${q[1]}</button>`).join('')}</div><div class="biz-divider my-4"></div><h3 class="font-semibold mb-2 text-sm">Outstanding invoices</h3>${u.length?u.slice(0,3).map(i=>`<div class="flex justify-between text-sm py-1"><span>${esc(i.client)}</span><span class="font-semibold" style="color:#f59e0b">${fmt(i.amount)}</span></div>`).join(''):'<p class="text-xs" style="color:var(--muted)">All invoices paid 🎉</p>'}</div></div>`;
+  return header+k+alerts+chartsRow+ai;
+}
+function bizCompanies(){
+  const s=bizStore();
+  const cards=s.businesses.map(b=>{const act=b.id===s.active;const rc=k=>(s[k]||[]).filter(r=>r.biz===b.id).length;
+    return `<div class="biz-card p-5 ${act?'biz-ring':''}"><div class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-3xl">${b.logo||'🏢'}</span><div><p class="font-bold">${esc(b.name)} ${act?'<span class="biz-pill ml-1">Active</span>':''}</p><p class="text-xs" style="color:var(--muted)">${esc(b.industry||'')} · ${esc(b.founded||'')}</p></div></div><div class="flex"><button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizEditCompany" data-id="${b.id}">✏️</button>${s.businesses.length>1?`<button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizDelCompany" data-id="${b.id}">🗑</button>`:''}</div></div><div class="grid grid-cols-4 gap-2 mt-4 text-center text-xs">${[['Cash',fmt(b.cash||0)],['Staff',rc('employees')],['Property',rc('properties')],['Invoices',rc('invoices')]].map(x=>`<div class="rounded-lg p-2" style="background:var(--glass)"><p class="font-bold text-sm">${x[1]}</p><p style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div>${!act?`<button class="btn btn-primary w-full mt-3 !py-2 text-sm" data-action="bizSwitchBtn" data-id="${b.id}">Switch to this company</button>`:''}</div>`;
+  }).join('');
+  return bizHead('Companies','🏢','Run multiple businesses from one workspace')+`<div class="grid gap-4 lg:grid-cols-2">${cards}</div><div class="mt-4 flex gap-2"><button class="btn btn-ghost" data-action="bizAddCompany">+ Add a company</button><button class="btn btn-ghost text-xs" data-action="bizReset">↺ Reset demo data</button></div>`;
+}
+function bizCashflow(){
+  const m=bizMetrics();
+  const pred=m.profit>=0?`At your current pace you'll add about ${fmt(m.profit*12)} to cash over the next 12 months.`:`At your current pace you'll burn about ${fmt(-m.profit*12)} over the next 12 months — act on expenses.`;
+  return bizHead('Cash Flow Analytics','💸','Money in vs money out, with a forward projection')+`<div class="grid gap-3 sm:grid-cols-4 mb-5">${bizStat('Money in',fmt(m.revenue),'monthly','⬆️','#22c55e')}${bizStat('Money out',fmt(m.expenses),'monthly','⬇️','#ef4444')}${bizStat('Net flow',fmt(m.profit),'monthly','🔁',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Cash on hand',fmt(m.cash),'','🏦','gold')}</div>`+bizPanel('6-month trend',`<div style="height:280px"><canvas id="bizCash"></canvas></div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">🔮 Projection</h3><p class="text-sm" style="color:var(--muted)">${pred}</p></div>`;
+}
+function bizNetworth(){
+  const m=bizMetrics();const rows=[['Cash',m.cash],['Property',m.propVal],['Investments',m.invVal],['Fleet',m.vehVal],['Inventory',m.stockVal]];
+  return bizHead('Net Worth','💎','Total business value across all assets')+`<div class="biz-card p-6 mb-5 text-center"><p class="text-xs uppercase tracking-widest" style="color:var(--muted)">Total business value</p><p class="text-4xl font-extrabold gold-text mt-1">${fmt(m.netWorth)}</p></div><div class="grid gap-4 lg:grid-cols-2"><div class="biz-card p-5"><h3 class="font-semibold mb-3">Asset breakdown</h3><div style="height:260px"><canvas id="nwDonut"></canvas></div></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Holdings</h3>${tableWrap(['Asset','Value','Share'],rows.map(r=>`<tr class="biz-tr"><td class="py-2.5">${r[0]}</td><td>${fmt(r[1])}</td><td>${m.netWorth?Math.round(r[1]/m.netWorth*100):0}%</td></tr>`).join(''))}</div></div>`;
+}
+function bizProperties(){
+  const recs=bizRecs('properties');const total=recs.reduce((a,p)=>a+(+p.value||0),0);const rent=recs.filter(p=>p.occupancy==='occupied').reduce((a,p)=>a+(+p.rent||0),0);
+  const body=recs.length?tableWrap(['Property','Type','Value','Rent/mo','Status',''],recs.map(p=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(p.name)}</td><td>${esc(p.kind||'')}</td><td>${fmt(p.value)}</td><td>${fmt(p.rent||0)}</td><td>${bizTag(p.occupancy,statusColor(p.occupancy))}</td><td class="text-right whitespace-nowrap">${rowActions('properties',p.id)}</td></tr>`).join('')):bizEmpty('No properties yet. Add buildings, apartments, offices, shops, warehouses or land.');
+  return bizHead('Property Management','🏗️','Buildings, rentals and land — value and occupancy')+`<div class="grid gap-4 sm:grid-cols-3 mb-5">${bizStat('Portfolio value',fmt(total),recs.length+' properties','🏠','gold')}${bizStat('Monthly rent',fmt(rent),'from occupied units','💶')}${bizStat('Occupancy',recs.length?Math.round(recs.filter(p=>p.occupancy==='occupied').length/recs.length*100)+'%':'—','','📊')}</div>`+bizPanel('Properties',body,addBtn('properties','Property'));
+}
+function bizEmployees(){
+  const recs=bizRecs('employees');const payroll=recs.filter(e=>e.status==='active').reduce((a,e)=>a+(+e.salary||0),0);
+  const body=recs.length?tableWrap(['Name','Position','Salary/mo','Hired','Status',''],recs.map(e=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(e.name)}</td><td>${esc(e.position||'')}</td><td>${fmt(e.salary)}</td><td>${esc(e.hired||'')}</td><td>${bizTag(e.status,statusColor(e.status))}</td><td class="text-right">${rowActions('employees',e.id)}</td></tr>`).join('')):bizEmpty('Add your team — track salaries and status.');
+  return bizHead('Employees','👔','Team, salaries and payroll')+`<div class="grid gap-3 sm:grid-cols-3 mb-5">${bizStat('Monthly payroll',fmt(payroll),'active staff','💵','gold')}${bizStat('Headcount',recs.filter(e=>e.status==='active').length,'active','🧑‍💼')}${bizStat('Annual cost',fmt(payroll*12),'projected','📆')}</div>`+bizPanel('Staff',body,addBtn('employees','Employee'));
+}
+function bizPayments(){
+  const recs=bizRecs('payments');const pending=recs.filter(p=>p.status!=='paid').reduce((a,p)=>a+(+p.amount||0),0);const overdue=recs.filter(p=>p.status==='overdue').length;
+  const body=recs.length?tableWrap(['Name','Type','Amount','Due','Status',''],recs.map(p=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(p.name)}</td><td>${esc(p.type||'')}</td><td>${fmt(p.amount)}</td><td>${esc(p.due||'')}</td><td>${bizTag(p.status,statusColor(p.status))}</td><td class="text-right whitespace-nowrap">${p.status!=='paid'?`<button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizPaid" data-coll="payments" data-id="${p.id}" title="Mark paid">✅</button>`:''}${rowActions('payments',p.id)}</td></tr>`).join('')):bizEmpty('Track salaries, rent, taxes, bills, invoices and loans.');
+  return bizHead('Payments','💳','Salaries, rent, taxes, bills, loans')+`<div class="grid gap-3 sm:grid-cols-2 mb-5">${bizStat('Pending / overdue',fmt(pending),recs.filter(p=>p.status!=='paid').length+' to pay','⏳','#f59e0b')}${bizStat('Overdue items',overdue,'need attention','⚠️',overdue?'#ef4444':'#22c55e')}</div>`+bizPanel('Scheduled payments',body,addBtn('payments','Payment'));
+}
+function bizInvoices(){
+  const recs=bizRecs('invoices');const unpaid=recs.filter(i=>i.status==='unpaid').reduce((a,i)=>a+(+i.amount||0),0);const paid=recs.filter(i=>i.status==='paid').reduce((a,i)=>a+(+i.amount||0),0);
+  const body=recs.length?tableWrap(['Client','Description','Amount','Due','Status',''],recs.map(i=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(i.client)}</td><td style="color:var(--muted)">${esc(i.desc||'')}</td><td>${fmt(i.amount)}</td><td>${esc(i.due||'')}</td><td>${bizTag(i.status,statusColor(i.status))}</td><td class="text-right whitespace-nowrap">${i.status==='unpaid'?`<button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizPaid" data-coll="invoices" data-id="${i.id}" title="Mark paid">✅</button>`:''}${rowActions('invoices',i.id)}</td></tr>`).join('')):bizEmpty('Create invoices and track who has paid.');
+  return bizHead('Invoices','🧾','Create invoices, track payments')+`<div class="grid gap-3 sm:grid-cols-2 mb-5">${bizStat('Unpaid invoices',fmt(unpaid),recs.filter(i=>i.status==='unpaid').length+' open','⏳','#f59e0b')}${bizStat('Collected',fmt(paid),'paid to date','✅','#22c55e')}</div>`+bizPanel('Invoices',body,addBtn('invoices','Invoice'));
+}
+function bizClients(){
+  const recs=bizRecs('clients');
+  const body=recs.length?`<div class="grid gap-3 sm:grid-cols-2">${recs.map(c=>`<div class="biz-card p-4"><div class="flex justify-between"><div><p class="font-bold">${esc(c.name)}</p>${c.company?`<p class="text-xs" style="color:var(--muted)">${esc(c.company)}</p>`:''}</div><div>${rowActions('clients',c.id)}</div></div><div class="mt-2 text-sm space-y-0.5" style="color:var(--muted)">${c.phone?`<p>📞 ${esc(c.phone)}</p>`:''}${c.email?`<p>✉️ ${esc(c.email)}</p>`:''}${c.value?`<p>💼 ${fmt(c.value)} contract</p>`:''}${c.notes?`<p>📝 ${esc(c.notes)}</p>`:''}</div></div>`).join('')}</div>`:bizEmpty('Build your CRM — clients, contacts, contracts and notes.');
+  return bizHead('Clients (CRM)','🤝','Contacts, contracts and relationships')+bizPanel('Clients',body,addBtn('clients','Client'));
+}
+function bizInvestments(){
+  const recs=bizRecs('investments');const inv=recs.reduce((a,i)=>a+(+i.invested||0),0),val=recs.reduce((a,i)=>a+(+i.value||0),0),g=val-inv;
+  const body=recs.length?tableWrap(['Investment','Type','Invested','Value','Profit/Loss',''],recs.map(i=>{const gg=(+i.value||0)-(+i.invested||0);return `<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(i.name)}</td><td>${esc(i.type||'')}</td><td>${fmt(i.invested)}</td><td>${fmt(i.value)}</td><td style="color:${gg>=0?'#22c55e':'#ef4444'}">${gg>=0?'+':''}${fmt(gg)}</td><td class="text-right">${rowActions('investments',i.id)}</td></tr>`;}).join('')):bizEmpty('Track real estate, stocks, crypto, businesses, vehicles and equipment.');
+  return bizHead('Investment Center','📈','Holdings and performance')+`<div class="grid gap-3 sm:grid-cols-3 mb-5">${bizStat('Invested',fmt(inv),'cost basis','💵')}${bizStat('Current value',fmt(val),'','💎','gold')}${bizStat('Total P/L',(g>=0?'+':'')+fmt(g),g>=0?'in profit':'in loss','📊',g>=0?'#22c55e':'#ef4444')}</div>`+bizPanel('Portfolio',body,addBtn('investments','Investment'));
+}
+function bizVehicles(){
+  const recs=bizRecs('vehicles');const val=recs.reduce((a,v)=>a+(+v.value||0),0),run=recs.reduce((a,v)=>a+(+v.monthly||0),0);
+  const body=recs.length?tableWrap(['Vehicle','Type','Value','Running/mo',''],recs.map(v=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(v.name)}</td><td>${esc(v.type||'')}</td><td>${fmt(v.value)}</td><td>${fmt(v.monthly||0)}</td><td class="text-right">${rowActions('vehicles',v.id)}</td></tr>`).join('')):bizEmpty('Track cars, trucks, vans and boats with running costs.');
+  return bizHead('Fleet','🚗','Vehicles, maintenance, fuel and insurance')+`<div class="grid gap-3 sm:grid-cols-2 mb-5">${bizStat('Fleet value',fmt(val),recs.length+' vehicles','🚙','gold')}${bizStat('Running cost',fmt(run),'per month','⛽','#f59e0b')}</div>`+bizPanel('Vehicles',body,addBtn('vehicles','Vehicle'));
+}
+function bizInventory(){
+  const recs=bizRecs('inventory');const val=recs.reduce((a,w)=>a+(+w.value||0),0);
+  const body=recs.length?recs.map(w=>{const p=w.capacity?Math.round((+w.used||0)/w.capacity*100):0;const col=p>=90?'#ef4444':p>=70?'#f59e0b':'#22c55e';return `<div class="mb-4"><div class="flex justify-between text-sm mb-1"><span class="font-medium">${esc(w.name)} ${w.notes?`<span style="color:var(--muted)">· ${esc(w.notes)}</span>`:''}</span><span style="color:${col}">${p}% full · ${fmt(w.value)}</span></div><div class="h-2.5 rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:${col}"></div></div><div class="flex justify-between items-center mt-1"><span class="text-[11px]" style="color:var(--muted)">${w.used||0} / ${w.capacity||0} units</span><span>${rowActions('inventory',w.id)}</span></div></div>`;}).join(''):bizEmpty('Add warehouses — track capacity, stock and value.');
+  return bizHead('Inventory & Warehouse','📦','Capacity, stock levels and value')+`<div class="grid gap-3 sm:grid-cols-2 mb-5">${bizStat('Inventory value',fmt(val),recs.length+' locations','📦','gold')}${bizStat('Capacity alerts',recs.filter(w=>w.capacity&&w.used/w.capacity>=0.9).length,'near full','⚠️',recs.some(w=>w.capacity&&w.used/w.capacity>=0.9)?'#ef4444':'#22c55e')}</div>`+bizPanel('Warehouses',body,addBtn('inventory','Warehouse'));
+}
+function bizTaxes(){
+  const recs=bizRecs('taxes');const due=recs.filter(t=>t.status==='pending').reduce((a,t)=>a+(+t.amount||0),0);
+  const next=recs.filter(t=>t.status==='pending'&&t.due).sort((a,b)=>a.due.localeCompare(b.due))[0];
+  const body=recs.length?tableWrap(['Tax','Period','Amount','Due','Status',''],recs.map(t=>`<tr class="biz-tr"><td class="py-2.5 font-medium">${esc(t.name)}</td><td>${esc(t.period||'')}</td><td>${fmt(t.amount)}</td><td>${esc(t.due||'')}</td><td>${bizTag(t.status,statusColor(t.status))}</td><td class="text-right whitespace-nowrap">${t.status==='pending'?`<button class="text-xs px-1.5 py-1 rounded hover:bg-white/10" data-action="bizPaid" data-coll="taxes" data-id="${t.id}" title="Mark paid">✅</button>`:''}${rowActions('taxes',t.id)}</td></tr>`).join('')):bizEmpty('Track monthly, quarterly and annual taxes with deadlines.');
+  return bizHead('Tax Center','🏛️','Deadlines, amounts and what is due')+`<div class="grid gap-3 sm:grid-cols-2 mb-5">${bizStat('Taxes due',fmt(due),recs.filter(t=>t.status==='pending').length+' pending','🧾','#f59e0b')}${bizStat('Next deadline',next?next.due:'—',next?next.name:'all clear','⏰',next?'#ef4444':'#22c55e')}</div>`+bizPanel('Tax obligations',body,addBtn('taxes','Tax'));
+}
+function bizCalendar(){
+  const ev=bizRecs('events').map(e=>({date:e.date,title:e.title,type:e.type,id:e.id}));
+  bizRecs('taxes').filter(t=>t.due&&t.status==='pending').forEach(t=>ev.push({date:t.due,title:t.name+' due',type:'Tax'}));
+  bizRecs('payments').filter(p=>p.due&&p.status!=='paid').forEach(p=>ev.push({date:p.due,title:p.name,type:'Payment'}));
+  bizRecs('invoices').filter(i=>i.due&&i.status==='unpaid').forEach(i=>ev.push({date:i.due,title:'Invoice: '+i.client,type:'Deadline'}));
+  ev.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const tc={Meeting:'#a78bfa',Tax:'#ef4444',Salary:'#22c55e',Payment:'#f59e0b',Deadline:'#d4af37'};
+  const body=ev.length?ev.map(e=>`<div class="flex items-center gap-3 biz-tr py-2.5"><div class="text-center w-12 shrink-0"><p class="text-[10px]" style="color:var(--muted)">${e.date?new Date(e.date).toLocaleString('en',{month:'short'}):''}</p><p class="text-lg font-bold">${e.date?new Date(e.date).getDate():'—'}</p></div><div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${esc(e.title)}</p><span class="biz-tag" style="background:${(tc[e.type]||'#94a3b8')}22;color:${tc[e.type]||'#94a3b8'}">${esc(e.type)}</span></div>${e.id?`<div>${rowActions('events',e.id)}</div>`:''}</div>`).join(''):bizEmpty('No events. Add meetings, deadlines and key dates.');
+  return bizHead('Business Calendar','📅','Meetings, tax dates, salary runs, deadlines')+bizPanel('Upcoming',body,addBtn('events','Event'));
+}
+function bizGoals(){
+  const recs=bizRecs('goals');const ach=bizAchievements();
+  const body=recs.length?recs.map(g=>{const p=g.target?Math.min(100,Math.round((+g.current||0)/g.target*100)):0;return `<div class="mb-4"><div class="flex justify-between text-sm mb-1"><span class="font-medium">${esc(g.title)} ${bizTag(g.kind||'Goal','#d4af37')}</span><span style="color:var(--muted)">${fmt(g.current||0)} / ${fmt(g.target)}</span></div><div class="h-2.5 rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#b8860b,#f3d97c)"></div></div><div class="text-right mt-1">${rowActions('goals',g.id)}</div></div>`;}).join(''):bizEmpty('Set targets: revenue, hiring, new location, equipment.');
+  const grid=`<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${ach.map(a=>`<div class="biz-card p-4 text-center ${a.got?'':'opacity-40'}"><div class="text-3xl">${a.e}</div><p class="text-xs mt-2 ${a.got?'gold-text font-semibold':''}">${a.name}</p><p class="text-[10px] mt-1" style="color:${a.got?'#22c55e':'var(--muted)'}">${a.got?'Unlocked':'Locked'}</p></div>`).join('')}</div>`;
+  return bizHead('Goals & Achievements','🎯','Grow with targets and unlock milestones')+bizPanel('Business goals',body,addBtn('goals','Goal'))+`<div class="mt-5"><h3 class="font-semibold mb-3">🏅 Achievements</h3>${grid}</div>`;
+}
+function bizAi(){
+  const ins=bizInsights();const al=bizAlerts();const m=bizMetrics();
+  const summary=`Your company is ${m.health>=75?'in strong shape':m.health>=50?'stable':'under pressure'} with a health score of ${m.health}/100. Monthly revenue is ${fmt(m.revenue)} against ${fmt(m.expenses)} in expenses, for a ${m.profit>=0?'profit':'loss'} of ${fmt(Math.abs(m.profit))}. Net worth stands at ${fmt(m.netWorth)}.`;
+  return bizHead('AI Business Advisor','🤖','Grounded analysis from your real numbers')+`<div class="biz-card p-5 mb-4"><h3 class="font-semibold mb-2">Executive summary</h3><p class="text-sm" style="color:var(--muted)">${summary}</p></div><div class="grid gap-4 lg:grid-cols-2"><div class="biz-card p-5"><h3 class="font-semibold mb-3">📊 Insights</h3><ul class="space-y-2.5 text-sm" style="color:var(--muted)">${ins.map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">⚡ Action items</h3>${al.length?`<ul class="space-y-2.5 text-sm">${al.map(x=>`<li class="flex gap-2"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></li>`).join('')}</ul>`:'<p class="text-sm" style="color:var(--muted)">No urgent issues. Everything looks healthy. ✅</p>'}</div></div>`;
+}
+function bizTeam(){
+  const recs=bizRecs('team');
+  const body=`<div class="flex items-center gap-3 biz-tr py-3"><span class="text-2xl">👑</span><div class="flex-1"><p class="text-sm font-medium">${esc(ME?.first_name||'You')} (Owner)</p><p class="text-xs" style="color:var(--muted)">${esc(ME?.email||'')}</p></div>${bizTag('Full access','#d4af37')}</div>`+recs.map(t=>`<div class="flex items-center gap-3 biz-tr py-3"><span class="text-2xl">👤</span><div class="flex-1"><p class="text-sm font-medium">${esc(t.name)}</p><p class="text-xs" style="color:var(--muted)">${esc(t.email||'')}</p></div>${bizTag(t.role||'Read only','#a78bfa')}<div class="ml-2">${rowActions('team',t.id)}</div></div>`).join('');
+  return bizHead('Team Accounts','👥','Invite accountants, managers and staff with roles')+bizPanel('Members',body,addBtn('team','Member'))+`<div class="biz-card p-4 mt-4 text-xs" style="color:var(--muted)">Roles: <b>Read only</b> can view, <b>Editor</b> can add/edit records, <b>Manager</b> can manage finances, <b>Full access</b> can do everything. Live invitations activate with real accounts.</div>`;
+}
+function bizMarketplace(){
+  const listings=[{e:'🤝',t:'Find business partners',d:'Connect with founders in your industry looking to collaborate.'},{e:'👔',t:'Hire talent',d:'Post roles and reach verified professionals on Goalify Business.'},{e:'🛠️',t:'Offer your services',d:'List what your company does and get discovered by other businesses.'},{e:'📦',t:'Sell products',d:'Move surplus inventory or list your catalogue to other companies.'},{e:'🌐',t:'Network',d:'Join industry circles and grow your professional network.'},{e:'📣',t:'Promote your brand',d:'Feature your company to the Goalify Business community.'}];
+  return bizHead('Business Marketplace','🌐','Find partners, talent, services and customers')+`<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${listings.map(l=>`<div class="biz-card p-5"><div class="text-3xl">${l.e}</div><h3 class="font-semibold mt-3">${l.t}</h3><p class="text-sm mt-1" style="color:var(--muted)">${l.d}</p><button class="btn btn-ghost mt-4 w-full !py-2 text-sm" data-action="bizInvite">Explore</button></div>`).join('')}</div><div class="biz-card p-4 mt-4 text-xs" style="color:var(--muted)">The marketplace connects Goalify Business accounts. Live matching activates when you go online with real accounts.</div>`;
+}
+function bizReports(){
+  const sets=[['summary','Financial summary'],['invoices','Invoices'],['payments','Payments'],['employees','Employees'],['properties','Properties'],['investments','Investments'],['vehicles','Fleet'],['inventory','Inventory'],['taxes','Taxes'],['clients','Clients']];
+  return bizHead('Reports & Export','📄','Download CSV reports or print a PDF')+bizPanel('Export data',`<div class="grid gap-2 sm:grid-cols-2">${sets.map(s=>`<button class="btn btn-ghost !py-2.5 text-sm" data-action="bizExport" data-coll="${s[0]}" style="justify-content:space-between"><span>${s[1]}</span><span>⬇️ CSV</span></button>`).join('')}</div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">📑 PDF report</h3><p class="text-sm mb-3" style="color:var(--muted)">Generate a printable financial overview (use your browser's "Save as PDF").</p><button class="btn btn-primary !py-2 text-sm" data-action="bizPrint">🖨️ Print / Save as PDF</button></div>`;
+}
+
+// ---------- actions ----------
+function bizSwitchTo(id){const s=bizStore();if(!s.businesses.find(b=>b.id===id))return;s.active=id;setBizStore(s);toast('Switched company');location.hash='#app/dashboard';render();}
+function bizDelete(coll,id){const s=bizStore();if(s[coll])s[coll]=s[coll].filter(r=>r.id!==id);setBizStore(s);toast('Deleted');render();}
+function bizMarkPaid(coll,id){const s=bizStore();const r=(s[coll]||[]).find(x=>x.id===id);if(r)r.status='paid';setBizStore(s);toast('Marked as paid ✓');render();}
+function bizDeleteCompany(id){const s=bizStore();if(s.businesses.length<=1){toast('You need at least one company','err');return;}if(!confirm('Delete this company and all its records?'))return;s.businesses=s.businesses.filter(b=>b.id!==id);['properties','employees','payments','invoices','clients','investments','vehicles','inventory','taxes','events','goals','team'].forEach(k=>{if(s[k])s[k]=s[k].filter(r=>r.biz!==id);});if(s.active===id)s.active=s.businesses[0].id;setBizStore(s);toast('Company removed');render();}
+function bizExportCSV(coll){
+  let rows,name;
+  if(coll==='summary'){const m=bizMetrics();rows=[{Metric:'Revenue (monthly)',Value:m.revenue},{Metric:'Expenses (monthly)',Value:m.expenses},{Metric:'Profit (monthly)',Value:m.profit},{Metric:'Net income (monthly)',Value:m.net},{Metric:'Cash',Value:m.cash},{Metric:'Outstanding',Value:m.outstanding},{Metric:'Net worth',Value:m.netWorth},{Metric:'Employees',Value:m.empCount},{Metric:'Properties',Value:m.propCount},{Metric:'Health score',Value:m.health}];name='financial-summary';}
+  else {rows=bizRecs(coll).map(({biz,id,...r})=>r);name=coll;}
+  if(!rows.length){toast('Nothing to export','err');return;}
+  const keys=[...new Set(rows.flatMap(r=>Object.keys(r)))];
+  const csv=[keys.join(','),...rows.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-'+name+'.csv';el.click();URL.revokeObjectURL(u);toast('Exported '+name+'.csv 📄');
+}
+function openBizForm(coll,id){
+  const spec=BIZ_SPECS[coll];if(!spec)return;
+  const s=bizStore();const isCompany=coll==='businesses';
+  const list=isCompany?s.businesses:(s[coll]||[]);
+  const rec=id?list.find(r=>r.id===id):null;
+  const m=document.getElementById('modal');
+  const fieldHTML=spec.fields.map(f=>{const v=rec?(rec[f.key]??''):(f.default??'');const wrap=f.wide?'col-span-2':'';
+    if(f.type==='select')return `<div class="${wrap}"><label class="label">${f.label}</label><select data-f="${f.key}" class="input">${f.options.map(o=>`<option value="${o}" ${String(v)===String(o)?'selected':''}>${o[0].toUpperCase()+o.slice(1)}</option>`).join('')}</select></div>`;
+    if(f.type==='textarea')return `<div class="${wrap}"><label class="label">${f.label}</label><textarea data-f="${f.key}" class="input" rows="2">${esc(v)}</textarea></div>`;
+    return `<div class="${wrap}"><label class="label">${f.label}</label><input data-f="${f.key}" type="${f.type}" class="input" value="${esc(v)}"></div>`;
+  }).join('');
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" id="bfBack"><div class="w-full max-w-lg biz-card p-6 anim" style="max-height:88vh;overflow-y:auto"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">${id?'Edit ':'New '}${spec.title}</h2><button id="bfX" style="color:var(--muted)">✕</button></div><div class="mt-4 grid grid-cols-2 gap-3">${fieldHTML}</div><button id="bfSave" class="btn btn-primary mt-5 w-full">${id?'Save changes':'Create'}</button></div></div>`;
+  const close=()=>m.innerHTML='';
+  $('#bfBack').addEventListener('click',e=>{if(e.target.id==='bfBack')close();});
+  $('#bfX').addEventListener('click',close);
+  $('#bfSave').addEventListener('click',()=>{
+    const vals={};
+    m.querySelectorAll('[data-f]').forEach(el=>{const k=el.getAttribute('data-f');const fd=spec.fields.find(x=>x.key===k);let val=el.value;if(fd.type==='number')val=Number(val)||0;vals[k]=typeof val==='string'?val.trim():val;});
+    if(spec.required&&spec.required.some(k=>vals[k]===''||vals[k]==null)){toast('Please fill required fields','err');return;}
+    const st=bizStore();
+    if(isCompany){if(rec){const t=st.businesses.find(b=>b.id===id);Object.assign(t,vals);}else{const nb={id:'b'+Date.now(),...vals};st.businesses.push(nb);st.active=nb.id;}}
+    else{st[coll]=st[coll]||[];if(rec){const t=st[coll].find(r=>r.id===id);Object.assign(t,vals);}else{st[coll].push({id:coll[0]+Date.now(),biz:st.active,...vals});}}
+    setBizStore(st);close();toast((id?'Updated':'Added')+' ✓');render();
+  });
+}
 
 // ============================================================
 // EVENTS
@@ -1043,6 +1423,19 @@ document.addEventListener('click',async(e)=>{
     else if(act==='redeemPromo'){const code=($('#promoInput')?.value||'').trim().toUpperCase();if(!code)return toast('Enter a code','err');const plan=PROMO_CODES[code];if(!plan)return toast('Invalid or expired code','err');const used=JSON.parse(localStorage.getItem('goalify_promo_used')||'[]');if(used.includes(code))return toast('This code has already been used','err');used.push(code);localStorage.setItem('goalify_promo_used',JSON.stringify(used));if(DEMO_MODE){DEMO_ME.plan=plan;ME.plan=plan;}else{await sb.from('profiles').update({plan}).eq('id',SESSION.user.id);await loadProfile();}toast('🎉 '+PLANS[plan].name+' plan activated!');render();}
     else if(act==='adminLogin'){const code=($('#adminInput')?.value||'').trim();if(code!==ADMIN_CODE)return toast('Incorrect access code','err');localStorage.setItem('goalify_admin','1');toast('🛡️ Admin access granted');location.hash='#admin';}
     else if(act==='adminLogout'){localStorage.removeItem('goalify_admin');toast('Admin signed out');render();}
+    else if(act==='simPreset'){simPreset(a.getAttribute('data-preset'));}
+    else if(act==='bizAdd'){openBizForm(a.getAttribute('data-coll'));}
+    else if(act==='bizEdit'){openBizForm(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
+    else if(act==='bizDel'){bizDelete(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
+    else if(act==='bizPaid'){bizMarkPaid(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
+    else if(act==='bizAddCompany'){openBizForm('businesses');}
+    else if(act==='bizEditCompany'){openBizForm('businesses',a.getAttribute('data-id'));}
+    else if(act==='bizDelCompany'){bizDeleteCompany(a.getAttribute('data-id'));}
+    else if(act==='bizSwitchBtn'){bizSwitchTo(a.getAttribute('data-id'));}
+    else if(act==='bizExport'){bizExportCSV(a.getAttribute('data-coll'));}
+    else if(act==='bizPrint'){window.print();}
+    else if(act==='bizInvite'){toast('Live networking activates with real accounts (demo).');}
+    else if(act==='bizReset'){if(confirm('Reset all business demo data?')){localStorage.removeItem('goalify_biz');toast('Business data reset');render();}}
     else if(act==='shareCard'){try{makeShareCard();toast('Progress card downloaded 📤');}catch(e){toast('Could not generate card','err');}}
     else if(act==='support'){toast('👏 You sent support to '+a.getAttribute('data-name')+'!');}
     else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
@@ -1068,6 +1461,7 @@ document.addEventListener('click',async(e)=>{
   }catch(err){toast(err.message||'Something went wrong','err');}
 });
 document.addEventListener('change',async(e)=>{
+  if(e.target.id==='bizSwitch'){bizSwitchTo(e.target.value);return;}
   const a=e.target.closest('[data-action="setPlan"]'); if(a){try{await sb.rpc('admin_set_plan',{p_user:a.getAttribute('data-id'),p_plan:a.value});toast('Plan updated');}catch(err){toast(err.message,'err');}}
   if(e.target.id==='avatarInput'){
     const file=e.target.files&&e.target.files[0]; if(!file)return;
