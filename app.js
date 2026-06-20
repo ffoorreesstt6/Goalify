@@ -34,9 +34,15 @@ const DEMO_ME = {
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null
 };
 const DEMO_GOALS = [
-  {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,created_at:'2024-01-01'},
-  {id:'g2',user_id:'demo',name:'New MacBook Pro',emoji:'💻',image_url:null,target_amount:2499,saved_amount:850,monthly_contribution:200,completed:false,created_at:'2024-02-01'},
-  {id:'g3',user_id:'demo',name:'Summer Trip 🇬🇷',emoji:'✈️',image_url:null,target_amount:1500,saved_amount:1500,monthly_contribution:0,completed:true,created_at:'2024-03-01'},
+  {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,status:'active',created_at:'2024-01-01',missions:[
+    {id:'m1',goal_id:'g1',title:'Transfer €75 to savings',cadence:'weekly',perWeek:1,difficulty:'easy',status:'active'},
+    {id:'m2',goal_id:'g1',title:'A no-spend day',cadence:'daily',perWeek:5,difficulty:'medium',status:'active'},
+  ]},
+  {id:'g2',user_id:'demo',name:'New MacBook Pro',emoji:'💻',image_url:null,target_amount:2499,saved_amount:850,monthly_contribution:200,completed:false,status:'active',created_at:'2024-02-01',missions:[
+    {id:'m3',goal_id:'g2',title:'Skip takeaway lunch',cadence:'daily',perWeek:5,difficulty:'medium',status:'active'},
+    {id:'m4',goal_id:'g2',title:'Sell one unused item',cadence:'weekly',perWeek:1,difficulty:'hard',status:'active'},
+  ]},
+  {id:'g3',user_id:'demo',name:'Summer Trip 🇬🇷',emoji:'✈️',image_url:null,target_amount:1500,saved_amount:1500,monthly_contribution:0,completed:true,status:'completed',created_at:'2024-03-01',missions:[]},
 ];
 const DEMO_EXPENSES = [
   {id:'e1',user_id:'demo',amount:420,category:'groceries',merchant:'Lidl',spent_at:`${_mo}-02`},
@@ -204,7 +210,83 @@ function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done
   if(GOALS.some(g=>g.completed))set.add('finisher');
   if(lvl>=5)set.add('leveled');
   if(s.count>=30)set.add('consistency');
+  if(allMissions().some(m=>missionStreak(m.id)>=7))set.add('saver7');
   return set;}
+
+// ============================================================
+// MISSIONS ENGINE — Goals → Missions → Check-ins
+// ============================================================
+const DIFF={easy:{xp:5,label:'Easy',c:'#22c55e'},medium:{xp:10,label:'Medium',c:'#f59e0b'},hard:{xp:20,label:'Hard',c:'#ef4444'}};
+const GOAL_LEVELS=[[0,'Beginner','🌱'],[150,'Consistent','⚡'],[400,'Advanced','🚀'],[800,'Elite','👑']];
+function mlogs(){try{return JSON.parse(localStorage.getItem('goalify_mlog_'+uid()))||{};}catch(e){return{};}}
+function setMlogs(o){localStorage.setItem('goalify_mlog_'+uid(),JSON.stringify(o));}
+function missionLog(id){return mlogs()[id]||{};}
+function isDoneToday(id){return !!missionLog(id)[todayISO()];}
+function weekStartISO(d=new Date()){const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toISOString().slice(0,10);} // Monday
+function doneThisWeek(id){const ws=weekStartISO(),log=missionLog(id);return Object.keys(log).filter(k=>k>=ws).length;}
+function missionStreak(id){const log=missionLog(id);let n=0,d=new Date();if(!log[todayISO()])d.setDate(d.getDate()-1);for(;;){const k=d.toISOString().slice(0,10);if(log[k]){n++;d.setDate(d.getDate()-1);}else break;}return n;}
+function missionBest(id){const days=Object.keys(missionLog(id)).sort();let best=0,run=0,prev=null;days.forEach(k=>{run=prev&&(new Date(k)-new Date(prev))/864e5===1?run+1:1;best=Math.max(best,run);prev=k;});return best;}
+function streakHealth(n){if(n>=7)return{label:'Strong',c:'#22c55e',e:'🔥'};if(n>=3)return{label:'Stable',c:'#3b82f6',e:'💪'};if(n>=1)return{label:'Weak',c:'#f59e0b',e:'⚠️'};return{label:'Critical',c:'#ef4444',e:'❗'};}
+function allMissions(){return GOALS.flatMap(g=>(g.missions||[]).map(m=>({...m,goal:g})));}
+function missionTarget(m){return m.cadence==='daily'?(m.perWeek||5):(m.perWeek||1);}
+function missionDueToday(m){if(m.status!=='active')return false;return m.cadence==='daily'?!isDoneToday(m.id):doneThisWeek(m.id)<missionTarget(m);}
+function checkInMission(id){const o=mlogs();o[id]=o[id]||{};o[id][todayISO()]=true;setMlogs(o);}
+function uncheckMission(id){const o=mlogs();if(o[id])delete o[id][todayISO()];setMlogs(o);}
+function goalXp(g){return (g.missions||[]).reduce((s,m)=>s+Object.keys(missionLog(m.id)).length*(DIFF[m.difficulty]?.xp||5),0);}
+function goalLevel(g){const xp=goalXp(g);let lvl=GOAL_LEVELS[0],idx=0;GOAL_LEVELS.forEach((L,i)=>{if(xp>=L[0]){lvl=L;idx=i;}});const next=GOAL_LEVELS[idx+1];return {idx:idx+1,name:lvl[1],emoji:lvl[2],xp,next:next?next[0]:null,prev:lvl[0]};}
+function goalProgress(g){const money=g.target_amount?pct(g.saved_amount,g.target_amount):null,ms=g.missions||[];let cons=null;
+  if(ms.length)cons=Math.round(ms.reduce((s,m)=>s+Math.min(1,doneThisWeek(m.id)/Math.max(1,missionTarget(m))),0)/ms.length*100);
+  if(money!=null&&cons!=null)return Math.round(money*0.6+cons*0.4);
+  return money!=null?money:(cons!=null?cons:0);}
+function userStreak(){const ms=allMissions();return ms.length?Math.max(0,...ms.map(m=>missionStreak(m.id))):0;}
+function weekCheckins(){const ws=weekStartISO();return allMissions().reduce((s,m)=>s+Object.keys(missionLog(m.id)).filter(k=>k>=ws).length,0);}
+// AI behaviour engine — finds failure patterns from real check-in logs
+function behaviourReport(){
+  const ms=allMissions().filter(m=>m.status==='active'&&m.cadence==='daily');
+  const miss=[0,0,0,0,0,0,0],tot=[0,0,0,0,0,0,0],today=new Date();
+  ms.forEach(m=>{const log=missionLog(m.id);for(let i=1;i<=21;i++){const d=new Date(today);d.setDate(today.getDate()-i);const k=d.toISOString().slice(0,10),dow=d.getDay();tot[dow]++;if(!log[k])miss[dow]++;}});
+  let worst=null,wr=0;for(let i=0;i<7;i++)if(tot[i]>=2){const r=miss[i]/tot[i];if(r>wr){wr=r;worst=i;}}
+  const DOW=['Sundays','Mondays','Tuesdays','Wednesdays','Thursdays','Fridays','Saturdays'];
+  const suggestions=[];
+  allMissions().filter(m=>m.status==='active').forEach(m=>{const rate=doneThisWeek(m.id)/Math.max(1,missionTarget(m));
+    if(rate>=1&&m.difficulty!=='hard')suggestions.push({type:'up',m});
+    else if(rate<0.4&&missionStreak(m.id)===0)suggestions.push({type:'down',m});});
+  return {worstDay:worst!=null&&wr>=0.4?DOW[worst]:null,worstRate:Math.round(wr*100),suggestions:suggestions.slice(0,3)};
+}
+// shareable weekly progress card (PNG export via canvas) — viral growth loop
+function makeShareCard(){
+  const us=userStreak(),wk=weekCheckins(),g=topGoal(),prog=g?goalProgress(g):0;
+  const W=1080,H=1080,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const cs=getComputedStyle(document.documentElement);const a2=(cs.getPropertyValue('--accent2')||'#8b5cf6').trim(),a1=(cs.getPropertyValue('--accent1')||'#4f46e5').trim();
+  const grd=x.createLinearGradient(0,0,W,H);grd.addColorStop(0,'#0b0f1d');grd.addColorStop(1,'#11162b');x.fillStyle=grd;x.fillRect(0,0,W,H);
+  const glow=x.createRadialGradient(W*0.78,H*0.22,0,W*0.78,H*0.22,720);glow.addColorStop(0,a2+'66');glow.addColorStop(1,'transparent');x.fillStyle=glow;x.fillRect(0,0,W,H);
+  x.textAlign='left';x.fillStyle='#fff';x.font='bold 56px Inter,sans-serif';x.fillText('Goalify',90,150);
+  x.font='600 38px Inter,sans-serif';x.fillStyle='#cbd5e1';x.fillText('My week',90,210);
+  x.textAlign='center';x.fillStyle='#fff';x.font='bold 300px Inter,sans-serif';x.fillText(String(us),W/2,560);
+  x.font='600 52px Inter,sans-serif';x.fillStyle=a2;x.fillText('🔥 day streak',W/2,650);
+  x.fillStyle='#fff';x.font='bold 60px Inter,sans-serif';x.fillText(wk+' check-ins this week',W/2,800);
+  if(g){x.font='600 44px Inter,sans-serif';x.fillStyle='#cbd5e1';x.fillText(g.emoji+' '+g.name+' — '+prog+'%',W/2,880);}
+  x.font='600 40px Inter,sans-serif';x.fillStyle=a2;x.fillText('Chase your goals → goalify.app',W/2,1000);
+  const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='goalify-week.png';a.click();
+}
+function weeklyReportText(){
+  const wk=weekCheckins(),us=userStreak(),r=behaviourReport();
+  const parts=[`This week you logged ${wk} check-in${wk===1?'':'s'} with a best streak of ${us} day${us===1?'':'s'}.`];
+  if(r.worstDay)parts.push(`Heads-up: ${r.worstDay} is when you slip most (${r.worstRate}% skipped).`);
+  if(r.suggestions[0]){const s=r.suggestions[0];parts.push(s.type==='up'?`“${s.m.title}” is going great — time to level it up.`:`Ease off “${s.m.title}” to rebuild the habit.`);}
+  else parts.push('Keep those streaks alive! 🔥');
+  return parts.join(' ');
+}
+function seedDemoMissions(){
+  if(localStorage.getItem('goalify_mlog_demo'))return;
+  const o={},today=new Date(),add=(id,d)=>{o[id]=o[id]||{};o[id][d.toISOString().slice(0,10)]=true;};
+  // m3: solid 8-day streak (Strong). m2: weekday-only (misses weekends -> AI detects). m1/m4 weekly.
+  for(let i=0;i<=8;i++){const d=new Date(today);d.setDate(today.getDate()-i);add('m3',d);}
+  for(let i=0;i<=20;i++){const d=new Date(today);d.setDate(today.getDate()-i);const dow=d.getDay();if(dow!==0&&dow!==6)add('m2',d);}
+  add('m1',new Date(weekStartISO()));add('m1',new Date(Date.now()-7*864e5));
+  add('m4',new Date(Date.now()-9*864e5));
+  setMlogs(o);
+}
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
@@ -220,6 +302,8 @@ function demoCoachReply(q,mode){
   const s=snapshot(ME,EXPENSES),cm=ME.coach_mode||'fun',wr=whatToReduce(),top=wr[0],cutPct=Math.round(savingsMode().cut*100);
   const roasting=(mode==='roast'||cm==='roast');
   const tone=roasting?'Alright, real talk 🔥 ':{chill:'No pressure 🌿 ',fun:'Love the energy! 🎉 ',strict:'',roast:'Alright, real talk 🔥 '}[cm]||'';
+  // behaviour / progress questions -> use real mission data
+  if(/doing|week|progress|streak|habit|mission/i.test(q)){return tone+weeklyReportText();}
   if(roasting){
     if(top){const m=CATS[top.cat]||CATS.other;return `${tone}You dropped ${fmt(top.spend)} on ${m.l} this month. Trim ${cutPct}% and that's ${fmt(top.save)} back in your pocket${top.impact?' — '+top.impact:''}. You'll get there… eventually. 😏`;}
     return `${tone}Your spending's actually fine. Don't let it go to your head.`;
@@ -455,7 +539,7 @@ async function finishQuiz(inner){
 // ============================================================
 // APP SHELL
 // ============================================================
-const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
+const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['squad','Squad','👥'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
 function shell(route,inner){
   const isAdmin=ME?.role==='admin';
   return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
@@ -502,6 +586,37 @@ function whatToReduceHTML(){
   </div>`;
 }
 
+function todayMissionsHTML(){
+  const due=allMissions().filter(missionDueToday);
+  const doneToday=allMissions().filter(m=>m.cadence==='daily'&&isDoneToday(m.id)).length;
+  return `<div class="glass-strong rounded-2xl p-6">
+    <div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">✅ Today's missions</h3><span class="text-xs" style="color:var(--muted)">${doneToday} done today</span></div>
+    ${due.length?`<div class="space-y-2">${due.map(m=>{const d=DIFF[m.difficulty]||DIFF.easy,st=missionStreak(m.id),h=streakHealth(st);return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass)"><button data-action="checkin" data-id="${m.id}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition" title="Check in" style="background:var(--glass);color:var(--muted);border:1px solid var(--border)">+</button><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(m.title)}</p><p class="text-[11px]" style="color:var(--muted)">${esc(m.goal.name)} · <span style="color:${d.c}">${d.label}</span> · +${d.xp} XP</p></div><span class="text-sm font-bold" style="color:${h.c}">${h.e} ${st}</span></div>`;}).join('')}</div>`:`<p class="py-6 text-center text-sm" style="color:var(--muted)">🎉 All caught up for today — nice work!</p>`}
+    <a href="#app/goals" class="mt-3 block text-center text-sm font-medium text-accent-purple hover:underline">Manage missions →</a>
+  </div>`;
+}
+function weeklySummaryHTML(){
+  const wk=weekCheckins(),us=userStreak(),h=streakHealth(us),goalsActive=GOALS.filter(g=>!g.completed).length;
+  return `<div class="glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">📅 This week</h3>
+    <div class="grid grid-cols-3 gap-3 text-center">
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${wk}</p><p class="text-[11px]" style="color:var(--muted)">check-ins</p></div>
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold" style="color:${h.c}">${us}</p><p class="text-[11px]" style="color:var(--muted)">best streak</p></div>
+      <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${goalsActive}</p><p class="text-[11px]" style="color:var(--muted)">active goals</p></div>
+    </div>
+    <div class="mt-3 rounded-xl p-3 text-center text-sm" style="background:var(--glass)">Streak health: <b style="color:${h.c}">${h.e} ${h.label}</b></div>
+    <button class="btn btn-ghost mt-3 w-full !py-2 text-sm" data-action="shareCard">📤 Share weekly progress</button>
+  </div>`;
+}
+function behaviourCardHTML(){
+  const has=PLAN_ORDER.indexOf(ME.plan)>=PLAN_ORDER.indexOf('pro');
+  if(!has)return `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">🧠 AI behaviour coach</h3><span class="rounded-full px-2 py-0.5 text-[10px]" style="background:var(--glass);color:var(--muted)">Pro</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Goalify spots when you tend to slip and adjusts mission difficulty automatically.</p><a href="#app/plans" class="btn btn-primary mt-3 text-sm">Unlock Pro</a></div>`;
+  const r=behaviourReport(),lines=[];
+  if(r.worstDay)lines.push(`You miss most on <b>${r.worstDay}</b> (${r.worstRate}% skipped) — plan a lighter mission that day.`);
+  r.suggestions.forEach(s=>{const m=s.m;lines.push(s.type==='up'?`🔼 You're crushing “${esc(m.title)}” — bump it to ${m.difficulty==='easy'?'Medium':'Hard'} for more XP.`:`🔽 “${esc(m.title)}” is slipping — ease it off to rebuild momentum.`);});
+  if(!lines.length)lines.push('Consistent across the board — keep those streaks alive! 🔥');
+  return `<div class="glass-strong rounded-2xl p-6"><div class="mb-3 flex items-center gap-2 font-semibold">🧠 AI behaviour coach</div><ul class="space-y-2 text-sm" style="color:var(--muted)">${lines.slice(0,3).map(t=>`<li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style="background:var(--accent2)"></span><span>${t}</span></li>`).join('')}</ul><a href="#app/ai" class="mt-3 block text-sm font-medium text-accent-purple hover:underline">Open AI coach →</a></div>`;
+}
+
 function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),g=goalifyScore(s,GOALS,ME.xp),h=healthScore(s);
   const persona=ME.personality?PERSONAS[ME.personality]:null;
@@ -521,18 +636,50 @@ function dashboardView(){
   // BUSINESS
   if(plan==='business'){const rev=s.income,profit=s.income-s.spending;blocks+=`<div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Revenue</p><p class="mt-2 text-2xl font-bold text-emerald-400">${fmt(rev)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Expenses</p><p class="mt-2 text-2xl font-bold text-orange-400">${fmt(s.spending)}</p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Profit</p><p class="mt-2 text-2xl font-bold gtext">${fmt(profit)}</p></div></div><div class="glass rounded-2xl p-6"><div class="mb-2 font-semibold">🧾 Tax estimate (illustrative)</div><p class="text-sm text-slate-400">Estimated set-aside at 20%: <b class="text-white">${fmt(Math.max(0,profit*0.2))}</b>. Connect your accountant's rate in Settings.</p></div>`;}
   return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="mt-1 text-sm text-slate-400">${persona?`You're a ${persona.name} ${persona.emoji} on the ${PLANS[plan].name} plan.`:`${PLANS[plan].name} plan`}</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ New goal</a></div>
+  <div class="grid gap-6 lg:grid-cols-2">${todayMissionsHTML()}<div class="space-y-6">${weeklySummaryHTML()}${behaviourCardHTML()}</div></div>
   <div class="grid gap-6 lg:grid-cols-2">${goalOverviewHTML()}${whatToReduceHTML()}</div>
   ${blocks}</div>`;
 }
 
+function missionRow(m){
+  const d=DIFF[m.difficulty]||DIFF.easy,done=isDoneToday(m.id),streak=missionStreak(m.id),h=streakHealth(streak);
+  const tw=doneThisWeek(m.id),tgt=missionTarget(m),paused=m.status==='paused';
+  return `<div class="rounded-xl p-3" style="background:var(--glass);${paused?'opacity:.55':''}">
+    <div class="flex items-center gap-3">
+      <button data-action="checkin" data-id="${m.id}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition" title="${done?'Undo today':'Check in'}" style="${done?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted);border:1px solid var(--border)'}">${done?'✓':'+'}</button>
+      <div class="min-w-0 flex-1"><p class="truncate text-sm font-medium ${paused?'line-through':''}">${esc(m.title)}</p>
+        <p class="text-[11px]" style="color:var(--muted)">${m.cadence==='daily'?'Daily':'Weekly'} · ${tw}/${tgt} this week · <span style="color:${d.c}">${d.label}</span> · +${d.xp} XP</p></div>
+      <div class="text-right"><p class="text-sm font-bold" style="color:${h.c}">${h.e} ${streak}</p><p class="text-[10px]" style="color:var(--muted)">${h.label}</p></div>
+      <div class="flex flex-col gap-1">
+        <button data-action="pauseMission" data-id="${m.id}" class="text-xs" style="color:var(--muted)" title="${paused?'Resume':'Pause'}">${paused?'▶':'⏸'}</button>
+        <button data-action="delMission" data-id="${m.id}" class="text-xs text-slate-400 hover:text-red-400" title="Delete">🗑</button>
+      </div>
+    </div></div>`;
+}
+function goalCard(g){
+  const prog=goalProgress(g),lvl=goalLevel(g),ms=g.missions||[];
+  const lvlPct=lvl.next?Math.round((lvl.xp-lvl.prev)/(lvl.next-lvl.prev)*100):100;
+  const canAddMission = PLANS[ME.plan].goalLimit!==-1 ? ms.length<2 : true; // free: 2 missions/goal
+  return `<div class="glass rounded-2xl overflow-hidden anim">${g.image_url?`<img src="${esc(g.image_url)}" class="h-28 w-full object-cover">`:''}
+  <div class="p-5">
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':g.status==='paused'?'Paused':'Active'}</span></div></div>
+      <div class="flex items-center gap-2"><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx} ${lvl.name}</span><button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400">🗑</button></div>
+    </div>
+    <div class="mt-4"><div class="mb-1 flex justify-between text-xs" style="color:var(--muted)"><span>Goal progress</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
+    ${g.target_amount?`<div class="mt-3 flex items-center gap-2"><input type="number" class="input !py-1.5 text-sm" placeholder="Add €" id="c-${g.id}"><button class="btn btn-primary !px-3 !py-1.5 text-sm shrink-0" data-action="contrib" data-id="${g.id}">Save</button><span class="text-xs shrink-0" style="color:var(--muted)">${fmt(g.saved_amount)}/${fmt(g.target_amount)}</span></div>`:''}
+    <div class="mt-4"><div class="mb-2 flex items-center justify-between"><p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--muted)">Missions (${ms.length})</p><span class="text-[11px]" style="color:var(--muted)">${lvl.xp} XP${lvl.next?` · ${lvl.next-lvl.xp} to Lv.${lvl.idx+1}`:' · max'}</span></div>
+      <div class="space-y-2">${ms.length?ms.map(missionRow).join(''):`<p class="rounded-xl p-3 text-center text-xs" style="background:var(--glass);color:var(--muted)">No missions yet — add the weekly actions that drive this goal.</p>`}</div>
+      <button class="btn btn-ghost mt-2 w-full !py-2 text-sm" data-action="newMission" data-goal="${g.id}" ${canAddMission?'':'disabled'}>${canAddMission?'+ Add mission':'🔒 Upgrade for more missions'}</button>
+    </div>
+  </div></div>`;
+}
 function goalsView(){
   const limit=PLANS[ME.plan].goalLimit, active=GOALS.filter(g=>!g.completed).length, atLimit=limit!==-1&&active>=limit;
-  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Goals</h1><p class="mt-1 text-sm text-slate-400">${limit===-1?'Unlimited goals.':active+' / '+limit+' goals used (Free plan).'}</p></div><button class="btn btn-primary !py-2.5 text-sm" data-action="newGoal" ${atLimit?'disabled':''}>+ New goal</button></div>
-  ${atLimit?`<div class="glass rounded-2xl p-5 flex items-center justify-between gap-4" style="border:1px solid rgba(168,85,247,.3)"><p class="text-sm text-slate-400">🔒 Free plan limit of ${limit} goals reached. Verify student status or upgrade for unlimited.</p><a href="#app/student" class="btn btn-primary !py-2 text-sm shrink-0">Unlock</a></div>`:''}
-  ${GOALS.length===0?`<div class="glass rounded-2xl p-16 text-center"><div class="text-5xl">🎯</div><h3 class="mt-4 text-lg font-semibold">No goals yet</h3><p class="mt-1 text-sm text-slate-400">Create your first goal — a phone, a trip, an emergency fund.</p><button class="btn btn-primary mt-5 text-sm" data-action="newGoal">+ Create a goal</button></div>`:
-  `<div class="grid gap-5 md:grid-cols-2">${GOALS.map(g=>{const p=pct(g.saved_amount,g.target_amount);return `<div class="glass rounded-2xl overflow-hidden anim">${g.image_url?`<img src="${esc(g.image_url)}" class="h-32 w-full object-cover">`:''}<div class="p-6"><div class="flex items-start justify-between"><div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':'text-slate-400'}">${g.completed?'✓ Completed':'In progress'}</span></div></div><button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400">🗑</button></div>
-  <div class="mt-4"><div class="mb-1 flex justify-between text-sm"><span class="font-medium">${fmt(g.saved_amount)}</span><span class="text-slate-400">of ${fmt(g.target_amount)}</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div><p class="mt-1 text-right text-xs text-slate-400">${p}%</p></div>
-  ${g.completed?'':`<div class="mt-4 flex gap-2"><input type="number" class="input" placeholder="Amount" id="c-${g.id}"><button class="btn btn-primary !px-4 !py-2 text-sm shrink-0" data-action="contrib" data-id="${g.id}">Add</button></div>`}</div></div>`;}).join('')}</div>`}</div>`;
+  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Goals</h1><p class="mt-1 text-sm text-slate-400">Long-term goals, broken into weekly missions you check in on. ${limit===-1?'Unlimited goals.':active+' / '+limit+' goals (Free).'}</p></div><button class="btn btn-primary !py-2.5 text-sm" data-action="newGoal" ${atLimit?'disabled':''}>+ New goal</button></div>
+  ${atLimit?`<div class="glass rounded-2xl p-5 flex items-center justify-between gap-4" style="border:1px solid var(--border)"><p class="text-sm text-slate-400">🔒 Free plan limit of ${limit} goals reached. Upgrade for unlimited goals & missions.</p><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">See plans</a></div>`:''}
+  ${GOALS.length===0?`<div class="glass rounded-2xl p-16 text-center"><div class="text-5xl">🎯</div><h3 class="mt-4 text-lg font-semibold">No goals yet</h3><p class="mt-1 text-sm text-slate-400">Create your first goal, then add missions that drive it.</p><button class="btn btn-primary mt-5 text-sm" data-action="newGoal">+ Create a goal</button></div>`:
+  `<div class="grid gap-5 lg:grid-cols-2">${GOALS.map(goalCard).join('')}</div>`}</div>`;
 }
 
 function analyticsView(){
@@ -553,10 +700,11 @@ function simulatorView(){
 function aiView(){
   const plan=ME.plan,limit=PLANS[plan].ai,cm=ME.coach_mode||'fun';
   return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">AI Coach</h1><p class="mt-1 text-sm text-slate-400">Real AI financial coaching.</p></div><div class="text-sm text-slate-400">Today: <span id="aiCount">${AIUSED}</span>${limit===-1?' · Unlimited':' / '+limit+' messages'}</div></div>
+  ${behaviourCardHTML()}
   <div class="glass rounded-2xl p-4"><p class="mb-2 text-xs font-medium" style="color:var(--muted)">Coach personality</p><div class="flex flex-wrap gap-2">${Object.keys(COACH_MODES).map(k=>{const c=COACH_MODES[k],on=cm===k;return `<button data-action="setCoachMode" data-mode="${k}" class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><span>${c.emoji}</span>${c.name}</button>`;}).join('')}</div></div>
-  <div class="glass-strong rounded-2xl p-6 flex flex-col" style="height:60vh"><div class="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 font-semibold">${COACH_MODES[cm].emoji} ${COACH_MODES[cm].name} <span class="text-xs font-normal" style="color:var(--muted)">· ${COACH_MODES[cm].desc}</span></div>
+  <div class="glass-strong rounded-2xl p-6 flex flex-col" style="height:56vh"><div class="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 font-semibold">${COACH_MODES[cm].emoji} ${COACH_MODES[cm].name} <span class="text-xs font-normal" style="color:var(--muted)">· ${COACH_MODES[cm].desc}</span></div>
   <div id="chatLog" class="flex-1 space-y-4 overflow-y-auto pr-1"></div>
-  <div class="mt-3 flex flex-wrap gap-2">${['How can I save more?','Where am I overspending?','Build me a savings plan','Roast my spending'].map(s=>`<button class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:text-white" data-action="ask" data-q="${esc(s)}">${s}</button>`).join('')}</div>
+  <div class="mt-3 flex flex-wrap gap-2">${['How am I doing this week?','How can I save more?','Where am I overspending?','Roast my spending'].map(s=>`<button class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:text-white" data-action="ask" data-q="${esc(s)}">${s}</button>`).join('')}</div>
   <form id="chatForm" class="mt-3 flex items-center gap-2 glass rounded-xl px-3 py-2"><input id="chatInput" class="flex-1 bg-transparent text-sm outline-none" placeholder="Ask your AI coach…"><button class="btn btn-primary !p-2">→</button></form></div></div>`;
 }
 
@@ -580,6 +728,21 @@ function studentView(){
   <div id="svStatus"></div>
   <div class="glass rounded-2xl p-6"><form id="svForm" class="space-y-4"><div><label class="label">University / Institution</label><input name="university" class="input" required></div><div><label class="label">Student email</label><input name="student_email" type="email" class="input" placeholder="you@university.edu" required></div><div><label class="label">Student document (optional)</label><input name="document" type="file" accept="image/*,application/pdf" class="input"></div><button class="btn btn-primary text-sm">Submit for verification</button></form></div>
   <p class="text-xs text-slate-500">An admin reviews requests. On approval your plan upgrades to Pro automatically.</p></div>`;
+}
+
+function squadView(){
+  const has=PLAN_ORDER.indexOf(ME.plan)>=PLAN_ORDER.indexOf('premium');
+  const me={name:(ME.first_name||'You'),streak:userStreak(),checkins:weekCheckins(),you:true};
+  const others=[{name:'Ava',streak:12,checkins:11},{name:'Liam',streak:4,checkins:6},{name:'Noah',streak:0,checkins:2}];
+  const members=[me,...others].sort((a,b)=>b.streak-a.streak);
+  const board=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏆 Squad leaderboard</h3><span class="text-xs" style="color:var(--muted)">This week</span></div>
+    <div class="space-y-2">${members.map((mb,i)=>{const h=streakHealth(mb.streak);return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${mb.you?'box-shadow:0 0 0 1px var(--accent2)':''}"><span class="w-6 text-center text-sm font-bold" style="color:var(--muted)">${i+1}</span><span class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${esc(mb.name[0].toUpperCase())}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(mb.name)}${mb.you?' <span class="text-[10px]" style="color:var(--muted)">(you)</span>':''}</p><p class="text-[11px]" style="color:var(--muted)">${mb.checkins} check-ins</p></div><span class="text-sm font-bold" style="color:${h.c}">${h.e} ${mb.streak}</span>${mb.you?'':`<button data-action="support" data-name="${esc(mb.name)}" class="rounded-lg px-2.5 py-1 text-xs" style="background:var(--glass)" title="Send support">👏</button>`}</div>`;}).join('')}</div></div>`;
+  const challenge=`<div class="glass-strong rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">⚔️ Weekly group challenge</h3><span class="rounded-full px-2 py-0.5 text-[10px]" style="background:var(--glass);color:var(--muted)">5 in</span></div><p class="mt-2 text-sm" style="color:var(--muted)">7-Day Streak Showdown — whoever keeps the longest streak this week wins bragging rights.</p><div class="mt-3 flex gap-2"><button class="btn btn-primary !py-2 text-sm" data-action="joinChallenge">Join challenge</button><button class="btn btn-ghost !py-2 text-sm" data-action="copyInvite">🔗 Copy invite link</button></div></div>`;
+  const inner = has
+    ? `${challenge}${board}<p class="text-xs text-slate-500">Demo: your squad is sample data. With a live account, squads sync across real friends, invites and challenges.</p>`
+    : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div><h3 class="font-semibold">👥 Accountability squads <span class="text-base">🔒</span></h3><p class="mt-1 text-sm text-slate-400">Groups of 2–10, leaderboards, support and 1v1/group challenges are a Premium feature.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">Unlock Premium</a></div>
+       <div class="relative overflow-hidden rounded-2xl"><div style="filter:blur(5px);pointer-events:none">${board}</div></div>`;
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Squad</h1><p class="mt-1 text-sm text-slate-400">Stay accountable with friends — a little pressure goes a long way.</p></div>${inner}</div>`;
 }
 
 function plansView(){
@@ -777,7 +940,7 @@ async function render(){
     if(DEMO_MODE){AIUSED=0;} else {
     const {data:u}=await sb.from('ai_usage').select('count').eq('user_id',SESSION.user.id).eq('day',todayISO()).maybeSingle();
     AIUSED=u?.count||0;}
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,squad:squadView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route,(views[route]||dashboardView)());
     window.scrollTo(0,0);
     if(route==='dashboard'){drawSpend('monthly');drawCat();if(ME.plan==='premium'||ME.plan==='business')loadAiInsights();}
@@ -810,6 +973,10 @@ document.addEventListener('click',async(e)=>{
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
     else if(act==='logout'){if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
+    else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
+    else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
+    else if(act==='pauseMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const m=(g.missions||[]).find(x=>x.id===id);if(m){m.status=m.status==='paused'?'active':'paused';break;}}render();}
+    else if(act==='delMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const i=(g.missions||[]).findIndex(x=>x.id===id);if(i>-1){g.missions.splice(i,1);break;}}const o=mlogs();delete o[id];setMlogs(o);toast('Mission removed');render();}
     else if(act==='delGoal'){const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted (demo)');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
     else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done){DEMO_ME.xp=(DEMO_ME.xp||0)+100;toast('🎉 Goal completed! +100 XP (demo)');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}}
     else if(act==='delExp'){const eid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_EXPENSES.findIndex(x=>x.id===eid);if(idx>-1)DEMO_EXPENSES.splice(idx,1);render();}else{await sb.from('expenses').delete().eq('id',eid);render();}}
@@ -821,6 +988,10 @@ document.addEventListener('click',async(e)=>{
     else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
     else if(act==='setBg'){applyBg(a.getAttribute('data-bg'));if(!DEMO_MODE){await sb.from('profiles').update({bg:ME.bg}).eq('id',SESSION.user.id);}render();}
     else if(act==='demoPlan'){const pl=a.getAttribute('data-plan');if(DEMO_MODE){DEMO_ME.plan=pl;ME.plan=pl;toast('Now previewing '+PLANS[pl].name+' plan (demo)');render();}else{toast('Upgrades are handled by an admin or via student verification.');}}
+    else if(act==='shareCard'){try{makeShareCard();toast('Progress card downloaded 📤');}catch(e){toast('Could not generate card','err');}}
+    else if(act==='support'){toast('👏 You sent support to '+a.getAttribute('data-name')+'!');}
+    else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
+    else if(act==='copyInvite'){const link=location.origin+location.pathname+'#invite';try{await navigator.clipboard.writeText(link);toast('🔗 Invite link copied!');}catch(e){toast('Invite link: '+link);}}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
     else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const u=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+u;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));const dk='goalify_chaldone_'+u;const dn=JSON.parse(localStorage.getItem(dk)||'[]');if(!dn.includes(k))dn.push(k);localStorage.setItem(dk,JSON.stringify(dn));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP earned!');render();}
@@ -894,6 +1065,34 @@ document.addEventListener('submit',async(e)=>{
   }catch(err){toast(err.message||'Error','err');}
 });
 
+// mission modal
+function openMissionModal(goalId){
+  const g=GOALS.find(x=>x.id===goalId);if(!g){toast('Goal not found','err');return;}
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="mmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New mission</h2><button id="mmX" class="text-slate-400">✕</button></div>
+    <p class="mt-1 text-sm" style="color:var(--muted)">Drives goal: <b>${esc(g.name)}</b></p>
+    <div class="mt-4 space-y-3">
+      <div><label class="label">Mission</label><input id="mmTitle" class="input" placeholder="e.g. Workout 3× per week"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Cadence</label><select id="mmCad" class="input"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
+        <div><label class="label">Target / week</label><input id="mmTarget" type="number" class="input" value="5" min="1" max="7"></div>
+      </div>
+      <div><label class="label">Difficulty</label><select id="mmDiff" class="input"><option value="easy">Easy · +5 XP</option><option value="medium" selected>Medium · +10 XP</option><option value="hard">Hard · +20 XP</option></select></div>
+      <p id="mmErr" class="text-sm text-red-300"></p>
+      <button id="mmSave" class="btn btn-primary w-full">Add mission</button>
+    </div></div></div>`;
+  const close=()=>m.innerHTML='';
+  $('#mmBack').addEventListener('click',e=>{if(e.target.id==='mmBack')close();});
+  $('#mmX').addEventListener('click',close);
+  $('#mmSave').addEventListener('click',()=>{
+    const title=$('#mmTitle').value.trim();if(!title){$('#mmErr').textContent='Enter a mission name.';return;}
+    const cad=$('#mmCad').value;
+    g.missions=g.missions||[];
+    g.missions.push({id:'m'+Date.now(),goal_id:goalId,title,cadence:cad,perWeek:+$('#mmTarget').value||(cad==='daily'?5:1),difficulty:$('#mmDiff').value,status:'active'});
+    close();toast('Mission added 🎯');render();
+  });
+}
+
 // goal modal
 function openGoalModal(){
   const EMO=['🎯','📱','💻','🚗','✈️','🏠','🛡️','🎓','💍','🎮','🏝️','💰'];let emo='🎯',file=null;
@@ -945,6 +1144,7 @@ loadTheme();
     // restore saved avatar; seed a streak so badges feel alive in the demo
     ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
     if(!localStorage.getItem('goalify_streak_demo')){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);localStorage.setItem('goalify_streak_demo',JSON.stringify({count:6,last:y}));}
+    seedDemoMissions();
     if(!localStorage.getItem('goalify_bg'))localStorage.setItem('goalify_bg','aurora');
     applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
     render(); return;

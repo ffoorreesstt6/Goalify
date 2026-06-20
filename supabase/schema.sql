@@ -253,6 +253,68 @@ alter table public.profiles add column if not exists bg text default 'none';
 alter table public.profiles add column if not exists avatar_url text;
 
 -- ============================================================
+-- V2: Goals → Missions → Check-ins hierarchy
+-- ============================================================
+alter table public.goals add column if not exists status text default 'active';
+
+create table if not exists public.missions (
+  id uuid primary key default gen_random_uuid(),
+  goal_id uuid references public.goals(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  title text not null,
+  cadence text default 'daily',        -- 'daily' | 'weekly'
+  per_week int default 5,
+  difficulty text default 'medium',    -- 'easy' | 'medium' | 'hard'
+  status text default 'active',        -- 'active' | 'paused'
+  created_at timestamptz default now()
+);
+alter table public.missions enable row level security;
+drop policy if exists "missions_own" on public.missions;
+create policy "missions_own" on public.missions for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.mission_checkins (
+  id uuid primary key default gen_random_uuid(),
+  mission_id uuid references public.missions(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  day date not null,
+  created_at timestamptz default now(),
+  unique (mission_id, day)
+);
+alter table public.mission_checkins enable row level security;
+drop policy if exists "checkins_own" on public.mission_checkins;
+create policy "checkins_own" on public.mission_checkins for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
+-- V2: Accountability squads (Premium)
+-- ============================================================
+create table if not exists public.squads (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  owner uuid references auth.users(id) on delete cascade,
+  invite_code text unique default substr(md5(random()::text),1,8),
+  created_at timestamptz default now()
+);
+create table if not exists public.squad_members (
+  squad_id uuid references public.squads(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  joined_at timestamptz default now(),
+  primary key (squad_id, user_id)
+);
+alter table public.squads enable row level security;
+alter table public.squad_members enable row level security;
+drop policy if exists "squad_member_read" on public.squads;
+create policy "squad_member_read" on public.squads for select
+  using (exists (select 1 from public.squad_members m where m.squad_id = id and m.user_id = auth.uid()) or auth.uid() = owner);
+drop policy if exists "squad_owner_all" on public.squads;
+create policy "squad_owner_all" on public.squads for all
+  using (auth.uid() = owner) with check (auth.uid() = owner);
+drop policy if exists "members_self" on public.squad_members;
+create policy "members_self" on public.squad_members for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
 -- DONE. Next: make yourself an admin AFTER you sign up once:
 --   update public.profiles set role='admin' where email = 'YOUR_EMAIL_HERE';
 -- ============================================================
