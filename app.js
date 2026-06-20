@@ -95,10 +95,12 @@ const PERSONAS={
 const COUNTRIES=["Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)","Congo (Kinshasa)","Costa Rica","Côte d'Ivoire","Croatia","Cuba","Cyprus","Czechia","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
 
 const CHALLENGES=[
-  {key:'save100',title:'Save €100 Challenge',desc:'Put aside €100 in two weeks.',emoji:'💰',xp:100},
-  {key:'nodelivery',title:'No Delivery Week',desc:'No food delivery for 7 days.',emoji:'🍳',xp:60},
-  {key:'nocoffee',title:'No Coffee Week',desc:'Skip the café for a week.',emoji:'☕',xp:50},
-  {key:'noimpulse',title:'No Impulse-Buy',desc:'No non-essentials for 10 days.',emoji:'🛑',xp:80},
+  {key:'cook1',title:'Cook At Home Today',desc:'Cook all your meals today.',emoji:'🍳',days:1,xp:15},
+  {key:'nospend1',title:'No-Spend Day',desc:'Spend €0 for 24 hours.',emoji:'🛑',days:1,xp:20},
+  {key:'nocoffee7',title:'No Coffee Week',desc:'Skip the café for 7 days.',emoji:'☕',days:7,xp:60},
+  {key:'nodelivery7',title:'No Delivery Week',desc:'No food delivery for 7 days.',emoji:'🥡',days:7,xp:60},
+  {key:'save100_14',title:'Save €100 in 14 Days',desc:'Stash €100 over two weeks.',emoji:'💰',days:14,xp:150},
+  {key:'noimpulse14',title:'No Impulse-Buy',desc:'No non-essentials for 14 days.',emoji:'🧊',days:14,xp:120},
 ];
 
 // -------------------- AI coach personalities --------------------
@@ -202,7 +204,12 @@ function whatToReduce(){
 function streakState(){try{return JSON.parse(localStorage.getItem('goalify_streak_'+uid()))||{count:0,last:null};}catch(e){return{count:0,last:null};}}
 function setStreakState(s){localStorage.setItem('goalify_streak_'+uid(),JSON.stringify(s));}
 function doCheckIn(){const s=streakState(),t=todayISO();if(s.last===t)return{...s,already:true};const y=new Date(Date.now()-864e5).toISOString().slice(0,10);s.count=(s.last===y?s.count+1:1);s.last=t;setStreakState(s);return{...s,already:false};}
-function completedChals(){try{return JSON.parse(localStorage.getItem('goalify_chaldone_'+uid()))||[];}catch(e){return[];}}
+// challenges v2 — proof-based, XP only after admin approval (no instant complete / no farming)
+function chalState(){try{return JSON.parse(localStorage.getItem('goalify_chalv2_'+uid()))||[];}catch(e){return[];}}
+function setChalState(a){localStorage.setItem('goalify_chalv2_'+uid(),JSON.stringify(a));}
+function joinedChal(key){return chalState().find(c=>c.key===key);}
+function chalDayNum(c){return Math.min((CHALLENGES.find(x=>x.key===c.key)||{days:1}).days,Math.floor((Date.now()-new Date(c.start))/864e5)+1);}
+function completedChals(){return chalState().filter(c=>c.status==='approved').map(c=>c.key);}
 function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done=completedChals(),set=new Set();
   if(GOALS.length>0)set.add('starter');
   if(s.count>=7)set.add('saver7');
@@ -315,6 +322,8 @@ function demoCoachReply(q,mode){
 // -------------------- icons --------------------
 const LOGO='<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z" stroke-linejoin="round"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const brand=(href='#home')=>`<a href="${href}" class="flex items-center gap-2"><span class="flex h-9 w-9 items-center justify-center rounded-xl text-white" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">${LOGO}</span><span class="text-xl font-extrabold">Goal<span class="gtext">ify</span></span></a>`;
+// subscription badge (none for Free)
+function planBadge(plan,size='xs'){const map={pro:['PRO','#3b82f6'],premium:['PREMIUM','#a855f7'],business:['BUSINESS','#f59e0b']};const b=map[plan];if(!b)return '';return `<span class="rounded-full px-2 py-0.5 font-bold text-white text-${size}" style="background:${b[1]};letter-spacing:.04em">${b[0]}</span>`;}
 
 // ============================================================
 // VIEWS — OAUTH AUTH
@@ -547,7 +556,7 @@ function shell(route,inner){
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
-    <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
+    <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><button class="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
   <div class="lg:pl-64"><div class="flex items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">${brand('#app/dashboard')}<select onchange="location.hash='#app/'+this.value" class="input !w-auto !py-1.5 text-sm">${NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[1]}</option>`).join('')}</select></div><main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
 }
@@ -628,7 +637,7 @@ function dashboardView(){
   </div>
   <div class="grid gap-6 lg:grid-cols-3"><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(g,'Goalify Score','/100')}</div><div class="glass rounded-2xl p-6 flex items-center justify-center">${ring(h.v,'Money Health',h.r)}</div>
     <div class="glass-strong rounded-2xl p-6 flex flex-col"><div class="mb-3 flex items-center gap-2 font-semibold">✨ AI Insights ${!has('premium')?'<span class="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">Premium</span>':''}</div>${has('premium')?`<ul class="flex-1 space-y-3 text-sm text-slate-400" id="aiInsights"><li>Generating…</li></ul>`:`<p class="flex-1 text-sm text-slate-400">Upgrade to Premium for AI-generated insights on your spending and goals.</p>`}<a href="#app/ai" class="mt-4 text-sm font-medium text-accent-purple hover:underline">Open AI Coach →</a></div></div>
-  <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Spending</h3><div class="flex gap-1 rounded-xl bg-white/5 p-1 text-xs">${['daily','weekly','monthly','yearly','fiveyear'].map((t,i)=>`<button data-action="tf" data-tf="${t}" class="rounded-lg px-3 py-1.5 ${i===2?'text-white':'text-slate-400'}" style="${i===2?'background:linear-gradient(90deg,#3b82f6,#8b5cf6)':''}">${t==='fiveyear'?'5-Year':t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div><canvas id="spendChart" height="100"></canvas></div>
+  <div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
   <div class="grid gap-6 lg:grid-cols-2"><div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Spending by category</h3><canvas id="catChart" height="180"></canvas></div>
     <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Goal progress</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div>${active.length?active.map(gg=>{const p=pct(gg.saved_amount,gg.target_amount);return `<div class="mb-4"><div class="mb-1 flex justify-between text-sm"><span>${gg.emoji||'🎯'} ${esc(gg.name)}</span><span class="text-slate-400">${fmt(gg.saved_amount)} / ${fmt(gg.target_amount)}</span></div><div class="h-2.5 rounded-full bg-white/10 overflow-hidden"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div>`;}).join(''):`<p class="py-8 text-center text-sm text-slate-400">No active goals. <a href="#app/goals" class="text-accent-purple hover:underline">Create one</a>.</p>`}</div></div>`;
   // PRO+ predictions
@@ -658,13 +667,16 @@ function missionRow(m){
 }
 function goalCard(g){
   const prog=goalProgress(g),lvl=goalLevel(g),ms=g.missions||[];
-  const lvlPct=lvl.next?Math.round((lvl.xp-lvl.prev)/(lvl.next-lvl.prev)*100):100;
   const canAddMission = PLANS[ME.plan].goalLimit!==-1 ? ms.length<2 : true; // free: 2 missions/goal
-  return `<div class="glass rounded-2xl overflow-hidden anim">${g.image_url?`<img src="${esc(g.image_url)}" class="h-28 w-full object-cover">`:''}
+  const canDelete = ME.plan!=='free'; // Free plan: archive only, no delete
+  const archived = g.status==='archived';
+  return `<div class="glass rounded-2xl overflow-hidden anim" style="${archived?'opacity:.6':''}">${g.image_url?`<img src="${esc(g.image_url)}" class="h-28 w-full object-cover">`:''}
   <div class="p-5">
     <div class="flex items-start justify-between gap-2">
-      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':g.status==='paused'?'Paused':'Active'}</span></div></div>
-      <div class="flex items-center gap-2"><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx} ${lvl.name}</span><button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400">🗑</button></div>
+      <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><h3 class="font-semibold leading-tight">${esc(g.name)}</h3><span class="text-xs ${g.completed?'text-emerald-400':''}" style="${g.completed?'':'color:var(--muted)'}">${g.completed?'✓ Completed':archived?'📦 Archived':'Active'}</span></div></div>
+      <div class="flex items-center gap-2"><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass)">${lvl.emoji} Lv.${lvl.idx} ${lvl.name}</span>
+      <button data-action="archiveGoal" data-id="${g.id}" class="text-sm" style="color:var(--muted)" title="${archived?'Restore':'Archive'}">${archived?'♻️':'📦'}</button>
+      ${canDelete?`<button data-action="delGoal" data-id="${g.id}" class="text-slate-400 hover:text-red-400" title="Delete">🗑</button>`:''}</div>
     </div>
     <div class="mt-4"><div class="mb-1 flex justify-between text-xs" style="color:var(--muted)"><span>Goal progress</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
     ${g.target_amount?`<div class="mt-3 flex items-center gap-2"><input type="number" class="input !py-1.5 text-sm" placeholder="Add €" id="c-${g.id}"><button class="btn btn-primary !px-3 !py-1.5 text-sm shrink-0" data-action="contrib" data-id="${g.id}">Save</button><span class="text-xs shrink-0" style="color:var(--muted)">${fmt(g.saved_amount)}/${fmt(g.target_amount)}</span></div>`:''}
@@ -675,16 +687,16 @@ function goalCard(g){
   </div></div>`;
 }
 function goalsView(){
-  const limit=PLANS[ME.plan].goalLimit, active=GOALS.filter(g=>!g.completed).length, atLimit=limit!==-1&&active>=limit;
-  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Goals</h1><p class="mt-1 text-sm text-slate-400">Long-term goals, broken into weekly missions you check in on. ${limit===-1?'Unlimited goals.':active+' / '+limit+' goals (Free).'}</p></div><button class="btn btn-primary !py-2.5 text-sm" data-action="newGoal" ${atLimit?'disabled':''}>+ New goal</button></div>
-  ${atLimit?`<div class="glass rounded-2xl p-5 flex items-center justify-between gap-4" style="border:1px solid var(--border)"><p class="text-sm text-slate-400">🔒 Free plan limit of ${limit} goals reached. Upgrade for unlimited goals & missions.</p><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">See plans</a></div>`:''}
+  const limit=PLANS[ME.plan].goalLimit, total=GOALS.length, atLimit=limit!==-1&&total>=limit;
+  return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Goals</h1><p class="mt-1 text-sm text-slate-400">Long-term goals, broken into weekly missions you check in on. ${limit===-1?'Unlimited goals.':total+' / '+limit+' goals used (Free — archived goals still count).'}</p></div><button class="btn btn-primary !py-2.5 text-sm" data-action="newGoal" ${atLimit?'disabled':''}>+ New goal</button></div>
+  ${atLimit?`<div class="glass rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--accent2)"><div><p class="text-sm font-semibold">🔒 You've used all ${limit} Free goals</p><p class="mt-0.5 text-sm text-slate-400">Upgrade for <b>unlimited goals & missions</b>, AI insights and more.</p></div><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">Upgrade</a></div>`:''}
   ${GOALS.length===0?`<div class="glass rounded-2xl p-16 text-center"><div class="text-5xl">🎯</div><h3 class="mt-4 text-lg font-semibold">No goals yet</h3><p class="mt-1 text-sm text-slate-400">Create your first goal, then add missions that drive it.</p><button class="btn btn-primary mt-5 text-sm" data-action="newGoal">+ Create a goal</button></div>`:
   `<div class="grid gap-5 lg:grid-cols-2">${GOALS.map(goalCard).join('')}</div>`}</div>`;
 }
 
 function analyticsView(){
   return `<div class="space-y-5"><div><h1 class="text-3xl font-bold">Analytics</h1><p class="mt-1 text-sm text-slate-400">Track expenses and explore spending across every timeframe.</p></div>
-  <div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold">Spending</h3><div class="flex gap-1 rounded-xl bg-white/5 p-1 text-xs">${['daily','weekly','monthly','yearly','fiveyear'].map((t,i)=>`<button data-action="tf" data-tf="${t}" class="rounded-lg px-2.5 py-1 ${i===2?'text-white':'text-slate-400'}" style="${i===2?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':''}">${t==='fiveyear'?'5Y':t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div><div style="height:160px"><canvas id="spendChart"></canvas></div></div>
+  <div class="glass rounded-2xl p-4 sm:p-5"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:42vh"><canvas id="spendChart"></canvas></div></div>
   <div class="grid gap-5 lg:grid-cols-3"><div class="glass rounded-2xl p-5 h-fit"><h3 class="font-semibold">Add expense</h3><form id="expForm" class="mt-3 space-y-2.5"><div><label class="label">Amount (€)</label><input name="amount" type="number" step="0.01" class="input" required></div><div><label class="label">Category</label><select name="category" class="input">${Object.keys(CATS).map(c=>`<option value="${c}">${CATS[c].e} ${CATS[c].l}</option>`).join('')}</select></div><div><label class="label">Merchant</label><input name="merchant" class="input" placeholder="optional"></div><div><label class="label">Date</label><input name="date" type="date" class="input" value="${todayISO()}"></div><button class="btn btn-primary w-full text-sm">+ Add expense</button></form></div>
   <div class="glass rounded-2xl p-5 lg:col-span-2"><h3 class="font-semibold">Recent transactions</h3>${EXPENSES.length===0?`<p class="py-10 text-center text-sm text-slate-400">No transactions yet.</p>`:`<div class="mt-3 divide-y divide-white/5 max-h-[340px] overflow-y-auto pr-1">${EXPENSES.slice(0,50).map(e=>{const m=CATS[e.category]||CATS.other,inc=e.category==='income';return `<div class="flex items-center gap-3 py-2.5"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-lg">${m.e}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(e.merchant||m.l)}</p><p class="text-xs text-slate-400">${m.l} · ${e.spent_at}</p></div><span class="text-sm font-semibold ${inc?'text-emerald-400':''}">${inc?'+':'-'}${fmt(e.amount)}</span><button data-action="delExp" data-id="${e.id}" class="text-slate-400 hover:text-red-400">🗑</button></div>`;}).join('')}</div>`}</div></div></div>`;
 }
@@ -708,40 +720,58 @@ function aiView(){
   <form id="chatForm" class="mt-3 flex items-center gap-2 glass rounded-xl px-3 py-2"><input id="chatInput" class="flex-1 bg-transparent text-sm outline-none" placeholder="Ask your AI coach…"><button class="btn btn-primary !p-2">→</button></form></div></div>`;
 }
 
+let CHAL_FILTER=0; // 0=all, 1, 7, 14
+function activeChalCard(c){
+  const def=CHALLENGES.find(x=>x.key===c.key);if(!def)return '';
+  const day=chalDayNum(c),proofs=c.proofs||[],done=proofs.length,ready=day>=def.days&&done>=def.days;
+  const status=c.status;
+  let badge='',action='';
+  if(status==='approved'){badge='<span class="text-emerald-400">✓ Approved · +'+def.xp+' XP</span>';}
+  else if(status==='rejected'){badge='<span class="text-red-400">✗ Rejected — no XP</span>';}
+  else if(status==='pending'){badge='<span class="text-amber-300">⏳ Awaiting admin review</span>';action=`<span class="text-xs" style="color:var(--muted)">Proof submitted — XP is granted only after approval.</span>`;}
+  else{badge=`<span style="color:var(--muted)">Day ${day} of ${def.days} · ${done} proof${done===1?'':'s'} logged</span>`;
+    action=`<div class="mt-3 flex flex-wrap gap-2"><button class="btn btn-ghost !py-2 text-sm" data-action="proofChal" data-key="${c.key}">+ Log today's proof</button>${ready?`<button class="btn btn-primary !py-2 text-sm" data-action="reviewChal" data-key="${c.key}">Submit for review</button>`:''}<button class="btn btn-ghost !py-2 text-sm" data-action="leaveChal" data-key="${c.key}">Leave</button></div>`;}
+  const last=proofs.slice(-2).reverse();
+  return `<div class="glass rounded-2xl p-5"><div class="flex items-start justify-between gap-2"><div class="flex items-center gap-3"><span class="text-2xl">${def.emoji}</span><div><h4 class="font-semibold leading-tight">${def.title}</h4><p class="text-[11px]" style="color:var(--muted)">${def.days}-day challenge · +${def.xp} XP</p></div></div><span class="text-xs">${badge}</span></div>
+    <div class="mt-3 h-2 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${Math.min(100,Math.round(done/def.days*100))}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div>
+    ${last.length?`<div class="mt-3 space-y-1">${last.map(p=>`<p class="rounded-lg p-2 text-xs" style="background:var(--glass);color:var(--muted)">📝 ${esc(p.day)}: ${esc(p.note||'')}${p.saved?` · saved €${esc(String(p.saved))}`:''}</p>`).join('')}</div>`:''}
+    ${action}</div>`;
+}
 function challengesView(){
   const {level,inLvl}=levelFromXp(ME.xp);
-  const activeKeys=JSON.parse(localStorage.getItem('goalify_chal_'+(DEMO_MODE?'demo':SESSION.user.id))||'[]');
   const st=streakState(),earned=earnedBadges(),checkedToday=st.last===todayISO();
-  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Challenges</h1><p class="mt-1 text-sm text-slate-400">Build habits, earn real XP, level up.</p></div>
+  const joined=chalState(),joinedKeys=joined.map(c=>c.key);
+  const cats=CHALLENGES.filter(t=>!CHAL_FILTER||t.days===CHAL_FILTER);
+  const filters=[[0,'All'],[1,'1 day'],[7,'7 days'],[14,'14 days']];
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Challenges</h1><p class="mt-1 text-sm text-slate-400">Real challenges with proof — XP is granted only after your evidence is reviewed. No instant completion.</p></div>
   <div class="grid gap-6 lg:grid-cols-2">
     <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-extrabold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${level}</span><div><p class="font-semibold">Level ${level}</p><p class="text-sm text-slate-400">${ME.xp||0} XP total</p></div></div><div class="w-full sm:w-56"><div class="mb-1 flex justify-between text-xs text-slate-400"><span>${inLvl} XP</span><span>100 XP</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>
     <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="text-4xl">🔥</span><div><p class="text-2xl font-extrabold">${st.count} day${st.count===1?'':'s'}</p><p class="text-sm text-slate-400">Check-in streak</p></div></div><button class="btn ${checkedToday?'btn-ghost':'btn-primary'} !py-2.5 text-sm" data-action="checkIn" ${checkedToday?'disabled':''}>${checkedToday?'✓ Checked in today':'Check in (+10 XP)'}</button></div>
   </div>
   <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Badges</h3><span class="text-xs" style="color:var(--muted)">${earned.size} / ${BADGES.length} earned</span></div>
     <div class="grid gap-4 grid-cols-3 sm:grid-cols-6">${BADGES.map(b=>{const on=earned.has(b.key);return `<div class="flex flex-col items-center text-center" title="${esc(b.desc)}"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${on?'':'grayscale'}" style="background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':'opacity:.45'}">${b.emoji}</span><p class="mt-2 text-[11px] font-medium ${on?'':'opacity-50'}">${b.name}</p></div>`;}).join('')}</div></div>
-  <div><h3 class="mb-3 font-semibold">Weekly challenges</h3><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${CHALLENGES.map(t=>{const joined=activeKeys.includes(t.key);return `<div class="glass rounded-2xl p-6 flex flex-col"><div class="text-3xl">${t.emoji}</div><h3 class="mt-3 font-semibold">${t.title}</h3><p class="mt-1 flex-1 text-sm text-slate-400">${t.desc}</p><div class="mt-3 text-xs text-accent-violet">+${t.xp} XP</div>${joined?`<button class="btn btn-primary mt-3 w-full !py-2 text-sm" data-action="doneChal" data-key="${t.key}" data-xp="${t.xp}">✓ Complete (+${t.xp} XP)</button>`:`<button class="btn btn-ghost mt-3 w-full !py-2 text-sm" data-action="startChal" data-key="${t.key}">Start</button>`}</div>`;}).join('')}</div></div></div>`;
+  ${joined.length?`<div><h3 class="mb-3 font-semibold">Your active challenges</h3><div class="grid gap-4 md:grid-cols-2">${joined.map(activeChalCard).join('')}</div></div>`:''}
+  <div><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Challenge catalog</h3><div class="grid grid-cols-4 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${filters.map(f=>`<button data-action="chalFilter" data-d="${f[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${CHAL_FILTER===f[0]?'text-white':''}" style="${CHAL_FILTER===f[0]?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${f[1]}</button>`).join('')}</div></div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${cats.map(t=>{const isJoined=joinedKeys.includes(t.key);return `<div class="glass rounded-2xl p-5 flex flex-col"><div class="flex items-center justify-between"><span class="text-3xl">${t.emoji}</span><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" style="background:var(--glass);color:var(--muted)">${t.days} day${t.days>1?'s':''}</span></div><h3 class="mt-3 font-semibold">${t.title}</h3><p class="mt-1 flex-1 text-sm text-slate-400">${t.desc}</p><div class="mt-3 text-xs text-accent-violet">+${t.xp} XP on approval</div><button class="btn ${isJoined?'btn-ghost':'btn-primary'} mt-3 w-full !py-2 text-sm" data-action="joinChal" data-key="${t.key}" ${isJoined?'disabled':''}>${isJoined?'In progress':'Start challenge'}</button></div>`;}).join('')}</div></div></div>`;
 }
 
 function studentView(){
-  return `<div class="space-y-6 max-w-2xl"><div><h1 class="text-3xl font-bold">Student Verification</h1><p class="mt-1 text-sm text-slate-400">Verify your student status to unlock Pro for free.</p></div>
-  ${ME.plan==='pro'&&ME.student_status&&ME.student_status!=='no'?'':''}
+  return `<div class="space-y-6 max-w-2xl"><div><h1 class="text-3xl font-bold">Student Verification</h1><p class="mt-1 text-sm text-slate-400">Verify your student status to unlock <b class="text-white">Pro free for 2 years</b>. All fields are required.</p></div>
   <div id="svStatus"></div>
-  <div class="glass rounded-2xl p-6"><form id="svForm" class="space-y-4"><div><label class="label">University / Institution</label><input name="university" class="input" required></div><div><label class="label">Student email</label><input name="student_email" type="email" class="input" placeholder="you@university.edu" required></div><div><label class="label">Student document (optional)</label><input name="document" type="file" accept="image/*,application/pdf" class="input"></div><button class="btn btn-primary text-sm">Submit for verification</button></form></div>
-  <p class="text-xs text-slate-500">An admin reviews requests. On approval your plan upgrades to Pro automatically.</p></div>`;
+  <div class="glass rounded-2xl p-6"><form id="svForm" class="space-y-4"><div><label class="label">University / Institution *</label><input name="university" class="input" required></div><div><label class="label">Student email *</label><input name="student_email" type="email" class="input" placeholder="you@university.edu" required></div><div><label class="label">Proof document * (student ID or enrolment letter)</label><input name="document" type="file" accept="image/*,application/pdf" class="input" required></div><button class="btn btn-primary text-sm">Submit for verification</button></form></div>
+  <p class="text-xs text-slate-500">An admin reviews every request. On approval your plan upgrades to Pro for 2 years automatically.</p></div>`;
 }
 
 function squadView(){
   const has=PLAN_ORDER.indexOf(ME.plan)>=PLAN_ORDER.indexOf('premium');
-  const me={name:(ME.first_name||'You'),streak:userStreak(),checkins:weekCheckins(),you:true};
-  const others=[{name:'Ava',streak:12,checkins:11},{name:'Liam',streak:4,checkins:6},{name:'Noah',streak:0,checkins:2}];
-  const members=[me,...others].sort((a,b)=>b.streak-a.streak);
-  const board=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏆 Squad leaderboard</h3><span class="text-xs" style="color:var(--muted)">This week</span></div>
-    <div class="space-y-2">${members.map((mb,i)=>{const h=streakHealth(mb.streak);return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${mb.you?'box-shadow:0 0 0 1px var(--accent2)':''}"><span class="w-6 text-center text-sm font-bold" style="color:var(--muted)">${i+1}</span><span class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${esc(mb.name[0].toUpperCase())}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(mb.name)}${mb.you?' <span class="text-[10px]" style="color:var(--muted)">(you)</span>':''}</p><p class="text-[11px]" style="color:var(--muted)">${mb.checkins} check-ins</p></div><span class="text-sm font-bold" style="color:${h.c}">${h.e} ${mb.streak}</span>${mb.you?'':`<button data-action="support" data-name="${esc(mb.name)}" class="rounded-lg px-2.5 py-1 text-xs" style="background:var(--glass)" title="Send support">👏</button>`}</div>`;}).join('')}</div></div>`;
-  const challenge=`<div class="glass-strong rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">⚔️ Weekly group challenge</h3><span class="rounded-full px-2 py-0.5 text-[10px]" style="background:var(--glass);color:var(--muted)">5 in</span></div><p class="mt-2 text-sm" style="color:var(--muted)">7-Day Streak Showdown — whoever keeps the longest streak this week wins bragging rights.</p><div class="mt-3 flex gap-2"><button class="btn btn-primary !py-2 text-sm" data-action="joinChallenge">Join challenge</button><button class="btn btn-ghost !py-2 text-sm" data-action="copyInvite">🔗 Copy invite link</button></div></div>`;
+  // Real social requires the live backend + real friends. No fake members.
+  const yourCard=`<div class="glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Your stats</h3>
+    <div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);box-shadow:0 0 0 1px var(--accent2)"><span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${esc((ME.first_name||'Y')[0].toUpperCase())}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(ME.first_name||'You')} ${planBadge(ME.plan)}</p><p class="text-[11px]" style="color:var(--muted)">${weekCheckins()} check-ins this week</p></div><span class="text-sm font-bold" style="color:${streakHealth(userStreak()).c}">${streakHealth(userStreak()).e} ${userStreak()}</span></div></div>`;
+  const empty=`<div class="glass rounded-2xl p-10 text-center"><div class="text-5xl">👥</div><h3 class="mt-4 text-lg font-semibold">No squad members yet</h3><p class="mx-auto mt-1 max-w-sm text-sm text-slate-400">Invite friends to build an accountability squad. Once they join, you'll see a real leaderboard, send support, and run challenges together.</p><button class="btn btn-primary mt-5 text-sm" data-action="copyInvite">🔗 Copy invite link</button></div>`;
+  const challenge=`<div class="glass-strong rounded-2xl p-6"><h3 class="font-semibold">⚔️ Group challenges</h3><p class="mt-2 text-sm" style="color:var(--muted)">Run 1v1 or group streak challenges with your squad. Available once you have at least one squad member.</p></div>`;
   const inner = has
-    ? `${challenge}${board}<p class="text-xs text-slate-500">Demo: your squad is sample data. With a live account, squads sync across real friends, invites and challenges.</p>`
-    : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div><h3 class="font-semibold">👥 Accountability squads <span class="text-base">🔒</span></h3><p class="mt-1 text-sm text-slate-400">Groups of 2–10, leaderboards, support and 1v1/group challenges are a Premium feature.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">Unlock Premium</a></div>
-       <div class="relative overflow-hidden rounded-2xl"><div style="filter:blur(5px);pointer-events:none">${board}</div></div>`;
+    ? `${yourCard}${empty}${challenge}<p class="text-xs text-slate-500">Real followers, friends and leaderboards populate from the database once friends join — no placeholder numbers.</p>`
+    : `<div class="glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div><h3 class="font-semibold">👥 Accountability squads <span class="text-base">🔒</span></h3><p class="mt-1 text-sm text-slate-400">Groups of 2–10, real leaderboards, support and 1v1/group challenges are a Premium feature.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">Unlock Premium</a></div>${yourCard}`;
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Squad</h1><p class="mt-1 text-sm text-slate-400">Stay accountable with friends — a little pressure goes a long way.</p></div>${inner}</div>`;
 }
 
@@ -810,14 +840,14 @@ async function adminView(){
 // CHARTS
 // ============================================================
 const isSpend=(e)=>e.category!=='income'&&e.category!=='savings';
-function series(tf){const spend=EXPENSES.filter(isSpend),now=new Date(),out=[];const sum=(a,b)=>spend.filter(e=>{const d=new Date(e.spent_at);return d>=a&&d<=b;}).reduce((s,e)=>s+Number(e.amount),0);
-  if(tf==='daily'){for(let i=13;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=d.toISOString().slice(0,10);out.push([d.toLocaleDateString('en-IE',{day:'numeric',month:'short'}),spend.filter(e=>e.spent_at===k).reduce((s,e)=>s+Number(e.amount),0)]);}}
-  else if(tf==='weekly'){for(let i=11;i>=0;i--){const e=new Date(now);e.setDate(now.getDate()-i*7);const s=new Date(e);s.setDate(e.getDate()-6);out.push(['W'+(12-i),sum(s,e)]);}}
-  else if(tf==='monthly'){for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),e=new Date(now.getFullYear(),now.getMonth()-i+1,0);out.push([d.toLocaleDateString('en-IE',{month:'short'}),sum(d,e)]);}}
-  else if(tf==='yearly'){for(let i=4;i>=0;i--){const y=now.getFullYear()-i;out.push([''+y,spend.filter(e=>new Date(e.spent_at).getFullYear()===y).reduce((s,e)=>s+Number(e.amount),0)]);}}
-  else{const months=new Set(spend.map(e=>e.spent_at.slice(0,7)));const avg=spend.length?spend.reduce((s,e)=>s+Number(e.amount),0)/Math.max(1,months.size):0;for(let i=0;i<=5;i++)out.push([i===0?'Now':'Y+'+i,Math.round(avg*12*i)]);}
+// timeframes: 'month' (last 30 days), 'year' (12 months), 'five' (5 years)
+function series(tf){const spend=EXPENSES.filter(isSpend),now=new Date(),out=[];
+  if(tf==='month'||tf==='daily'){for(let i=29;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=d.toISOString().slice(0,10);out.push([(i%5===0)?d.toLocaleDateString('en-IE',{day:'numeric',month:'short'}):'',spend.filter(e=>e.spent_at===k).reduce((s,e)=>s+Number(e.amount),0)]);}}
+  else if(tf==='five'||tf==='yearly'){for(let i=4;i>=0;i--){const y=now.getFullYear()-i;out.push([''+y,spend.filter(e=>new Date(e.spent_at).getFullYear()===y).reduce((s,e)=>s+Number(e.amount),0)]);}}
+  else{for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),e=new Date(now.getFullYear(),now.getMonth()-i+1,0);out.push([d.toLocaleDateString('en-IE',{month:'short'}),spend.filter(x=>{const dd=new Date(x.spent_at);return dd>=d&&dd<=e;}).reduce((s,x)=>s+Number(x.amount),0)]);}}
   return out;}
-function chartOpts(){return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#64748b',font:{size:11}}}}};}
+// light animation, no constant motion
+function chartOpts(){return {responsive:true,maintainAspectRatio:false,animation:{duration:300},resizeDelay:150,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:10},maxRotation:0,autoSkip:true}},y:{grid:{color:'rgba(128,128,128,.10)'},ticks:{color:'#64748b',font:{size:10}}}}};}
 function drawSpend(tf){const el=$('#spendChart');if(!el)return;const data=series(tf),ctx=el.getContext('2d');const g=ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,'rgba(139,92,246,.5)');g.addColorStop(1,'rgba(59,130,246,.02)');if(charts.spend)charts.spend.destroy();charts.spend=new Chart(ctx,{type:'line',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),borderColor:'#a855f7',backgroundColor:g,fill:true,tension:.4,pointRadius:0,borderWidth:2.5}]},options:chartOpts()});}
 function drawCat(){const el=$('#catChart');if(!el)return;const now=new Date(),m=new Date(now.getFullYear(),now.getMonth(),1),map={};EXPENSES.filter(e=>isSpend(e)&&new Date(e.spent_at)>=m).forEach(e=>map[e.category]=(map[e.category]||0)+Number(e.amount));const keys=Object.keys(map);if(!keys.length){el.insertAdjacentHTML('afterend','<p class="py-8 text-center text-sm text-slate-400">No spending this month yet.</p>');el.style.display='none';return;}charts.cat=new Chart(el,{type:'doughnut',data:{labels:keys.map(k=>(CATS[k]||CATS.other).l),datasets:[{data:keys.map(k=>map[k]),backgroundColor:keys.map(k=>(CATS[k]||CATS.other).c),borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}},cutout:'62%'}});}
 function runSim(){const inc=+($('#simIncome')?.value||0),exp=+($('#simExp')?.value||0),goal=+($('#simGoal')?.value||0),rate=+($('#simRate')?.value||0);
@@ -943,8 +973,8 @@ async function render(){
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,squad:squadView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route,(views[route]||dashboardView)());
     window.scrollTo(0,0);
-    if(route==='dashboard'){drawSpend('monthly');drawCat();if(ME.plan==='premium'||ME.plan==='business')loadAiInsights();}
-    if(route==='analytics'){drawSpend('monthly');}
+    if(route==='dashboard'){drawSpend('year');drawCat();if(ME.plan==='premium'||ME.plan==='business')loadAiInsights();}
+    if(route==='analytics'){drawSpend('year');}
     if(route==='simulator'){runSim();}
     if(route==='ai'){chat=[{role:'ai',text:"Hi! I'm your AI coach. Ask me about saving, spending, or a plan."}];renderChat();}
     if(route==='student'){renderSVStatus();}
@@ -977,10 +1007,11 @@ document.addEventListener('click',async(e)=>{
     else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
     else if(act==='pauseMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const m=(g.missions||[]).find(x=>x.id===id);if(m){m.status=m.status==='paused'?'active':'paused';break;}}render();}
     else if(act==='delMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const i=(g.missions||[]).findIndex(x=>x.id===id);if(i>-1){g.missions.splice(i,1);break;}}const o=mlogs();delete o[id];setMlogs(o);toast('Mission removed');render();}
-    else if(act==='delGoal'){const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted (demo)');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
+    else if(act==='archiveGoal'){const gid=a.getAttribute('data-id');const g=GOALS.find(x=>x.id===gid);if(!g)return;const ns=g.status==='archived'?'active':'archived';g.status=ns;if(!DEMO_MODE){await sb.from('goals').update({status:ns}).eq('id',gid);}toast(ns==='archived'?'Goal archived 📦':'Goal restored ♻️');render();}
+    else if(act==='delGoal'){if(ME.plan==='free'){toast('Free plan: archive goals instead of deleting. Upgrade to delete.','err');return;}const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
     else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done){DEMO_ME.xp=(DEMO_ME.xp||0)+100;toast('🎉 Goal completed! +100 XP (demo)');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}}
     else if(act==='delExp'){const eid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_EXPENSES.findIndex(x=>x.id===eid);if(idx>-1)DEMO_EXPENSES.splice(idx,1);render();}else{await sb.from('expenses').delete().eq('id',eid);render();}}
-    else if(act==='tf'){a.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='';b.classList.remove('text-white');b.classList.add('text-slate-400');});a.style.background='linear-gradient(90deg,#3b82f6,#8b5cf6)';a.classList.add('text-white');a.classList.remove('text-slate-400');drawSpend(a.getAttribute('data-tf'));}
+    else if(act==='tf'){a.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='';b.style.color='var(--muted)';b.classList.remove('text-white');});a.style.background='linear-gradient(90deg,var(--accent1),var(--accent2))';a.style.color='';a.classList.add('text-white');drawSpend(a.getAttribute('data-tf'));}
     else if(act==='ask'){const q=a.getAttribute('data-q');sendChat(q,q.toLowerCase().includes('roast')?'roast':'coach');}
     else if(act==='setSavingsMode'){const m=a.getAttribute('data-mode');ME.savings_mode=m;if(!DEMO_MODE){await sb.from('profiles').update({savings_mode:m}).eq('id',SESSION.user.id);}toast(SAVINGS_MODES[m].emoji+' '+SAVINGS_MODES[m].name+' mode');render();}
     else if(act==='setCoachMode'){const m=a.getAttribute('data-mode');ME.coach_mode=m;if(!DEMO_MODE){await sb.from('profiles').update({coach_mode:m}).eq('id',SESSION.user.id);}toast(COACH_MODES[m].emoji+' '+COACH_MODES[m].name);render();}
@@ -993,8 +1024,11 @@ document.addEventListener('click',async(e)=>{
     else if(act==='joinChallenge'){toast('⚔️ You joined the weekly challenge!');}
     else if(act==='copyInvite'){const link=location.origin+location.pathname+'#invite';try{await navigator.clipboard.writeText(link);toast('🔗 Invite link copied!');}catch(e){toast('Invite link: '+link);}}
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
-    else if(act==='startChal'){const k=a.getAttribute('data-key');const uid=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+uid;const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(k))arr.push(k);localStorage.setItem(key,JSON.stringify(arr));render();}
-    else if(act==='doneChal'){const k=a.getAttribute('data-key'),xp=+a.getAttribute('data-xp');const u=DEMO_MODE?'demo':SESSION.user.id;const key='goalify_chal_'+u;const arr=JSON.parse(localStorage.getItem(key)||'[]').filter(x=>x!==k);localStorage.setItem(key,JSON.stringify(arr));const dk='goalify_chaldone_'+u;const dn=JSON.parse(localStorage.getItem(dk)||'[]');if(!dn.includes(k))dn.push(k);localStorage.setItem(dk,JSON.stringify(dn));if(!DEMO_MODE){await sb.rpc('award_xp',{p_amount:xp});}else{DEMO_ME.xp=(DEMO_ME.xp||0)+xp;}await loadProfile();toast('+'+xp+' XP earned!');render();}
+    else if(act==='chalFilter'){CHAL_FILTER=+a.getAttribute('data-d');render();}
+    else if(act==='joinChal'){const k=a.getAttribute('data-key');const arr=chalState();if(!arr.find(c=>c.key===k)){arr.push({key:k,start:todayISO(),proofs:[],status:'active'});setChalState(arr);}toast('Challenge started — log proof daily 💪');render();}
+    else if(act==='proofChal'){openProofModal(a.getAttribute('data-key'));}
+    else if(act==='reviewChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='pending';setChalState(arr);}toast('Submitted for review — XP is granted after approval ⏳');render();}
+    else if(act==='leaveChal'){const k=a.getAttribute('data-key');setChalState(chalState().filter(c=>c.key!==k));toast('Left challenge');render();}
     else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
     else if(act==='rmAvatar'){ME.avatar_url=null;localStorage.removeItem('goalify_avatar_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({avatar_url:null}).eq('id',SESSION.user.id);}toast('Photo removed');render();}
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
@@ -1093,6 +1127,33 @@ function openMissionModal(goalId){
   });
 }
 
+// challenge proof modal
+function openProofModal(key){
+  const def=CHALLENGES.find(x=>x.key===key);if(!def){toast('Challenge not found','err');return;}
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="pfBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">${def.emoji} Log proof</h2><button id="pfX" class="text-slate-400">✕</button></div>
+    <p class="mt-1 text-sm" style="color:var(--muted)">${def.title} — your evidence is reviewed before XP is granted.</p>
+    <div class="mt-4 space-y-3">
+      <div><label class="label">What did you do today?</label><input id="pfNote" class="input" placeholder="e.g. Skipped my usual coffee"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">Amount saved (€)</label><input id="pfSaved" type="number" class="input" placeholder="5"></div><div><label class="label">Expense reduced</label><input id="pfReduced" class="input" placeholder="Coffee"></div></div>
+      <div><label class="label">Short explanation</label><textarea id="pfExpl" class="input" rows="2" placeholder="I saved €5 today by not buying coffee."></textarea></div>
+      <p id="pfErr" class="text-sm text-red-300"></p>
+      <button id="pfSave" class="btn btn-primary w-full">Submit proof</button>
+    </div></div></div>`;
+  const close=()=>m.innerHTML='';
+  $('#pfBack').addEventListener('click',e=>{if(e.target.id==='pfBack')close();});
+  $('#pfX').addEventListener('click',close);
+  $('#pfSave').addEventListener('click',()=>{
+    const note=$('#pfNote').value.trim()||$('#pfExpl').value.trim();
+    if(!note){$('#pfErr').textContent='Add a note or explanation as proof.';return;}
+    const arr=chalState(),c=arr.find(x=>x.key===key);if(!c){close();return;}
+    const today=todayISO();
+    if((c.proofs||[]).some(p=>p.day===today)){$('#pfErr').textContent='You already logged proof today.';return;}
+    c.proofs=c.proofs||[];c.proofs.push({day:today,note,saved:+$('#pfSaved').value||0,reduced:$('#pfReduced').value.trim(),explanation:$('#pfExpl').value.trim()});
+    setChalState(arr);close();toast('Proof logged ✅');render();
+  });
+}
+
 // goal modal
 function openGoalModal(){
   const EMO=['🎯','📱','💻','🚗','✈️','🏠','🛡️','🎓','💍','🎮','🏝️','💰'];let emo='🎯',file=null;
@@ -1105,14 +1166,14 @@ function openGoalModal(){
   $('#gmEmo').addEventListener('click',e=>{const b=e.target.closest('[data-e]');if(!b)return;emo=b.getAttribute('data-e');m.querySelectorAll('#gmEmo button').forEach(x=>x.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg bg-white/5');b.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg ring-1 ring-accent-purple bg-accent-purple/20';});
   $('#gmSave').addEventListener('click',async()=>{
     const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,monthly=+$('#gmMonthly').value||0;
-    const limit=PLANS[ME.plan].goalLimit,active=GOALS.filter(g=>!g.completed).length;
+    const limit=PLANS[ME.plan].goalLimit,total=GOALS.length;
     if(!name||!target){$('#gmErr').textContent='Enter a name and target.';return;}
-    if(limit!==-1&&active>=limit){$('#gmErr').textContent='Free plan limit reached.';return;}
+    if(limit!==-1&&total>=limit){$('#gmErr').innerHTML='Free plan allows '+limit+' goals (archived included). <a href="#app/plans" class="text-accent-purple underline">Upgrade</a> for unlimited.';return;}
     $('#gmSave').disabled=true;$('#gmSave').textContent='Saving…';
     let imgUrl=null;
     if(DEMO_MODE){
-      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,created_at:new Date().toISOString(),image_url:null};
-      DEMO_GOALS.unshift(newGoal);close();toast('Goal created (demo)');render();return;
+      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,status:'active',created_at:new Date().toISOString(),image_url:null,missions:[]};
+      DEMO_GOALS.unshift(newGoal);close();toast('Goal created');render();return;
     }
     if(file){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('goal-images').upload(path,file);if(!upErr){imgUrl=sb.storage.from('goal-images').getPublicUrl(path).data.publicUrl;}}
     const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,image_url:imgUrl});
