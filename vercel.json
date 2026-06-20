@@ -1,7 +1,9 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "echo no-install-needed",
-  "buildCommand": "mkdir -p public && cp index.html public/index.html",
-  "outputDirectory": "public"
+  "buildCommand": "mkdir -p public && cp index.html public/index.html && cp app.js public/app.js",
+  "outputDirectory": "public",
+  "installCommand": "echo done",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
