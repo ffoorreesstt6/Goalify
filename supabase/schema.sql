@@ -253,9 +253,31 @@ alter table public.profiles add column if not exists bg text default 'none';
 alter table public.profiles add column if not exists avatar_url text;
 
 -- ============================================================
+-- V3: Public profiles, visibility & prestige progression
+-- profile_visibility: 'public' (default) appears in search + leaderboards;
+-- 'private' hides the user from everyone. show_active_goals toggles whether
+-- active goals are shown on the public profile. prestige is the post-L100
+-- prestige rank (0 = not prestiged) — scaffolded for a future expansion.
+-- ============================================================
+alter table public.profiles add column if not exists profile_visibility text default 'public';
+alter table public.profiles add column if not exists show_active_goals boolean default true;
+alter table public.profiles add column if not exists prestige int default 0;
+alter table public.profiles add column if not exists prestige_at timestamptz;
+
+-- Public leaderboard source: only public, onboarded profiles are exposed.
+-- Ready for real ranking once accounts go live; ordered by prestige then XP.
+create or replace view public.leaderboard as
+  select id, first_name, last_name, username, plan, xp, prestige, avatar_url
+  from public.profiles
+  where coalesce(profile_visibility,'public') = 'public'
+    and coalesce(onboarded,false) = true
+  order by coalesce(prestige,0) desc, coalesce(xp,0) desc;
+
+-- ============================================================
 -- V2: Goals → Missions → Check-ins hierarchy
 -- ============================================================
 alter table public.goals add column if not exists status text default 'active';
+alter table public.goals add column if not exists private boolean default false;
 
 create table if not exists public.missions (
   id uuid primary key default gen_random_uuid(),
