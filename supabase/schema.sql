@@ -264,6 +264,13 @@ alter table public.profiles add column if not exists show_active_goals boolean d
 alter table public.profiles add column if not exists prestige int default 0;
 alter table public.profiles add column if not exists prestige_at timestamptz;
 
+-- Onboarding quiz results (modern flow: categories, top-3, end-of-month, goals)
+alter table public.profiles add column if not exists spend_categories text[] default '{}';
+alter table public.profiles add column if not exists top_categories text[] default '{}';
+alter table public.profiles add column if not exists end_of_month text;
+alter table public.profiles add column if not exists improve_goals text[] default '{}';
+alter table public.profiles add column if not exists savings_potential text;
+
 -- Public leaderboard source: only public, onboarded profiles are exposed.
 -- Ready for real ranking once accounts go live; ordered by prestige then XP.
 create or replace view public.leaderboard as
