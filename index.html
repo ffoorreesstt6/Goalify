@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Goalify — Turn Every Euro Into Progress</title>
-  <meta name="description" content="AI-powered personal finance & goal-tracking. Track spending, reach goals faster, get AI financial coaching." />
+  <meta name="description" content="Goalify helps you track spending, build better habits, and reach your savings goals faster. Simple, premium and made for everyone." />
+  <link rel="icon" type="image/png" href="./assets/favicon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <meta name="theme-color" content="#030712" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
@@ -21,12 +25,13 @@
     /* ---- theme tokens ---- */
     :root{
       color-scheme:dark;
-      --bg:#070A14; --text:#f1f5f9; --muted:#94a3b8;
-      --glass:rgba(255,255,255,.04); --glass-strong:rgba(255,255,255,.07); --border:rgba(255,255,255,.10);
-      --accent1:#4f46e5; --accent2:#8b5cf6; --accent3:#a855f7;
+      --bg:#030712; --text:#F3F4F6; --muted:#9CA3AF;
+      --card:#111827; --sidebar:#0F172A;
+      --glass:#111827; --glass-strong:#0F172A; --border:#1F2937;
+      --accent1:#7C3AED; --accent2:#8B5CF6; --accent3:#A78BFA;
     }
     /* full-color modes — accent + a tinted background for dark mode */
-    html[data-accent="blue"]  {--accent1:#4f46e5;--accent2:#8b5cf6;--accent3:#a855f7;--bg:#070a14}
+    html[data-accent="blue"]  {--accent1:#7C3AED;--accent2:#8B5CF6;--accent3:#A78BFA;--bg:#030712}
     html[data-accent="green"] {--accent1:#059669;--accent2:#22c55e;--accent3:#4ade80;--bg:#06140d}
     html[data-accent="yellow"]{--accent1:#ca8a04;--accent2:#eab308;--accent3:#facc15;--bg:#15120a}
     html[data-accent="orange"]{--accent1:#ea580c;--accent2:#f97316;--accent3:#fb923c;--bg:#160c06}
@@ -36,12 +41,14 @@
     /* light mode */
     html.light{
       color-scheme:light;
-      --bg:#f4f6fb; --text:#0f172a; --muted:#64748b;
-      --glass:rgba(15,23,42,.04); --glass-strong:rgba(15,23,42,.06); --border:rgba(15,23,42,.10);
+      --bg:#FAFAFA; --text:#111827; --muted:#6B7280;
+      --card:#FFFFFF; --glass:#FFFFFF; --glass-strong:#FFFFFF; --border:#E5E7EB;
     }
     body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden;transition:background .3s,color .3s}
-    .glass{background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border)}
-    .glass-strong{background:var(--glass-strong);backdrop-filter:blur(22px);border:1px solid var(--border)}
+    /* solid cards — no glassmorphism */
+    .glass{background:var(--glass);border:1px solid var(--border)}
+    .glass-strong{background:var(--glass-strong);border:1px solid var(--border)}
+    html.light .glass,html.light .glass-strong{box-shadow:0 1px 3px rgba(17,24,39,.06),0 1px 2px rgba(17,24,39,.04)}
     .gtext{background:linear-gradient(135deg,var(--accent1),var(--accent2),var(--accent3));-webkit-background-clip:text;background-clip:text;color:transparent}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:.75rem;padding:.75rem 1.5rem;font-weight:600;transition:.25s;cursor:pointer;border:none;text-decoration:none}
     .btn-primary{color:#fff;background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 8px 24px -8px rgba(99,102,241,.5)}
@@ -218,6 +225,6 @@
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=30"></script>
+  <script type="module" src="./app.js?v=31"></script>
 </body>
 </html>

@@ -499,14 +499,17 @@ function seedDemoMissions(){
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
-function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+// Landing, quiz and auth always use the light premium theme.
+function siteTheme(){const r=document.documentElement;r.removeAttribute('data-biz');r.classList.add('light');r.setAttribute('data-accent','blue');r.setAttribute('data-bg','none');}
 // Enforce per-plan theme rules without overwriting Premium's saved prefs.
 function enforcePlanTheme(plan){
   const r=document.documentElement,c=caps(plan);
   if(plan==='business')return; // gold executive handled via data-biz
-  if(c.themes==='full'){ applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
-  else if(c.themes==='red'){ r.classList.toggle('light',(localStorage.getItem('goalify_theme')||'light')==='light'); r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
-  else { r.classList.toggle('light',(localStorage.getItem('goalify_theme')||'light')==='light'); r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
+  r.classList.remove('light'); // dashboard is dark premium by default
+  if(c.themes==='full'){ const m=localStorage.getItem('goalify_theme')||'dark'; r.classList.toggle('light',m==='light'); r.setAttribute('data-accent',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
+  else if(c.themes==='red'){ r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
+  else { r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
 }
 // avatar (with badge ring)
 function avatarHTML(size=36,opts={}){
@@ -541,7 +544,8 @@ function demoCoachReply(q,mode){
 
 // -------------------- icons --------------------
 const LOGO='<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z" stroke-linejoin="round"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const brand=(href='#home')=>`<a href="${href}" class="flex items-center gap-2"><span class="flex h-9 w-9 items-center justify-center rounded-xl text-white" style="background:linear-gradient(135deg,#4f46e5,#8b5cf6)">${LOGO}</span><span class="text-xl font-extrabold">Goal<span class="gtext">ify</span></span></a>`;
+const BRAND_ICON=(size=40)=>`<img src="./assets/goalify-icon.png" alt="Goalify" style="height:${size}px;width:auto;display:inline-block" />`;
+const brand=(href='#home',size=34)=>`<a href="${href}" class="flex items-center gap-2"><img src="./assets/goalify-icon.png" alt="Goalify logo" style="height:${size}px;width:auto;display:block" /><span class="text-xl font-extrabold">Goal<span class="gtext">ify</span></span></a>`;
 // subscription badge (none for Free)
 function planBadge(plan,size='xs'){const map={pro:['PRO','#3b82f6'],premium:['PREMIUM','#a855f7'],business:['BUSINESS','#f59e0b']};const b=map[plan];if(!b)return '';return `<span class="rounded-full px-2 py-0.5 font-bold text-white text-${size}" style="background:${b[1]};letter-spacing:.04em">${b[0]}</span>`;}
 
@@ -588,7 +592,7 @@ function landingPreview(){
   const nav=(ic,t,on)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:11px;${on?'background:#EEF0FF;color:#4f46e5;font-weight:600':'color:#64748b'}">${ic} ${t}</div>`;
   return `<div style="background:#fff;border:1px solid #ECECF5;border-radius:20px;box-shadow:0 40px 80px -30px rgba(79,70,229,.4);overflow:hidden;display:flex;min-height:420px">
     <div class="lp-side" style="width:150px;border-right:1px solid #F0F1F7;padding:14px 10px">
-      <div style="display:flex;align-items:center;gap:6px;font-weight:800;color:#0f172a;font-size:14px;margin-bottom:14px"><span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:7px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:#fff;font-size:11px">◆</span> Goalify</div>
+      <div style="display:flex;align-items:center;gap:6px;font-weight:800;color:#0f172a;font-size:14px;margin-bottom:14px"><img src="./assets/goalify-icon.png" alt="" style="height:20px;width:auto"> Goalify</div>
       ${nav('▦','Dashboard',true)}${nav('◎','Goals')}${nav('≣','Transactions')}${nav('▤','Analytics')}${nav('♦','Challenges')}${nav('✦','Achievements')}${nav('💡','Insights')}${nav('⚙','Settings')}
       <div style="margin-top:14px;display:flex;align-items:center;gap:8px;border-top:1px solid #F0F1F7;padding-top:10px"><span style="width:26px;height:26px;border-radius:9999px;background:linear-gradient(135deg,#4f46e5,#8b5cf6)"></span><div><p style="font-size:11px;font-weight:700;color:#0f172a;margin:0">Forest</p><p style="font-size:9px;color:#94a3b8;margin:0">Level 12</p></div></div>
     </div>
@@ -615,8 +619,6 @@ function landing(){
   </div></div></header>
   <main>
     <section class="relative overflow-hidden pt-32 pb-16 sm:pt-36">
-      <div class="orb animate-float" style="top:-8%;left:0%;width:420px;height:420px;background:radial-gradient(circle,color-mix(in srgb,var(--accent2) 35%,transparent),transparent 70%)"></div>
-      <div class="orb animate-float" style="top:5%;right:-5%;width:480px;height:480px;background:radial-gradient(circle,color-mix(in srgb,var(--accent1) 28%,transparent),transparent 70%);animation-delay:2s"></div>
       <div class="relative mx-auto grid max-w-7xl items-center gap-10 px-4 lg:grid-cols-2">
         <div>
           <div class="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm" style="background:var(--glass);border:1px solid var(--border);color:var(--muted)">✦ The #1 Savings & Goals App</div>
@@ -654,7 +656,7 @@ function landing(){
       <div class="mt-10 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="glass rounded-2xl overflow-hidden"><button class="flex w-full items-center justify-between px-6 py-5 text-left font-medium" data-action="faq" data-i="${i}">${f[0]}<span id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
     </section>
     <section class="py-16 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent3))"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="${cta}" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
-    <footer class="py-12 mx-auto max-w-7xl px-4 text-center text-sm" style="border-top:1px solid var(--border);color:var(--muted)">© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
+    <footer class="py-12 mx-auto max-w-7xl px-4 text-center text-sm" style="border-top:1px solid var(--border);color:var(--muted)"><div class="mb-3 flex justify-center">${brand('#home',30)}</div>© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
   </main>`;
 }
 
@@ -663,8 +665,6 @@ function landing(){
 // ============================================================
 function authWrap(inner){
   return `<div class="relative flex min-h-screen items-center justify-center px-4 py-12">
-    <div class="orb animate-float" style="top:8%;left:8%;width:380px;height:380px;background:radial-gradient(circle,rgba(59,130,246,.4),transparent 70%)"></div>
-    <div class="orb animate-float" style="bottom:8%;right:8%;width:420px;height:420px;background:radial-gradient(circle,rgba(168,85,247,.4),transparent 70%);animation-delay:2s"></div>
     <div class="absolute left-6 top-6">${brand()}</div>
     <div class="w-full max-w-md anim">${inner}</div></div>`;
 }
@@ -763,7 +763,7 @@ function spendInsight(idx){
 function quizView(){
   QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
   QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
-  return `<div class="relative flex min-h-screen items-center justify-center px-4 py-10"><div class="orb animate-float" style="top:4%;left:6%;width:380px;height:380px;background:radial-gradient(circle,color-mix(in srgb,var(--accent2) 38%,transparent),transparent 70%)"></div><div class="orb animate-float" style="bottom:6%;right:8%;width:320px;height:320px;background:radial-gradient(circle,color-mix(in srgb,var(--accent1) 30%,transparent),transparent 70%);animation-delay:-3s"></div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
+  return `<div class="relative flex min-h-screen flex-col items-center justify-center px-4 py-10"><div class="mb-6">${brand('#home',32)}</div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
 }
 function qFrame(key,body,nav,sub){
   const idx=QPROG.indexOf(key),total=QPROG.length,stepNum=idx+1,prog=Math.round(stepNum/total*100);
@@ -879,7 +879,7 @@ const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics
 function shell(route,inner){
   const isAdmin=ME?.role==='admin';const NAV=planNav(ME?.plan||'free');const c=caps(ME?.plan||'free');
   const themeBtn = (c.themes==='full'||c.themes==='red') ? `<a href="#app/settings" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5"><span>🎨</span>Theme<span class="ml-auto text-[10px]" style="color:var(--muted)">${c.themes==='full'?'customize':'red'}</span></a>` : '';
-  return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0b0f1d]/80 backdrop-blur-xl lg:flex">
+  return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col lg:flex" style="background:var(--sidebar);border-right:1px solid var(--border)">
     <div class="px-5 py-6">${brand('#app/dashboard')}</div>
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
     ${themeBtn}
@@ -1292,7 +1292,7 @@ function rewardsView(){
 function settingsView(){
   const p=ME;
   const vis=profVisibility();
-  const curMode=localStorage.getItem('goalify_theme')||'light',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
+  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Blue','#6366f1'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
   const themes=caps(p.plan).themes;
@@ -1468,16 +1468,18 @@ async function render(){
   // The hash will contain access_token=... when Supabase redirects back after email confirm.
   if(hash.startsWith('access_token=')||hash.includes('&access_token=')){
     if(hash.includes('type=recovery')){location.hash='#reset';return;}
+    siteTheme();
     // Show a spinner — onAuthStateChange SIGNED_IN will redirect once the session is ready.
     root.innerHTML=`<div class="flex min-h-screen flex-col items-center justify-center gap-4">
-      <div class="animate-float text-5xl">✨</div>
-      <p class="text-slate-300 font-medium">Verifying your account…</p>
-      <p class="text-sm text-slate-500">You'll be redirected in a moment.</p>
+      <div class="text-5xl">${BRAND_ICON(48)}</div>
+      <p class="font-medium" style="color:var(--text)">Verifying your account…</p>
+      <p class="text-sm" style="color:var(--muted)">You'll be redirected in a moment.</p>
     </div>`;
     return;
   }
   // Supabase error callback (e.g. expired link)
   if(hash.startsWith('error=')||hash.includes('error_description=')){
+    siteTheme();
     const raw=hash.match(/error_description=([^&]*)/)?.[1]||'Link+expired+or+already+used.';
     const msg=decodeURIComponent(raw.replace(/\+/g,' '));
     root.innerHTML=authWrap(`<div class="glass-strong rounded-2xl p-7 text-center">
@@ -1491,22 +1493,23 @@ async function render(){
     return;
   }
 
-  // public routes
-  if(hash==='home'){root.innerHTML=landing();window.scrollTo(0,0);return;}
+  // public routes (light premium theme)
+  if(hash==='home'){siteTheme();root.innerHTML=landing();window.scrollTo(0,0);return;}
   if(hash==='login'){
     if(DEMO_MODE){location.hash='#quiz';return;}
-    root.innerHTML=loginView();return;
+    siteTheme();root.innerHTML=loginView();return;
   }
   if(hash==='signup'){
     if(DEMO_MODE){location.hash='#quiz';return;}
-    root.innerHTML=signupView();return;
+    siteTheme();root.innerHTML=signupView();return;
   }
-  if(hash==='reset'){root.innerHTML=resetView();return;}
+  if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
+  if(hash==='reset'){siteTheme();root.innerHTML=resetView();return;}
   // need session below
   if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
   if(!ME) await loadProfile();
   if(hash==='admin'){ if(ME?.role!=='admin'&&!isDemoAdmin()){toast('Admins only','err');location.hash='#app/settings';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
-  if(hash==='quiz'){ QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
+  if(hash==='quiz'){ siteTheme();QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
   if(hash.startsWith('app/')){
     if(!ME?.onboarded){location.hash='#quiz';return;}
     const route=hash.split('/')[1]||'dashboard';
@@ -2151,7 +2154,7 @@ loadTheme();
     ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
     seedDemoMissions();
     if(!localStorage.getItem('goalify_bg'))localStorage.setItem('goalify_bg','aurora');
-    applyTheme(ME.theme||'light',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
+    applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
     render(); return;
   }
   const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();
