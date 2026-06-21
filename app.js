@@ -499,14 +499,14 @@ function seedDemoMissions(){
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
-function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
 // Enforce per-plan theme rules without overwriting Premium's saved prefs.
 function enforcePlanTheme(plan){
   const r=document.documentElement,c=caps(plan);
   if(plan==='business')return; // gold executive handled via data-biz
-  if(c.themes==='full'){ applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
-  else if(c.themes==='red'){ r.classList.remove('light'); r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
-  else { r.classList.remove('light'); r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
+  if(c.themes==='full'){ applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
+  else if(c.themes==='red'){ r.classList.toggle('light',(localStorage.getItem('goalify_theme')||'light')==='light'); r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
+  else { r.classList.toggle('light',(localStorage.getItem('goalify_theme')||'light')==='light'); r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
 }
 // avatar (with badge ring)
 function avatarHTML(size=36,opts={}){
@@ -583,42 +583,78 @@ function authView(){
 // ============================================================
 // VIEWS — LANDING
 // ============================================================
+function landingPreview(){
+  const stat=(emoji,label,val,bg)=>`<div style="background:#fff;border:1px solid #EEF0F7;border-radius:14px;padding:10px 11px"><span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9999px;background:${bg};font-size:14px">${emoji}</span><p style="margin-top:8px;font-size:10px;color:#94a3b8">${label}</p><p style="font-weight:800;color:#0f172a;font-size:15px">${val}</p></div>`;
+  const nav=(ic,t,on)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:11px;${on?'background:#EEF0FF;color:#4f46e5;font-weight:600':'color:#64748b'}">${ic} ${t}</div>`;
+  return `<div style="background:#fff;border:1px solid #ECECF5;border-radius:20px;box-shadow:0 40px 80px -30px rgba(79,70,229,.4);overflow:hidden;display:flex;min-height:420px">
+    <div class="lp-side" style="width:150px;border-right:1px solid #F0F1F7;padding:14px 10px">
+      <div style="display:flex;align-items:center;gap:6px;font-weight:800;color:#0f172a;font-size:14px;margin-bottom:14px"><span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:7px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:#fff;font-size:11px">◆</span> Goalify</div>
+      ${nav('▦','Dashboard',true)}${nav('◎','Goals')}${nav('≣','Transactions')}${nav('▤','Analytics')}${nav('♦','Challenges')}${nav('✦','Achievements')}${nav('💡','Insights')}${nav('⚙','Settings')}
+      <div style="margin-top:14px;display:flex;align-items:center;gap:8px;border-top:1px solid #F0F1F7;padding-top:10px"><span style="width:26px;height:26px;border-radius:9999px;background:linear-gradient(135deg,#4f46e5,#8b5cf6)"></span><div><p style="font-size:11px;font-weight:700;color:#0f172a;margin:0">Forest</p><p style="font-size:9px;color:#94a3b8;margin:0">Level 12</p></div></div>
+    </div>
+    <div style="flex:1;padding:16px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><p style="font-weight:800;color:#0f172a;font-size:15px;margin:0">Good morning, Forest! 👋</p><p style="font-size:10px;color:#94a3b8;margin:2px 0 0">Stay focused and keep building your future.</p></div><span style="font-size:9px;background:#F3F0FF;color:#6d5bd0;padding:3px 8px;border-radius:9999px;white-space:nowrap">17 day streak 🔥</span></div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${stat('💰','Income','€3,500','rgba(34,197,94,.15)')}${stat('💸','Spending','€1,230','rgba(239,68,68,.15)')}${stat('🐷','Left Over','€2,270','rgba(59,130,246,.15)')}${stat('📈','Savings','65%','rgba(139,92,246,.15)')}</div>
+      <div style="margin-top:10px;background:#fff;border:1px solid #EEF0F7;border-radius:14px;padding:12px"><div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8"><span>My Goals</span><span style="color:#4f46e5">View all</span></div><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:30px;height:30px;border-radius:8px;background:#F3F4FB;display:inline-flex;align-items:center;justify-content:center">🎮</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:700;color:#0f172a">Gaming Setup</span><span style="font-size:9px;color:#94a3b8">42 days left</span></div><span style="font-size:9px;color:#94a3b8">€900 / €1,500</span><div style="margin-top:4px;height:6px;border-radius:9999px;background:#EEF0F7"><div style="width:60%;height:100%;border-radius:9999px;background:linear-gradient(90deg,#4f46e5,#8b5cf6)"></div></div></div></div></div>
+      <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#fff;border:1px solid #EEF0F7;border-radius:14px;padding:10px"><p style="font-size:9px;color:#94a3b8;margin:0">Money Health Score</p><p style="font-weight:800;color:#0f172a;font-size:18px;margin:2px 0">90<span style="font-size:9px;color:#94a3b8">/100</span></p><p style="font-size:9px;color:#22c55e;margin:0">● Excellent</p><svg viewBox="0 0 100 24" style="margin-top:4px;width:100%;height:22px"><polyline fill="none" stroke="#22c55e" stroke-width="2.5" points="0,18 16,13 32,16 48,8 64,12 80,5 100,9"/></svg></div>
+        <div style="background:#fff;border:1px solid #EEF0F7;border-radius:14px;padding:10px"><p style="font-size:9px;color:#94a3b8;margin:0">Level 12</p><p style="font-weight:800;color:#0f172a;font-size:14px;margin:2px 0">340 <span style="font-size:9px;color:#94a3b8">/ 500 XP</span></p><div style="height:6px;border-radius:9999px;background:#EEF0F7"><div style="width:68%;height:100%;border-radius:9999px;background:linear-gradient(90deg,#4f46e5,#8b5cf6)"></div></div><p style="margin:8px 0 0;font-size:10px;color:#0f172a">⭐ Goal Chaser</p></div>
+        <div style="background:#fff;border:1px solid #EEF0F7;border-radius:14px;padding:10px"><p style="font-size:9px;color:#94a3b8;margin:0 0 3px">This Week</p>${[['🔴 Spent','€280'],['🟢 Saved','€120'],['🎯 Goals Active','2']].map(r=>`<div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px;color:#0f172a"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+}
 function landing(){
   const cta=DEMO_MODE?'#quiz':'#signup';
   const loginHref=DEMO_MODE?'#quiz':'#login';
-  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4"><div class="mx-auto max-w-7xl"><div class="glass-strong flex items-center justify-between rounded-2xl px-4 py-3">${brand()}
-    <nav class="hidden gap-8 md:flex text-sm text-slate-300"><a href="#home" data-scroll="feat" class="hover:text-white">Features</a><a href="#home" data-scroll="pricing" class="hover:text-white">Pricing</a><a href="#home" data-scroll="faq" class="hover:text-white">FAQ</a></nav>
-    <div class="flex items-center gap-3">${DEMO_MODE?`<a href="#quiz" class="btn btn-primary !py-2 !px-4 text-sm">Get started →</a>`:SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="text-sm text-slate-300 hover:text-white">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Get started</a>`}</div>
+  const feats=[['🎯','Set Any Goal','Create goals for anything and stay motivated.','rgba(139,92,246,.15)'],['📊','Track & Analyze','Understand your money and habits.','rgba(34,197,94,.15)'],['🏆','Earn & Level Up','Complete missions and unlock achievements.','rgba(245,158,11,.15)'],['👥','Stay Accountable','Build streaks and beat your best.','rgba(59,130,246,.15)'],['🔒','Bank-Level Security','Your data is encrypted and always protected.','rgba(239,68,68,.15)']];
+  const steps=[['👤','Sign up in seconds','Create your account and tell us a bit about you.'],['🎯','Set your goals','Choose what you\'re saving for and target amount.'],['📊','Track & save','Log transactions, build habits, and watch your progress.'],['🏆','Reach your goals','Level up, unlock rewards, and celebrate wins.']];
+  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4"><div class="mx-auto max-w-7xl"><div class="glass-strong flex items-center justify-between rounded-2xl px-5 py-3">${brand()}
+    <nav class="hidden gap-7 md:flex text-sm" style="color:var(--muted)"><a href="#home" data-scroll="feat" class="hover:text-accent-purple">Features</a><a href="#home" data-scroll="how" class="hover:text-accent-purple">How it works</a><a href="#home" data-scroll="pricing" class="hover:text-accent-purple">Pricing</a><a href="#home" data-scroll="faq" class="hover:text-accent-purple">Blog</a><a href="#home" data-scroll="faq" class="hover:text-accent-purple">About</a></nav>
+    <div class="flex items-center gap-3">${DEMO_MODE?`<a href="#quiz" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`:SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`}</div>
   </div></div></header>
   <main>
-    <section class="relative overflow-hidden pt-40 pb-24">
-      <div class="orb animate-float" style="top:-10%;left:5%;width:460px;height:460px;background:radial-gradient(circle,rgba(59,130,246,.45),transparent 70%)"></div>
-      <div class="orb animate-float" style="top:15%;right:-5%;width:520px;height:520px;background:radial-gradient(circle,rgba(168,85,247,.4),transparent 70%);animation-delay:2s"></div>
-      <div class="absolute inset-0 grid-bg opacity-60"></div>
-      <div class="relative mx-auto max-w-4xl px-4 text-center">
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-slate-300">✨ AI-powered financial coaching</div>
-        <h1 class="text-5xl font-extrabold leading-tight sm:text-6xl md:text-7xl">Turn Every Euro<br>Into <span class="gtext">Progress.</span></h1>
-        <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-400">Track spending, reach goals faster, and receive AI-powered financial coaching — all in one beautifully simple platform.</p>
-        <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"><a href="${cta}" class="btn btn-primary">Start for free →</a><a href="${loginHref}" class="btn btn-ghost">Log in</a></div>
-        <p class="mt-4 text-sm text-slate-500">No credit card required · Students get Pro free</p>
+    <section class="relative overflow-hidden pt-32 pb-16 sm:pt-36">
+      <div class="orb animate-float" style="top:-8%;left:0%;width:420px;height:420px;background:radial-gradient(circle,color-mix(in srgb,var(--accent2) 35%,transparent),transparent 70%)"></div>
+      <div class="orb animate-float" style="top:5%;right:-5%;width:480px;height:480px;background:radial-gradient(circle,color-mix(in srgb,var(--accent1) 28%,transparent),transparent 70%);animation-delay:2s"></div>
+      <div class="relative mx-auto grid max-w-7xl items-center gap-10 px-4 lg:grid-cols-2">
+        <div>
+          <div class="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm" style="background:var(--glass);border:1px solid var(--border);color:var(--muted)">✦ The #1 Savings & Goals App</div>
+          <h1 class="text-5xl font-extrabold leading-[1.05] sm:text-6xl">Turn every euro<br>into <span class="gtext">progress.</span></h1>
+          <p class="mt-6 max-w-md text-lg" style="color:var(--muted)">Track your spending, build better habits, and reach your goals faster with Goalify.</p>
+          <div class="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center"><a href="${cta}" class="btn btn-primary">Start for free →</a><a href="${cta}" class="inline-flex items-center gap-2 font-semibold text-accent-purple">▶ See how it works</a></div>
+          <div class="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)"><span>✅ Free to start</span><span>💳 No credit card</span><span>✅ Cancel anytime</span></div>
+        </div>
+        <div class="anim">${landingPreview()}</div>
       </div>
     </section>
-    <section id="sec-feat" class="py-20 mx-auto max-w-7xl px-4">
-      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Features</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Everything you need to <span class="gtext">win with money</span></h2></div>
-      <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      ${[['🧠','AI Financial Coach','Real AI that analyzes your spending and builds savings strategies.'],['🎯','Goal Tracking','Goals with images, progress bars and completion estimates.'],['📊','Deep Analytics','Daily, weekly, monthly, yearly & 5-year projections.'],['🎓','Student = Pro Free','Verify your student status to unlock Pro at no cost.'],['🏆','Challenges & XP','Build habits, earn XP and level up.'],['🛡️','Bank-grade Security','Supabase Auth, row-level security, encrypted storage.']].map(f=>`<div class="glass rounded-2xl p-6 hover:-translate-y-1 transition"><div class="text-3xl">${f[0]}</div><h3 class="mt-4 text-lg font-semibold">${f[1]}</h3><p class="mt-2 text-sm text-slate-400">${f[2]}</p></div>`).join('')}
+    <section id="sec-feat" class="mx-auto max-w-7xl px-4 pb-8">
+      <div class="glass rounded-3xl p-5 sm:p-7"><div class="grid gap-6 sm:grid-cols-3 lg:grid-cols-5">
+      ${feats.map(f=>`<div class="flex flex-col gap-2"><span class="flex h-11 w-11 items-center justify-center rounded-xl text-xl" style="background:${f[3]}">${f[0]}</span><h3 class="text-sm font-bold">${f[1]}</h3><p class="text-xs" style="color:var(--muted)">${f[2]}</p></div>`).join('')}
+      </div></div>
+    </section>
+    <section id="sec-how" class="mx-auto max-w-7xl px-4 py-20">
+      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Simple. Powerful. Effective.</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">How Goalify works</h2><p class="mt-3 text-sm" style="color:var(--muted)">Get started in minutes and take control of your money.</p></div>
+      <div class="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">${steps.map((s,i)=>`<div class="relative text-center"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl glass-strong">${s[0]}</div><span class="mx-auto mt-3 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${i+1}</span><h3 class="mt-3 font-bold">${s[1]}</h3><p class="mt-1 text-sm" style="color:var(--muted)">${s[2]}</p></div>`).join('')}</div>
+    </section>
+    <section class="mx-auto max-w-5xl px-4 pb-12">
+      <div class="glass rounded-3xl p-6 flex flex-col items-center justify-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div><p class="text-xs" style="color:var(--muted)">Trusted by thousands of savers worldwide</p><div class="mt-1 flex items-center gap-2"><div class="flex -space-x-2">${['#4f46e5','#8b5cf6','#22c55e','#f59e0b','#ec4899'].map(c=>`<span class="h-7 w-7 rounded-full" style="background:${c};border:2px solid var(--bg)"></span>`).join('')}</div><span class="text-sm font-semibold">⭐ 4.9/5 <span style="color:var(--muted)">from 2,500+ reviews</span></span></div></div>
+        <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl" style="background:color-mix(in srgb,var(--accent1) 18%,transparent)">🛡️</span><div><p class="text-sm font-semibold">Secure & Private</p><p class="text-xs" style="color:var(--muted)">256-bit encrypted</p></div></div>
+        <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl" style="background:color-mix(in srgb,var(--accent2) 18%,transparent)">💜</span><div><p class="text-sm font-semibold">Made for Everyone</p><p class="text-xs" style="color:var(--muted)">Students, workers, families</p></div></div>
       </div>
     </section>
-    <section id="sec-pricing" class="py-20 mx-auto max-w-7xl px-4">
-      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Pricing</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Simple, honest pricing</h2></div>
-      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id];return `<div class="relative flex flex-col rounded-2xl p-6 ${p.highlight?'glass-strong':'glass'}" ${p.highlight?'style="box-shadow:0 0 40px -10px rgba(99,102,241,.5)"':''}>${p.highlight?'<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,#3b82f6,#8b5cf6)">Most popular</span>':''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm text-slate-400">/mo</span></div><a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-5 space-y-2 text-sm text-slate-400">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul></div>`;}).join('')}</div>
+    <section id="sec-pricing" class="py-16 mx-auto max-w-7xl px-4">
+      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Pricing</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Simple, honest pricing</h2><p class="mt-3 text-sm" style="color:var(--muted)">Start free. Upgrade when you're ready. Cancel anytime.</p></div>
+      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id],pr=PRICING[id];return `<div class="relative flex flex-col rounded-2xl p-6 ${p.highlight?'glass-strong':'glass'}" ${p.highlight?'style="box-shadow:0 0 40px -10px color-mix(in srgb,var(--accent2) 60%,transparent)"':''}>${p.highlight?'<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>':''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm" style="color:var(--muted)">${id==='free'?'/forever':'/mo'}</span></div>${pr?`<p class="mt-1 text-xs" style="color:var(--muted)">or €${pr.yr}/year</p>`:'<p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>'}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-5 space-y-2 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul></div>`;}).join('')}</div>
+      <p class="mt-6 text-center text-sm" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
     </section>
-    <section id="sec-faq" class="py-20 mx-auto max-w-3xl px-4">
+    <section id="sec-faq" class="py-16 mx-auto max-w-3xl px-4">
       <div class="text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">FAQ</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Questions, answered</h2></div>
-      <div class="mt-10 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, analytics, your money personality and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once an admin approves it, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['How does the AI work?','A secure server function calls a real AI model using your financial context, with per-plan daily limits.']].map((f,i)=>`<div class="glass rounded-2xl overflow-hidden"><button class="flex w-full items-center justify-between px-6 py-5 text-left font-medium" data-action="faq" data-i="${i}">${f[0]}<span id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm text-slate-400">${f[1]}</div></div>`).join('')}</div>
+      <div class="mt-10 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="glass rounded-2xl overflow-hidden"><button class="flex w-full items-center justify-between px-6 py-5 text-left font-medium" data-action="faq" data-i="${i}">${f[0]}<span id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
     </section>
-    <section class="py-20 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="${cta}" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
-    <footer class="border-t border-white/10 py-12 mx-auto max-w-7xl px-4 text-center text-sm text-slate-500">© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
+    <section class="py-16 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent3))"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="${cta}" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
+    <footer class="py-12 mx-auto max-w-7xl px-4 text-center text-sm" style="border-top:1px solid var(--border);color:var(--muted)">© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
   </main>`;
 }
 
@@ -1256,7 +1292,7 @@ function rewardsView(){
 function settingsView(){
   const p=ME;
   const vis=profVisibility();
-  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
+  const curMode=localStorage.getItem('goalify_theme')||'light',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Blue','#6366f1'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
   const themes=caps(p.plan).themes;
@@ -2115,7 +2151,7 @@ loadTheme();
     ME.avatar_url=localStorage.getItem('goalify_avatar_demo')||null;
     seedDemoMissions();
     if(!localStorage.getItem('goalify_bg'))localStorage.setItem('goalify_bg','aurora');
-    applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
+    applyTheme(ME.theme||'light',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
     render(); return;
   }
   const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();
