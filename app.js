@@ -124,7 +124,8 @@ const I18N={
   'Loading…':'Duke u ngarkuar…','unlocked':'zhbllokuar','Next up:':'Vijon:','legend!':'legjendë!','Admin Portal':'Portali i adminit','Approve':'Mirato','Reject':'Refuzo','Your plan':'Plani juaj','Current plan':'Plani aktual','Upgrade':'Përmirëso','Switch':'Ndërro','best value':'vlera më e mirë','Free 2 years':'Falas 2 vjet','Referral Reward':'Shpërblim referimi','Invite & earn':'Fto & fito','Pick the plan that fits you.':'Zgjidh planin që të përshtatet.','/mo':'/muaj','/year':'/vit','/forever':'/përgjithmonë','No card needed':'Pa kartë','1-week free trial':'Provë falas 1-javore','Current title':'Titulli aktual','Total saved':'Totali i kursyer','Longest streak':'Seria më e gjatë','Leaderboard':'Klasifikimi','Profile visibility':'Dukshmëria e profilit','Public':'Publik','Private':'Privat','Profile progression':'Përparimi i profilit','Current frame':'Korniza aktuale','Prestige':'Prestigj',
   'Choose Your Language':'Zgjidhni gjuhën','Goalify will personalize your experience in your preferred language.':'Goalify do ta personalizojë përvojën tuaj në gjuhën tuaj të preferuar.',"Let's learn a little about your spending habits and create a personalized experience.":'Le të mësojmë pak rreth zakoneve tuaja të shpenzimit dhe të krijojmë një përvojë të personalizuar.','Start →':'Fillo →','Where does most of your money go?':'Ku shkojnë më shumë paratë tuaja?','Which take the most money?':'Cilat marrin më shumë para?','Tap your top 3 in order — biggest first.':'Trokit 3 kryesoret me radhë — më e madhja e para.','Tap a category':'Trokit një kategori','Go back and pick a few categories first.':'Kthehu dhe zgjidh fillimisht disa kategori.','How much is left at the end of the month?':'Sa para mbeten në fund të muajit?','Honest answers give better insights.':'Përgjigjet e sinqerta japin njohuri më të mira.','What would you like to improve?':'Çfarë dëshironi të përmirësoni?','See my profile →':'Shih profilin tim →','Your Goalify Profile':'Profili juaj Goalify','Top spending areas':'Fushat kryesore të shpenzimit','Main goal':'Qëllimi kryesor','Savings potential':'Potenciali i kursimit','Continue To Dashboard →':'Vazhdo te paneli →','Building your personalized journey…':'Duke ndërtuar udhëtimin tuaj të personalizuar…',
   'Almost Nothing':'Pothuajse asgjë','Less Than €100':'Më pak se €100','More Than €500':'Më shumë se €500','Save More Money':'Kurse më shumë para','Reach Goals Faster':'Arri qëllimet më shpejt','Spend Less':'Shpenzo më pak','Understand Spending Better':'Kupto shpenzimet më mirë','Build Better Habits':'Ndërto zakone më të mira',
-  'Food & Restaurants':'Ushqim & Restorante','Coffee & Drinks':'Kafe & Pije','Gaming':'Lojëra','Apps & Subscriptions':'Aplikacione & Abonime','Entertainment & Streaming':'Argëtim & Transmetim','Clothing & Fashion':'Veshje & Modë','Fuel':'Karburant','Rent & Housing':'Qira & Banesë','Gym & Fitness':'Palestër & Fitnes','Healthcare':'Shëndetësi','Pets':'Kafshë shtëpiake','Gifts':'Dhurata','Nightlife':'Jeta e natës','Technology':'Teknologji','Beauty & Personal Care':'Bukuri & Kujdes personal','Family & Children':'Familje & Fëmijë','Investments & Savings':'Investime & Kursime','Online Shopping':'Blerje online','Electronics':'Elektronikë','Hobbies':'Hobi','Sports':'Sport','Books':'Libra','Food Delivery':'Dërgesë ushqimi','Taxi & Rideshare':'Taksi & Udhëtim i përbashkët','Bills & Debt Payments':'Fatura & Pagesa borxhi','Low':'I ulët','High':'I lartë','Very High':'Shumë i lartë','save':'kurse' },
+  'Food & Restaurants':'Ushqim & Restorante','Coffee & Drinks':'Kafe & Pije','Gaming':'Lojëra','Apps & Subscriptions':'Aplikacione & Abonime','Entertainment & Streaming':'Argëtim & Transmetim','Clothing & Fashion':'Veshje & Modë','Fuel':'Karburant','Rent & Housing':'Qira & Banesë','Gym & Fitness':'Palestër & Fitnes','Healthcare':'Shëndetësi','Pets':'Kafshë shtëpiake','Gifts':'Dhurata','Nightlife':'Jeta e natës','Technology':'Teknologji','Beauty & Personal Care':'Bukuri & Kujdes personal','Family & Children':'Familje & Fëmijë','Investments & Savings':'Investime & Kursime','Online Shopping':'Blerje online','Electronics':'Elektronikë','Hobbies':'Hobi','Sports':'Sport','Books':'Libra','Food Delivery':'Dërgesë ushqimi','Taxi & Rideshare':'Taksi & Udhëtim i përbashkët','Bills & Debt Payments':'Fatura & Pagesa borxhi','Low':'I ulët','High':'I lartë','Very High':'Shumë i lartë',
+  'What\'s your monthly income?':'Sa janë të ardhurat tuaja mujore?','Pick a range — you can fine-tune later.':'Zgjidh një interval — mund ta saktësosh më vonë.','Custom amount':'Shumë e personalizuar','Enter your exact amount.':'Shkruani shumën e saktë.','Drag to estimate your monthly spend.':'Rrëshqit për të vlerësuar shpenzimin mujor.','Skip':'Kapërce','Which spending category frustrates you most?':'Cila kategori shpenzimi ju mërzit më shumë?','If you could reduce ONE expense, which would it be?':'Nëse do të zvogëlonit NJË shpenzim, cili do të ishte?','How often do you check your bank account?':'Sa shpesh e kontrolloni llogarinë bankare?','What\'s your biggest money challenge?':'Cila është sfida juaj më e madhe me paratë?','Under €500':'Nën €500','Rarely':'Rrallë','Every few days':'Çdo disa ditë','Impulse spending':'Shpenzime impulsive','Saving consistently':'Kursim i vazhdueshëm','Unexpected expenses':'Shpenzime të papritura','Bills':'Faturat','Reaching goals':'Arritja e qëllimeve','Understanding spending':'Kuptimi i shpenzimeve','Coffee':'Kafe','Transport':'Transport','Streaming Services':'Shërbime transmetimi','Clothing':'Veshje','Cigarettes / Vapes':'Cigare / Vape','Rent / Housing':'Qira / Strehim','Your Money Profile':'Profili juaj i parave','Potential savings':'Kursime të mundshme','Top expenses':'Shpenzimet kryesore','Spending breakdown':'Ndarja e shpenzimeve','Advanced insights':'Njohuri të avancuara','Unlock Full Spending Breakdown':'Zhblloko ndarjen e plotë të shpenzimeve','save':'kurse' },
  de:{ // German
   'Dashboard':'Übersicht','Goals':'Ziele','Analytics':'Analytik','Future Simulator':'Zukunfts-Simulator','AI Coach':'KI-Coach','Challenges':'Herausforderungen','Social':'Sozial','Rewards':'Belohnungen','Plans':'Tarife','Student Verify':'Studenten-Verifizierung','Settings':'Einstellungen','Theme':'Design','Sign out':'Abmelden','Owner':'Inhaber',
   'Executive':'Geschäftsleitung','Companies':'Unternehmen','Cash Flow':'Cashflow','Net Worth':'Nettovermögen','Properties':'Immobilien','Employees':'Mitarbeiter','Payments':'Zahlungen','Invoices':'Rechnungen','Clients':'Kunden','Investments':'Investitionen','Fleet':'Fuhrpark','Inventory':'Lager','Tax Center':'Steuerzentrum','Calendar':'Kalender','AI Advisor':'KI-Berater','Team':'Team','Marketplace':'Marktplatz','Profile':'Profil','Reports':'Berichte','Business':'Business',
@@ -146,7 +147,8 @@ const I18N={
   'Loading…':'Wird geladen…','unlocked':'freigeschaltet','Next up:':'Als Nächstes:','legend!':'Legende!','Admin Portal':'Admin-Portal','Approve':'Genehmigen','Reject':'Ablehnen','Your plan':'Dein Tarif','Current plan':'Aktueller Tarif','Upgrade':'Upgrade','Switch':'Wechseln','best value':'bestes Angebot','Free 2 years':'2 Jahre gratis','Referral Reward':'Empfehlungsbelohnung','Invite & earn':'Einladen & verdienen','Pick the plan that fits you.':'Wähle den passenden Tarif.','/mo':'/Mon','/year':'/Jahr','/forever':'/für immer','No card needed':'Keine Karte nötig','1-week free trial':'1 Woche gratis testen','Current title':'Aktueller Titel','Total saved':'Insgesamt gespart','Longest streak':'Längste Serie','Leaderboard':'Bestenliste','Profile visibility':'Profil-Sichtbarkeit','Public':'Öffentlich','Private':'Privat','Profile progression':'Profil-Fortschritt','Current frame':'Aktueller Rahmen','Prestige':'Prestige',
   'Choose Your Language':'Wähle deine Sprache','Goalify will personalize your experience in your preferred language.':'Goalify personalisiert dein Erlebnis in deiner bevorzugten Sprache.',"Let's learn a little about your spending habits and create a personalized experience.":'Lass uns etwas über deine Ausgabengewohnheiten lernen und ein personalisiertes Erlebnis schaffen.','Start →':'Los →','Where does most of your money go?':'Wohin geht das meiste Geld?','Which take the most money?':'Was kostet am meisten?','Tap your top 3 in order — biggest first.':'Tippe deine Top 3 der Reihe nach — größtes zuerst.','Tap a category':'Kategorie antippen','Go back and pick a few categories first.':'Geh zurück und wähle zuerst ein paar Kategorien.','How much is left at the end of the month?':'Wie viel bleibt am Monatsende übrig?','Honest answers give better insights.':'Ehrliche Antworten geben bessere Einblicke.','What would you like to improve?':'Was möchtest du verbessern?','See my profile →':'Mein Profil ansehen →','Your Goalify Profile':'Dein Goalify-Profil','Top spending areas':'Top-Ausgabenbereiche','Main goal':'Hauptziel','Savings potential':'Sparpotenzial','Continue To Dashboard →':'Weiter zur Übersicht →','Building your personalized journey…':'Wir erstellen deine persönliche Reise…',
   'Almost Nothing':'Fast nichts','Less Than €100':'Weniger als €100','More Than €500':'Mehr als €500','Save More Money':'Mehr Geld sparen','Reach Goals Faster':'Ziele schneller erreichen','Spend Less':'Weniger ausgeben','Understand Spending Better':'Ausgaben besser verstehen','Build Better Habits':'Bessere Gewohnheiten aufbauen',
-  'Food & Restaurants':'Essen & Restaurants','Coffee & Drinks':'Kaffee & Getränke','Gaming':'Gaming','Apps & Subscriptions':'Apps & Abos','Entertainment & Streaming':'Unterhaltung & Streaming','Clothing & Fashion':'Kleidung & Mode','Fuel':'Kraftstoff','Rent & Housing':'Miete & Wohnen','Gym & Fitness':'Fitnessstudio','Healthcare':'Gesundheit','Pets':'Haustiere','Gifts':'Geschenke','Nightlife':'Nachtleben','Technology':'Technik','Beauty & Personal Care':'Beauty & Körperpflege','Family & Children':'Familie & Kinder','Investments & Savings':'Investitionen & Sparen','Online Shopping':'Online-Shopping','Electronics':'Elektronik','Hobbies':'Hobbys','Sports':'Sport','Books':'Bücher','Food Delivery':'Essenslieferung','Taxi & Rideshare':'Taxi & Fahrdienste','Bills & Debt Payments':'Rechnungen & Schulden','Low':'Niedrig','High':'Hoch','Very High':'Sehr hoch','save':'spare' },
+  'Food & Restaurants':'Essen & Restaurants','Coffee & Drinks':'Kaffee & Getränke','Gaming':'Gaming','Apps & Subscriptions':'Apps & Abos','Entertainment & Streaming':'Unterhaltung & Streaming','Clothing & Fashion':'Kleidung & Mode','Fuel':'Kraftstoff','Rent & Housing':'Miete & Wohnen','Gym & Fitness':'Fitnessstudio','Healthcare':'Gesundheit','Pets':'Haustiere','Gifts':'Geschenke','Nightlife':'Nachtleben','Technology':'Technik','Beauty & Personal Care':'Beauty & Körperpflege','Family & Children':'Familie & Kinder','Investments & Savings':'Investitionen & Sparen','Online Shopping':'Online-Shopping','Electronics':'Elektronik','Hobbies':'Hobbys','Sports':'Sport','Books':'Bücher','Food Delivery':'Essenslieferung','Taxi & Rideshare':'Taxi & Fahrdienste','Bills & Debt Payments':'Rechnungen & Schulden','Low':'Niedrig','High':'Hoch','Very High':'Sehr hoch',
+  'What\'s your monthly income?':'Wie hoch ist dein Monatseinkommen?','Pick a range — you can fine-tune later.':'Wähle einen Bereich — du kannst es später anpassen.','Custom amount':'Eigener Betrag','Enter your exact amount.':'Gib deinen genauen Betrag ein.','Drag to estimate your monthly spend.':'Ziehe, um deine monatlichen Ausgaben zu schätzen.','Skip':'Überspringen','Which spending category frustrates you most?':'Welche Ausgabenkategorie frustriert dich am meisten?','If you could reduce ONE expense, which would it be?':'Wenn du EINE Ausgabe reduzieren könntest, welche wäre das?','How often do you check your bank account?':'Wie oft prüfst du dein Bankkonto?','What\'s your biggest money challenge?':'Was ist deine größte finanzielle Herausforderung?','Under €500':'Unter €500','Rarely':'Selten','Every few days':'Alle paar Tage','Impulse spending':'Impulskäufe','Saving consistently':'Konstant sparen','Unexpected expenses':'Unerwartete Ausgaben','Bills':'Rechnungen','Reaching goals':'Ziele erreichen','Understanding spending':'Ausgaben verstehen','Coffee':'Kaffee','Transport':'Transport','Streaming Services':'Streaming-Dienste','Clothing':'Kleidung','Cigarettes / Vapes':'Zigaretten / Vapes','Rent / Housing':'Miete / Wohnen','Your Money Profile':'Dein Geldprofil','Potential savings':'Mögliche Ersparnis','Top expenses':'Top-Ausgaben','Spending breakdown':'Ausgabenaufschlüsselung','Advanced insights':'Erweiterte Einblicke','Unlock Full Spending Breakdown':'Vollständige Ausgabenaufschlüsselung freischalten','save':'spare' },
  es:{ // Spanish
   'Dashboard':'Panel','Goals':'Metas','Analytics':'Analítica','Future Simulator':'Simulador','AI Coach':'Entrenador IA','Challenges':'Retos','Social':'Social','Rewards':'Recompensas','Plans':'Planes','Student Verify':'Verificar estudiante','Settings':'Ajustes','Theme':'Tema','Sign out':'Cerrar sesión','Owner':'Propietario',
   'Executive':'Ejecutivo','Companies':'Empresas','Cash Flow':'Flujo de caja','Net Worth':'Patrimonio neto','Properties':'Propiedades','Employees':'Empleados','Payments':'Pagos','Invoices':'Facturas','Clients':'Clientes','Investments':'Inversiones','Fleet':'Flota','Inventory':'Inventario','Tax Center':'Centro fiscal','Calendar':'Calendario','AI Advisor':'Asesor IA','Team':'Equipo','Marketplace':'Mercado','Profile':'Perfil','Reports':'Informes','Business':'Empresa',
@@ -168,7 +170,8 @@ const I18N={
   'Loading…':'Cargando…','unlocked':'desbloqueado','Next up:':'A continuación:','legend!':'¡leyenda!','Admin Portal':'Portal de admin','Approve':'Aprobar','Reject':'Rechazar','Your plan':'Tu plan','Current plan':'Plan actual','Upgrade':'Mejorar','Switch':'Cambiar','best value':'mejor valor','Free 2 years':'Gratis 2 años','Referral Reward':'Recompensa por referido','Invite & earn':'Invita y gana','Pick the plan that fits you.':'Elige el plan que se ajuste a ti.','/mo':'/mes','/year':'/año','/forever':'/para siempre','No card needed':'Sin tarjeta','1-week free trial':'Prueba gratis de 1 semana','Current title':'Título actual','Total saved':'Total ahorrado','Longest streak':'Racha más larga','Leaderboard':'Clasificación','Profile visibility':'Visibilidad del perfil','Public':'Público','Private':'Privado','Profile progression':'Progresión del perfil','Current frame':'Marco actual','Prestige':'Prestigio',
   'Choose Your Language':'Elige tu idioma','Goalify will personalize your experience in your preferred language.':'Goalify personalizará tu experiencia en tu idioma preferido.',"Let's learn a little about your spending habits and create a personalized experience.":'Aprendamos un poco sobre tus hábitos de gasto y creemos una experiencia personalizada.','Start →':'Empezar →','Where does most of your money go?':'¿A dónde va la mayor parte de tu dinero?','Which take the most money?':'¿Cuáles se llevan más dinero?','Tap your top 3 in order — biggest first.':'Toca tus 3 principales en orden — el mayor primero.','Tap a category':'Toca una categoría','Go back and pick a few categories first.':'Vuelve y elige primero algunas categorías.','How much is left at the end of the month?':'¿Cuánto te queda al final del mes?','Honest answers give better insights.':'Las respuestas honestas dan mejores conclusiones.','What would you like to improve?':'¿Qué te gustaría mejorar?','See my profile →':'Ver mi perfil →','Your Goalify Profile':'Tu perfil Goalify','Top spending areas':'Principales áreas de gasto','Main goal':'Objetivo principal','Savings potential':'Potencial de ahorro','Continue To Dashboard →':'Continuar al panel →','Building your personalized journey…':'Creando tu recorrido personalizado…',
   'Almost Nothing':'Casi nada','Less Than €100':'Menos de €100','More Than €500':'Más de €500','Save More Money':'Ahorrar más dinero','Reach Goals Faster':'Alcanzar metas más rápido','Spend Less':'Gastar menos','Understand Spending Better':'Entender mejor el gasto','Build Better Habits':'Crear mejores hábitos',
-  'Food & Restaurants':'Comida y restaurantes','Coffee & Drinks':'Café y bebidas','Gaming':'Videojuegos','Apps & Subscriptions':'Apps y suscripciones','Entertainment & Streaming':'Entretenimiento y streaming','Clothing & Fashion':'Ropa y moda','Fuel':'Combustible','Rent & Housing':'Alquiler y vivienda','Gym & Fitness':'Gimnasio y fitness','Healthcare':'Salud','Pets':'Mascotas','Gifts':'Regalos','Nightlife':'Vida nocturna','Technology':'Tecnología','Beauty & Personal Care':'Belleza y cuidado personal','Family & Children':'Familia e hijos','Investments & Savings':'Inversiones y ahorros','Online Shopping':'Compras online','Electronics':'Electrónica','Hobbies':'Pasatiempos','Sports':'Deportes','Books':'Libros','Food Delivery':'Comida a domicilio','Taxi & Rideshare':'Taxi y viajes compartidos','Bills & Debt Payments':'Facturas y pagos de deuda','Low':'Bajo','High':'Alto','Very High':'Muy alto','save':'ahorra' },
+  'Food & Restaurants':'Comida y restaurantes','Coffee & Drinks':'Café y bebidas','Gaming':'Videojuegos','Apps & Subscriptions':'Apps y suscripciones','Entertainment & Streaming':'Entretenimiento y streaming','Clothing & Fashion':'Ropa y moda','Fuel':'Combustible','Rent & Housing':'Alquiler y vivienda','Gym & Fitness':'Gimnasio y fitness','Healthcare':'Salud','Pets':'Mascotas','Gifts':'Regalos','Nightlife':'Vida nocturna','Technology':'Tecnología','Beauty & Personal Care':'Belleza y cuidado personal','Family & Children':'Familia e hijos','Investments & Savings':'Inversiones y ahorros','Online Shopping':'Compras online','Electronics':'Electrónica','Hobbies':'Pasatiempos','Sports':'Deportes','Books':'Libros','Food Delivery':'Comida a domicilio','Taxi & Rideshare':'Taxi y viajes compartidos','Bills & Debt Payments':'Facturas y pagos de deuda','Low':'Bajo','High':'Alto','Very High':'Muy alto',
+  'What\'s your monthly income?':'¿Cuál es tu ingreso mensual?','Pick a range — you can fine-tune later.':'Elige un rango — puedes ajustarlo después.','Custom amount':'Cantidad personalizada','Enter your exact amount.':'Introduce tu cantidad exacta.','Drag to estimate your monthly spend.':'Desliza para estimar tu gasto mensual.','Skip':'Omitir','Which spending category frustrates you most?':'¿Qué categoría de gasto te frustra más?','If you could reduce ONE expense, which would it be?':'Si pudieras reducir UN gasto, ¿cuál sería?','How often do you check your bank account?':'¿Con qué frecuencia revisas tu cuenta bancaria?','What\'s your biggest money challenge?':'¿Cuál es tu mayor reto con el dinero?','Under €500':'Menos de €500','Rarely':'Casi nunca','Every few days':'Cada pocos días','Impulse spending':'Gasto impulsivo','Saving consistently':'Ahorrar de forma constante','Unexpected expenses':'Gastos inesperados','Bills':'Facturas','Reaching goals':'Alcanzar metas','Understanding spending':'Entender el gasto','Coffee':'Café','Transport':'Transporte','Streaming Services':'Servicios de streaming','Clothing':'Ropa','Cigarettes / Vapes':'Cigarrillos / Vapes','Rent / Housing':'Alquiler / Vivienda','Your Money Profile':'Tu perfil financiero','Potential savings':'Ahorro potencial','Top expenses':'Gastos principales','Spending breakdown':'Desglose de gastos','Advanced insights':'Análisis avanzados','Unlock Full Spending Breakdown':'Desbloquea el desglose completo de gastos','save':'ahorra' },
  it:{ // Italian
   'Dashboard':'Pannello','Goals':'Obiettivi','Analytics':'Analisi','Future Simulator':'Simulatore','AI Coach':'Coach IA','Challenges':'Sfide','Social':'Social','Rewards':'Premi','Plans':'Piani','Student Verify':'Verifica studente','Settings':'Impostazioni','Theme':'Tema','Sign out':'Esci','Owner':'Titolare',
   'Executive':'Direzione','Companies':'Aziende','Cash Flow':'Flusso di cassa','Net Worth':'Patrimonio netto','Properties':'Immobili','Employees':'Dipendenti','Payments':'Pagamenti','Invoices':'Fatture','Clients':'Clienti','Investments':'Investimenti','Fleet':'Flotta','Inventory':'Magazzino','Tax Center':'Centro fiscale','Calendar':'Calendario','AI Advisor':'Consulente IA','Team':'Team','Marketplace':'Mercato','Profile':'Profilo','Reports':'Report','Business':'Business',
@@ -190,7 +193,8 @@ const I18N={
   'Loading…':'Caricamento…','unlocked':'sbloccato','Next up:':'Prossimo:','legend!':'leggenda!','Admin Portal':'Portale admin','Approve':'Approva','Reject':'Rifiuta','Your plan':'Il tuo piano','Current plan':'Piano attuale','Upgrade':'Aggiorna','Switch':'Cambia','best value':'miglior valore','Free 2 years':'Gratis 2 anni','Referral Reward':'Premio invito','Invite & earn':'Invita e guadagna','Pick the plan that fits you.':'Scegli il piano adatto a te.','/mo':'/mese','/year':'/anno','/forever':'/per sempre','No card needed':'Nessuna carta','1-week free trial':'Prova gratis di 1 settimana','Current title':'Titolo attuale','Total saved':'Totale risparmiato','Longest streak':'Serie più lunga','Leaderboard':'Classifica','Profile visibility':'Visibilità del profilo','Public':'Pubblico','Private':'Privato','Profile progression':'Avanzamento profilo','Current frame':'Cornice attuale','Prestige':'Prestigio',
   'Choose Your Language':'Scegli la tua lingua','Goalify will personalize your experience in your preferred language.':'Goalify personalizzerà la tua esperienza nella lingua che preferisci.',"Let's learn a little about your spending habits and create a personalized experience.":'Scopriamo un po\' le tue abitudini di spesa e creiamo un\'esperienza personalizzata.','Start →':'Inizia →','Where does most of your money go?':'Dove vanno la maggior parte dei tuoi soldi?','Which take the most money?':'Quali pesano di più?','Tap your top 3 in order — biggest first.':'Tocca le tue prime 3 in ordine — la più grande prima.','Tap a category':'Tocca una categoria','Go back and pick a few categories first.':'Torna indietro e scegli prima alcune categorie.','How much is left at the end of the month?':'Quanto ti rimane a fine mese?','Honest answers give better insights.':'Risposte sincere danno analisi migliori.','What would you like to improve?':'Cosa vorresti migliorare?','See my profile →':'Vedi il mio profilo →','Your Goalify Profile':'Il tuo profilo Goalify','Top spending areas':'Principali aree di spesa','Main goal':'Obiettivo principale','Savings potential':'Potenziale di risparmio','Continue To Dashboard →':'Continua al pannello →','Building your personalized journey…':'Stiamo costruendo il tuo percorso personalizzato…',
   'Almost Nothing':'Quasi niente','Less Than €100':'Meno di €100','More Than €500':'Più di €500','Save More Money':'Risparmiare di più','Reach Goals Faster':'Raggiungere obiettivi più in fretta','Spend Less':'Spendere meno','Understand Spending Better':'Capire meglio le spese','Build Better Habits':'Creare abitudini migliori',
-  'Food & Restaurants':'Cibo e ristoranti','Coffee & Drinks':'Caffè e bevande','Gaming':'Videogiochi','Apps & Subscriptions':'App e abbonamenti','Entertainment & Streaming':'Intrattenimento e streaming','Clothing & Fashion':'Abbigliamento e moda','Fuel':'Carburante','Rent & Housing':'Affitto e casa','Gym & Fitness':'Palestra e fitness','Healthcare':'Salute','Pets':'Animali domestici','Gifts':'Regali','Nightlife':'Vita notturna','Technology':'Tecnologia','Beauty & Personal Care':'Bellezza e cura personale','Family & Children':'Famiglia e figli','Investments & Savings':'Investimenti e risparmi','Online Shopping':'Acquisti online','Electronics':'Elettronica','Hobbies':'Hobby','Sports':'Sport','Books':'Libri','Food Delivery':'Consegna cibo','Taxi & Rideshare':'Taxi e ride-sharing','Bills & Debt Payments':'Bollette e pagamenti debiti','Low':'Basso','High':'Alto','Very High':'Molto alto','save':'risparmia' },
+  'Food & Restaurants':'Cibo e ristoranti','Coffee & Drinks':'Caffè e bevande','Gaming':'Videogiochi','Apps & Subscriptions':'App e abbonamenti','Entertainment & Streaming':'Intrattenimento e streaming','Clothing & Fashion':'Abbigliamento e moda','Fuel':'Carburante','Rent & Housing':'Affitto e casa','Gym & Fitness':'Palestra e fitness','Healthcare':'Salute','Pets':'Animali domestici','Gifts':'Regali','Nightlife':'Vita notturna','Technology':'Tecnologia','Beauty & Personal Care':'Bellezza e cura personale','Family & Children':'Famiglia e figli','Investments & Savings':'Investimenti e risparmi','Online Shopping':'Acquisti online','Electronics':'Elettronica','Hobbies':'Hobby','Sports':'Sport','Books':'Libri','Food Delivery':'Consegna cibo','Taxi & Rideshare':'Taxi e ride-sharing','Bills & Debt Payments':'Bollette e pagamenti debiti','Low':'Basso','High':'Alto','Very High':'Molto alto',
+  'What\'s your monthly income?':'Qual è il tuo reddito mensile?','Pick a range — you can fine-tune later.':'Scegli un intervallo — potrai affinarlo dopo.','Custom amount':'Importo personalizzato','Enter your exact amount.':'Inserisci l\'importo esatto.','Drag to estimate your monthly spend.':'Trascina per stimare la spesa mensile.','Skip':'Salta','Which spending category frustrates you most?':'Quale categoria di spesa ti frustra di più?','If you could reduce ONE expense, which would it be?':'Se potessi ridurre UNA spesa, quale sarebbe?','How often do you check your bank account?':'Quanto spesso controlli il conto bancario?','What\'s your biggest money challenge?':'Qual è la tua sfida più grande con i soldi?','Under €500':'Meno di €500','Rarely':'Raramente','Every few days':'Ogni pochi giorni','Impulse spending':'Spese impulsive','Saving consistently':'Risparmiare con costanza','Unexpected expenses':'Spese impreviste','Bills':'Bollette','Reaching goals':'Raggiungere obiettivi','Understanding spending':'Capire le spese','Coffee':'Caffè','Transport':'Trasporti','Streaming Services':'Servizi di streaming','Clothing':'Abbigliamento','Cigarettes / Vapes':'Sigarette / Vape','Rent / Housing':'Affitto / Casa','Your Money Profile':'Il tuo profilo finanziario','Potential savings':'Risparmio potenziale','Top expenses':'Spese principali','Spending breakdown':'Ripartizione delle spese','Advanced insights':'Analisi avanzate','Unlock Full Spending Breakdown':'Sblocca la ripartizione completa delle spese','save':'risparmia' },
 };
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();return `<select id="langSel" class="input !py-1.5 text-xs" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
@@ -674,52 +678,61 @@ function verifyView(email){
 }
 
 // ============================================================
-// ONBOARDING — modern, fast, personalized (Duolingo/Revolut feel)
-// language → welcome → categories → top-3 → end-of-month → improve → result
+// ONBOARDING — slider-based spending discovery (game-like, 60–90s)
+// language → income → spend sliders (1/category, insights) →
+// frustrate → reduce → bank-check → challenge → money profile
 // ============================================================
-const ONBOARD_CATS=[
-  ['food','Food & Restaurants','🍔'],['coffee','Coffee & Drinks','☕'],['groceries','Groceries','🛒'],
-  ['gaming','Gaming','🎮'],['apps','Apps & Subscriptions','📱'],['streaming','Entertainment & Streaming','🎬'],
-  ['fashion','Clothing & Fashion','👕'],['travel','Travel','✈️'],['transport','Transportation','🚗'],
-  ['fuel','Fuel','⛽'],['rent','Rent & Housing','🏠'],['utilities','Utilities','⚡'],
-  ['education','Education','📚'],['gym','Gym & Fitness','🏋️'],['health','Healthcare','💊'],
-  ['pets','Pets','🐶'],['gifts','Gifts','🎁'],['nightlife','Nightlife','🍻'],
-  ['shopping','Shopping','🛍️'],['tech','Technology','💻'],['beauty','Beauty & Personal Care','💄'],
-  ['family','Family & Children','👶'],['investing','Investments & Savings','💰'],['online','Online Shopping','📦'],
-  ['electronics','Electronics','📺'],['hobbies','Hobbies','🎨'],['sports','Sports','⚽'],
-  ['books','Books','📖'],['delivery','Food Delivery','🍕'],['taxi','Taxi & Rideshare','🚕'],
-  ['bills','Bills & Debt Payments','🧾'],['other','Other','✨'],
+const INCOME_BRACKETS=[['u500','Under €500',300],['500_1000','€500–€1000',750],['1000_2000','€1000–€2000',1500],['2000_3000','€2000–€3000',2500],['3000_5000','€3000–€5000',4000],['5000','€5000+',6000]];
+const SPEND_CATS=[
+  ['food','Food & Restaurants','🍔',250],['groceries','Groceries','🛒',300],['coffee','Coffee & Drinks','☕',60],
+  ['fuel','Fuel','⛽',120],['transport','Transport','🚌',70],['gaming','Gaming','🎮',40],
+  ['apps','Apps & Subscriptions','📱',30],['streaming','Streaming Services','🎬',25],['clothing','Clothing','👕',80],
+  ['shopping','Shopping','🛍️',100],['travel','Travel','✈️',120],['nightlife','Nightlife','🍻',80],
+  ['cigarettes','Cigarettes / Vapes','🚬',120],['delivery','Food Delivery','🍕',90],['gym','Gym & Fitness','🏋️',40],
+  ['tech','Technology','💻',60],['gifts','Gifts','🎁',40],['pets','Pets','🐶',50],
+  ['utilities','Utilities','⚡',150],['rent','Rent / Housing','🏠',700],['other','Other','✨',60],
 ];
-const Q_ENDMONTH=[['nothing','Almost Nothing','😬'],['lt100','Less Than €100','🙂'],['100_300','€100–€300','👍'],['300_500','€300–€500','💪'],['gt500','More Than €500','🚀']];
-const Q_IMPROVE=[['savemore','Save More Money','💰'],['reachgoals','Reach Goals Faster','🎯'],['spendless','Spend Less','🛑'],['understand','Understand Spending Better','📊'],['habits','Build Better Habits','🏆']];
-const ENDMONTH_SAVINGS={nothing:0,lt100:60,'100_300':200,'300_500':400,gt500:650};
-const ENDMONTH_POTENTIAL={nothing:'Low',lt100:'Low','100_300':'Medium','300_500':'High',gt500:'Very High'};
-const obCat=(k)=>ONBOARD_CATS.find(x=>x[0]===k);
+const FRUSTRATE=[['delivery','Food Delivery','🍕'],['cigarettes','Cigarettes','🚬'],['gaming','Gaming','🎮'],['shopping','Shopping','🛍️'],['coffee','Coffee','☕'],['apps','Subscriptions','📱'],['other','Other','✨']];
+const BANKCHECK=[['rarely','Rarely','😅'],['weekly','Weekly','🙂'],['fewdays','Every few days','👍'],['daily','Daily','🔥']];
+const CHALLENGE=[['impulse','Impulse spending','💸'],['saving','Saving consistently','📉'],['unexpected','Unexpected expenses','😬'],['bills','Bills','🧾'],['goals','Reaching goals','🎯'],['understand','Understanding spending','📊']];
+const spendCat=(k)=>SPEND_CATS.find(x=>x[0]===k);
+const spendLabel=(v)=>v>=1000?'€1000+':'€'+v;
 
-let QSTEP=0; const QA={lang:'en',cats:new Set(),top:[],endmonth:'',improve:new Set()};
-const QSTEPS=['language','welcome','categories','top3','endmonth','improve'];
-const QPROG=['welcome','categories','top3','endmonth','improve']; // progress-tracked screens
+let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
+let QA={lang:'en',income:0,incomeBracket:'',_custom:false,spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+const QSTEPS=['language','income','spend','frustrate','reduce','bankcheck','challenge'];
+const QPROG=['income','spend','frustrate','reduce','bankcheck','challenge'];
 
-function computePersonaNew(){
+function computePersona2(){
   const t={saver:0,goal_chaser:0,student_budgeter:0,lifestyle_spender:0,impulse_buyer:0,future_investor:0};
-  const em=QA.endmonth;
-  if(em==='gt500'){t.saver+=3;t.future_investor+=2;} else if(em==='300_500'){t.saver+=2;} else if(em==='nothing'){t.impulse_buyer+=3;} else if(em==='lt100'){t.impulse_buyer+=1;}
-  QA.improve.forEach(g=>{ if(g==='savemore')t.saver+=2; if(g==='reachgoals')t.goal_chaser+=3; if(g==='spendless')t.impulse_buyer+=2; if(g==='understand')t.goal_chaser+=1; if(g==='habits')t.saver+=1; });
-  const lux=new Set(['nightlife','travel','fashion','delivery','shopping','beauty','gaming']);
-  [...QA.top,...QA.cats].forEach(c=>{ if(lux.has(c))t.lifestyle_spender+=1; if(c==='investing')t.future_investor+=2; });
+  const ch=QA.challenge;
+  if(ch==='impulse')t.impulse_buyer+=3; if(ch==='saving')t.saver+=3; if(ch==='goals')t.goal_chaser+=3; if(ch==='understand')t.goal_chaser+=2; if(ch==='bills')t.saver+=1; if(ch==='unexpected')t.saver+=2;
+  const inc=QA.income||0,sp=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),rate=inc>0?(inc-sp)/inc:0;
+  if(rate>=.2){t.saver+=2;t.future_investor+=2;} else if(rate<=0){t.impulse_buyer+=2;}
+  const lux=new Set(['nightlife','delivery','shopping','gaming','travel','clothing']);
+  Object.entries(QA.spend).forEach(([k,v])=>{ if(lux.has(k)&&v>=80)t.lifestyle_spender+=1; });
   let best='goal_chaser',bs=-1; for(const k in t) if(t[k]>bs){bs=t[k];best=k;} return best;
+}
+function spendInsight(idx){
+  const slice=SPEND_CATS.slice(Math.max(0,idx-4),idx);
+  let best=null,bestRatio=-1;
+  slice.forEach(c=>{const v=QA.spend[c[0]]||0,r=v/(c[3]||1);if(r>bestRatio){bestRatio=r;best=c;}});
+  const v=best?(QA.spend[best[0]]||0):0;
+  if(!best||v===0) return {title:'Nice and lean 👌',msg:'You skipped those — keeping it minimal so far.'};
+  if(bestRatio>=1.3){const pctMore=Math.min(95,55+Math.round((bestRatio-1)*30));return {title:'Interesting…',msg:`You spend more on ${best[1].toLowerCase()} than about ${pctMore}% of people. Worth a closer look.`};}
+  if(bestRatio<=0.6) return {title:'Nice! 🎉',msg:`Your ${best[1].toLowerCase()} spending is below average — nicely controlled.`};
+  return {title:'Looking balanced ⚖️',msg:`Your ${best[1].toLowerCase()} spending is around average.`};
 }
 
 function quizView(){
-  // fresh state each time onboarding is entered
-  QA.lang=curLang();QA.cats=new Set();QA.top=[];QA.endmonth='';QA.improve=new Set();
+  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+  QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
   return `<div class="relative flex min-h-screen items-center justify-center px-4 py-10"><div class="orb animate-float" style="top:4%;left:6%;width:380px;height:380px;background:radial-gradient(circle,color-mix(in srgb,var(--accent2) 38%,transparent),transparent 70%)"></div><div class="orb animate-float" style="bottom:6%;right:8%;width:320px;height:320px;background:radial-gradient(circle,color-mix(in srgb,var(--accent1) 30%,transparent),transparent 70%);animation-delay:-3s"></div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
 }
-// progress + card frame for tracked steps
-function qFrame(key,body,nav){
+function qFrame(key,body,nav,sub){
   const idx=QPROG.indexOf(key),total=QPROG.length,stepNum=idx+1,prog=Math.round(stepNum/total*100);
-  const bar=`<div class="mb-6"><div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>`;
-  const back=idx>0?`<button class="text-sm font-medium" style="color:var(--muted)" data-action="qback">← Back</button>`:'<span></span>';
+  const bar=`<div class="mb-6"><div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}${sub?` · ${sub}`:''}</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>`;
+  const back=`<button class="text-sm font-medium" style="color:var(--muted)" data-action="qback">← Back</button>`;
   return `${bar}<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">${body}<div class="mt-7 flex items-center justify-between gap-3">${back}${nav||'<span></span>'}</div></div>`;
 }
 function renderQuiz(){
@@ -727,11 +740,12 @@ function renderQuiz(){
   if(QSTEP>=QSTEPS.length) return finishQuiz(inner);
   const key=QSTEPS[QSTEP];
   if(key==='language') inner.innerHTML=stepLanguage();
-  else if(key==='welcome') inner.innerHTML=stepWelcome();
-  else if(key==='categories') inner.innerHTML=stepCategories();
-  else if(key==='top3') inner.innerHTML=stepTop3();
-  else if(key==='endmonth') inner.innerHTML=stepEndmonth();
-  else if(key==='improve') inner.innerHTML=stepImprove();
+  else if(key==='income') inner.innerHTML=stepIncome();
+  else if(key==='spend') inner.innerHTML=stepSpend();
+  else if(key==='frustrate') inner.innerHTML=stepPick('frustrate','Which spending category frustrates you most?','',FRUSTRATE);
+  else if(key==='reduce') inner.innerHTML=stepPick('reduce','If you could reduce ONE expense, which would it be?','',FRUSTRATE);
+  else if(key==='bankcheck') inner.innerHTML=stepPick('bankcheck','How often do you check your bank account?','',BANKCHECK);
+  else if(key==='challenge') inner.innerHTML=stepPick('challenge',"What's your biggest money challenge?",'',CHALLENGE);
 }
 function stepLanguage(){
   const cur=curLang();
@@ -743,68 +757,83 @@ function stepLanguage(){
     <button class="btn btn-primary mt-7 w-full sm:w-auto sm:px-12" data-action="qnext">Continue →</button>
   </div>`;
 }
-function stepWelcome(){
-  return qFrame('welcome',`<div class="text-center"><div class="mb-3 text-6xl animate-float">🎯</div><h1 class="text-3xl font-extrabold sm:text-4xl">Welcome to Goalify</h1><p class="mx-auto mt-3 max-w-md text-sm" style="color:var(--muted)">Let's learn a little about your spending habits and create a personalized experience.</p></div>`,`<button class="btn btn-primary" data-action="qnext">Start →</button>`);
+function stepIncome(){
+  const body=QA._custom
+   ? `<h2 class="text-2xl font-bold">What's your monthly income?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Enter your exact amount.</p>
+      <div class="mt-6 flex items-center gap-2 rounded-2xl border px-4" style="border-color:var(--border);background:var(--glass)"><span class="text-2xl">💰</span><span class="text-xl" style="color:var(--muted)">€</span><input id="incomeInput" type="number" min="0" inputmode="numeric" class="w-full bg-transparent py-4 text-2xl font-bold outline-none" placeholder="0" value="${QA.income||''}"></div>`
+   : `<h2 class="text-2xl font-bold">What's your monthly income?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Pick a range — you can fine-tune later.</p>
+      <div class="mt-6 space-y-3">${INCOME_BRACKETS.map(b=>{const on=QA.incomeBracket===b[0];return `<button data-action="qincome" data-v="${b[0]}" data-amt="${b[2]}" class="ob-row ${on?'sel':''}"><span class="text-2xl">💰</span><span class="font-semibold">${b[1]}</span>${on?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`;}).join('')}
+      <button data-action="qincomeCustom" class="ob-row"><span class="text-2xl">✏️</span><span class="font-semibold">Custom amount</span><span class="ml-auto" style="color:var(--muted)">→</span></button></div>`;
+  return qFrame('income',body,QA._custom?`<button class="btn btn-primary" data-action="qincomeSave">Continue →</button>`:'');
 }
-function stepCategories(){
-  const n=QA.cats.size;
-  const grid=ONBOARD_CATS.map(c=>{const on=QA.cats.has(c[0]);return `<button data-action="qcat" data-key="${c[0]}" class="ob-chip ${on?'sel':''}"><span class="text-xl">${c[2]}</span><span>${c[1]}</span></button>`;}).join('');
-  const body=`<h2 class="text-2xl font-bold">Where does most of your money go?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Select all that apply.${n?` · <b class="text-white">${n} selected</b>`:''}</p><div class="mt-5 grid max-h-[50vh] grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">${grid}</div>`;
-  return qFrame('categories',body,`<button class="btn btn-primary" data-action="qnext">Continue →</button>`);
+function stepSpend(){
+  if(SHOWINSIGHT){const ins=spendInsight(SPENDIDX);return qFrame('spend',`<div class="text-center anim"><div class="mb-3 text-5xl">💡</div><h2 class="text-2xl font-bold">${ins.title}</h2><p class="mx-auto mt-2 max-w-sm text-sm" style="color:var(--muted)">${ins.msg}</p></div>`,`<button class="btn btn-primary" data-action="qInsightNext">Continue →</button>`,`${SPENDIDX} of ${SPEND_CATS.length}`);}
+  const c=SPEND_CATS[SPENDIDX],v=QA.spend[c[0]]??0;
+  const body=`<div class="text-center"><div class="mb-2 text-5xl">${c[2]}</div><h2 class="text-2xl font-bold">${c[1]}</h2><p class="mt-1 text-sm" style="color:var(--muted)">Drag to estimate your monthly spend.</p>
+    <div class="mt-6 text-4xl font-extrabold gtext" id="spendVal">${spendLabel(v)}</div>
+    <input id="spendSlider" type="range" min="0" max="1000" step="10" value="${v}" data-cat="${c[0]}" class="ob-slider mt-5">
+    <div class="mt-1 flex justify-between text-[11px]" style="color:var(--muted)"><span>€0</span><span>€1000+</span></div></div>`;
+  return qFrame('spend',body,`<div class="flex gap-2"><button class="btn btn-ghost" data-action="qspendSkip">Skip</button><button class="btn btn-primary" data-action="qspendNext">Continue →</button></div>`,`Category ${SPENDIDX+1} of ${SPEND_CATS.length}`);
 }
-function stepTop3(){
-  const podium=[0,1,2].map(i=>{const k=QA.top[i],c=k?obCat(k):null,medal=['🥇','🥈','🥉'][i];return `<div class="ob-podium ${c?'filled':''}"><span class="text-xl">${medal}</span>${c?`<span class="text-2xl">${c[2]}</span><span class="text-xs font-semibold leading-tight">${c[1]}</span>`:`<span class="text-[11px]" style="color:var(--muted)">Tap a category</span>`}</div>`;}).join('');
-  const chosen=[...QA.cats];
-  const opts=chosen.length?chosen.map(k=>{const c=obCat(k),rank=QA.top.indexOf(k),on=rank>-1;return `<button data-action="qrank" data-key="${k}" class="ob-chip ${on?'sel':''}">${on?`<span class="ob-rank">${rank+1}</span>`:''}<span class="text-xl">${c[2]}</span><span>${c[1]}</span></button>`;}).join(''):`<p class="text-sm" style="color:var(--muted)">Go back and pick a few categories first.</p>`;
-  const body=`<h2 class="text-2xl font-bold">Which take the most money?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Tap your top 3 in order — biggest first.</p><div class="mt-5 grid grid-cols-3 gap-2">${podium}</div><div class="mt-5 flex max-h-[34vh] flex-wrap gap-2 overflow-y-auto">${opts}</div>`;
-  return qFrame('top3',body,`<button class="btn btn-primary" data-action="qnext">Continue →</button>`);
+function stepPick(field,title,sub,opts){
+  const cur=QA[field];
+  const body=`<h2 class="text-2xl font-bold">${title}</h2>${sub?`<p class="mt-1 text-sm" style="color:var(--muted)">${sub}</p>`:''}<div class="mt-6 space-y-3">${opts.map(o=>{const on=cur===o[0];return `<button data-action="qpick" data-field="${field}" data-val="${o[0]}" class="ob-row ${on?'sel':''}"><span class="text-2xl">${o[2]}</span><span class="font-semibold">${o[1]}</span>${on?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`;}).join('')}</div>`;
+  return qFrame(field,body,'');
 }
-function stepEndmonth(){
-  const body=`<h2 class="text-2xl font-bold">How much is left at the end of the month?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Honest answers give better insights.</p><div class="mt-6 space-y-3">${Q_ENDMONTH.map(o=>{const on=QA.endmonth===o[0];return `<button data-action="qendmonth" data-val="${o[0]}" class="ob-row ${on?'sel':''}"><span class="text-2xl">${o[2]}</span><span class="font-semibold">${o[1]}</span>${on?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`;}).join('')}</div>`;
-  return qFrame('endmonth',body,'');
-}
-function stepImprove(){
-  const body=`<h2 class="text-2xl font-bold">What would you like to improve?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Select all that apply.</p><div class="mt-6 space-y-3">${Q_IMPROVE.map(o=>{const on=QA.improve.has(o[0]);return `<button data-action="qimprove" data-val="${o[0]}" class="ob-row ${on?'sel':''}"><span class="text-2xl">${o[2]}</span><span class="font-semibold">${o[1]}</span>${on?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`;}).join('')}</div>`;
-  return qFrame('improve',body,`<button class="btn btn-primary" data-action="qnext">See my profile →</button>`);
-}
-function quizNext(){
+function advanceSpend(){ SPENDIDX++; if(SPENDIDX>=SPEND_CATS.length){SHOWINSIGHT=false;QSTEP++;} else if(SPENDIDX%4===0){SHOWINSIGHT=true;} renderQuiz(); }
+function quizBack(){
   const key=QSTEPS[QSTEP];
-  if(key==='categories'&&QA.cats.size===0){toast('Pick at least one category','err');return;}
-  if(key==='top3'&&QA.top.length===0){QA.top=[...QA.cats].slice(0,3);}
-  if(key==='improve'&&QA.improve.size===0){toast('Pick at least one','err');return;}
-  QSTEP++; renderQuiz();
+  if(key==='spend'){ if(SHOWINSIGHT){SHOWINSIGHT=false;renderQuiz();return;} if(SPENDIDX>0){SPENDIDX--;renderQuiz();return;} }
+  QSTEP=Math.max(0,QSTEP-1);
+  if(QSTEPS[QSTEP]==='spend'){SPENDIDX=SPEND_CATS.length-1;SHOWINSIGHT=false;}
+  renderQuiz();
 }
-function quizBack(){ QSTEP=Math.max(0,QSTEP-1); renderQuiz(); }
-async function finishQuiz(inner){
-  inner.innerHTML=`<div class="glass-strong rounded-3xl p-10 text-center anim"><div class="animate-float text-5xl">🧠</div><p class="mt-4 text-sm" style="color:var(--muted)">Building your personalized journey…</p></div>`;
-  const persona=computePersonaNew();
-  const savings=ENDMONTH_SAVINGS[QA.endmonth]??0;
-  const potential=ENDMONTH_POTENTIAL[QA.endmonth]||'Medium';
-  const cats=[...QA.cats],top=(QA.top.length?QA.top:cats).slice(0,3),improve=[...QA.improve];
-  if(DEMO_MODE){
-    Object.assign(DEMO_ME,{monthly_savings:savings,personality:persona,onboarded:true,spend_categories:cats,top_categories:top,end_of_month:QA.endmonth,improve_goals:improve,savings_potential:potential});
-  } else {
-    try{ await sb.from('profiles').update({monthly_savings:savings,personality:persona,onboarded:true,spend_categories:cats,top_categories:top,end_of_month:QA.endmonth,improve_goals:improve,savings_potential:potential,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);
-    }catch(e){ await sb.from('profiles').update({monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id); }
-  }
-  await loadProfile();
-  const p=PERSONAS[persona]||PERSONAS.goal_chaser;
-  const topCards=top.length?top.map((k,i)=>{const c=obCat(k)||['','Other','✨'];return `<div class="ob-result-card"><span class="text-2xl">${c[2]}</span><div><p class="text-[11px]" style="color:var(--muted)">${['1st','2nd','3rd'][i]||''} biggest</p><p class="font-semibold">${c[1]}</p></div></div>`;}).join(''):`<p class="text-sm" style="color:var(--muted)">—</p>`;
-  const mg=Q_IMPROVE.find(x=>x[0]===improve[0])||['','Save More Money','💰'];
-  inner.innerHTML=`<div class="glass-strong rounded-3xl p-7 anim text-center">
-    <div class="text-5xl">${p.emoji}</div>
-    <p class="mt-3 text-xs font-semibold uppercase tracking-widest gtext">Your Goalify Profile</p>
-    <h2 class="mt-1 text-2xl font-bold">${p.name}</h2>
-    <p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">${p.desc}</p>
-    <div class="mt-6 text-left"><p class="label">Top spending areas</p><div class="grid gap-2 sm:grid-cols-3">${topCards}</div></div>
-    <div class="mt-3 grid gap-2 text-left sm:grid-cols-2">
-      <div class="ob-result-card"><span class="text-2xl">${mg[2]}</span><div><p class="text-[11px]" style="color:var(--muted)">Main goal</p><p class="font-semibold">${mg[1]}</p></div></div>
-      <div class="ob-result-card"><span class="text-2xl">📈</span><div><p class="text-[11px]" style="color:var(--muted)">Savings potential</p><p class="font-semibold gtext">${potential}</p></div></div>
-    </div>
-    <div class="mt-3 glass rounded-2xl p-4 text-left"><h3 class="mb-2 text-sm font-semibold">✨ Recommendations</h3><ul class="space-y-1.5 text-sm" style="color:var(--muted)">${p.recs.map(r=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${r}</li>`).join('')}</ul></div>
-    <div class="mt-3 rounded-2xl p-4 text-left" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 16%,transparent),color-mix(in srgb,var(--accent2) 16%,transparent));border:1px solid var(--border)"><p class="text-sm"><b>Next step:</b> create your first savings goal — Goalify will show exactly what to cut to reach it.</p></div>
-    <button class="btn btn-primary mt-6 w-full" onclick="location.hash='#app/dashboard'">Continue To Dashboard →</button>
+function drawQuizChart(spend){
+  const el=$('#quizChart'); if(!el||typeof Chart==='undefined') return;
+  const ent=Object.entries(spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!ent.length){el.parentElement.innerHTML='<p class="flex h-full items-center justify-center text-sm" style="color:var(--muted)">No spending entered.</p>';return;}
+  const lbls=ent.map(([k])=>{const c=spendCat(k);return c?c[1]:k;}),data=ent.map(([,v])=>v);
+  const palette=['#8b5cf6','#6366f1','#22c55e','#f59e0b','#ec4899','#3b82f6','#ef4444','#14b8a6'];
+  if(charts.quiz)charts.quiz.destroy();
+  charts.quiz=new Chart(el,{type:'doughnut',data:{labels:lbls,datasets:[{data,backgroundColor:palette,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},boxWidth:10}}},cutout:'60%'}});
+}
+function premiumTeaserHTML(){
+  return `<div class="relative mt-4 overflow-hidden rounded-2xl glass p-4">
+    <div class="blur-lock"><p class="label">Advanced insights</p><div class="grid gap-2 sm:grid-cols-2"><div class="ob-result-card"><span class="text-xl">📈</span><div><p class="text-[11px]" style="color:var(--muted)">Spending trend</p><p class="font-semibold">Detailed monthly trends</p></div></div><div class="ob-result-card"><span class="text-xl">🔮</span><div><p class="text-[11px]" style="color:var(--muted)">Savings forecast</p><p class="font-semibold">12-month projection</p></div></div><div class="ob-result-card"><span class="text-xl">📊</span><div><p class="text-[11px]" style="color:var(--muted)">Category analytics</p><p class="font-semibold">Full breakdown</p></div></div><div class="ob-result-card"><span class="text-xl">🗓️</span><div><p class="text-[11px]" style="color:var(--muted)">Monthly reports</p><p class="font-semibold">Auto-generated</p></div></div></div></div>
+    <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4" style="background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 78%,transparent) 55%)"><div class="text-2xl">🔒</div><p class="font-bold">Unlock Full Spending Breakdown</p><p class="max-w-xs text-[11px]" style="color:var(--muted)">Premium adds spending trends, detailed category analytics, monthly reports, savings forecasts & advanced insights.</p><a href="#app/plans" class="btn btn-primary !py-2 text-sm">Upgrade</a></div>
   </div>`;
+}
+async function finishQuiz(inner){
+  inner.innerHTML=`<div class="glass-strong rounded-3xl p-10 text-center anim"><div class="animate-float text-5xl">🧠</div><p class="mt-4 text-sm" style="color:var(--muted)">Building your money profile…</p></div>`;
+  const income=QA.income||0,spend=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),savings=Math.max(0,income-spend);
+  const potential=savings<=0?'Low':savings<150?'Low':savings<400?'Medium':savings<800?'High':'Very High';
+  const persona=computePersona2();
+  const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
+  const disc=new Set(['food','coffee','gaming','apps','streaming','clothing','shopping','travel','nightlife','cigarettes','delivery','gym','tech','gifts']);
+  let opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>disc.has(k))||sorted[0]||null);
+  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},personality:persona,onboarded:true,savings_potential:potential,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
+  else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
+  await loadProfile();
+  const p=PERSONAS[persona]||PERSONAS.goal_chaser,catName=(k)=>{const c=spendCat(k);return c?[c[1],c[2]]:[k,'•'];};
+  const topRows=top3.length?top3.map(([k,v])=>{const [n,e]=catName(k);return `<div class="ob-result-card"><span class="text-2xl">${e}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${n}</p></div><span class="font-bold">${fmt(v)}</span></div>`;}).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
+  let oppHTML='';
+  if(opp){const [n,e]=catName(opp[0]),yr=Math.round(opp[1]*0.25*12);oppHTML=`<div class="mt-4 rounded-2xl p-4 text-left" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 16%,transparent),color-mix(in srgb,var(--accent2) 16%,transparent));border:1px solid var(--border)"><p class="text-sm"><b>💡 Biggest opportunity:</b> reducing ${e} ${n.toLowerCase()} by 25% could save <b class="gtext">${fmt(yr)}/year</b>.</p></div>`;}
+  inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-7 anim">
+    <div class="text-center"><div class="text-5xl">${p.emoji}</div><p class="mt-2 text-xs font-semibold uppercase tracking-widest gtext">Your Money Profile</p><h2 class="mt-1 text-2xl font-bold">${p.name}</h2></div>
+    <div class="mt-5 grid grid-cols-3 gap-2 text-center">
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Income</p><p class="text-lg font-extrabold">${fmt(income)}</p></div>
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Spending</p><p class="text-lg font-extrabold">${fmt(spend)}</p></div>
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Potential savings</p><p class="text-lg font-extrabold gtext">${fmt(savings)}</p></div>
+    </div>
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div><p class="label">Top expenses</p><div class="space-y-2">${topRows}</div></div>
+      <div><p class="label">Spending breakdown</p><div class="glass rounded-2xl p-3" style="height:210px"><canvas id="quizChart"></canvas></div></div>
+    </div>
+    ${oppHTML}
+    ${premiumTeaserHTML()}
+    <button class="btn btn-primary mt-5 w-full" onclick="location.hash='#app/dashboard'">Continue To Dashboard →</button>
+  </div>`;
+  drawQuizChart(QA.spend);
 }
 
 // ============================================================
@@ -1871,17 +1900,23 @@ document.addEventListener('click',async(e)=>{
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
     else if(act==='delAcct'){if(DEMO_MODE){toast('Account deletion is disabled in demo mode','err');return;}if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
     else if(act==='qback'){quizBack();}
-    else if(act==='qnext'){quizNext();}
+    else if(act==='qnext'){QSTEP++;renderQuiz();}
     else if(act==='qlang'){const l=a.getAttribute('data-l');QA.lang=l;localStorage.setItem('goalify_lang',l);if(ME)ME.language=l;renderQuiz();}
-    else if(act==='qcat'){const k=a.getAttribute('data-key');QA.cats.has(k)?QA.cats.delete(k):QA.cats.add(k);if(!QA.cats.has(k))QA.top=QA.top.filter(x=>x!==k);renderQuiz();}
-    else if(act==='qrank'){const k=a.getAttribute('data-key');const i=QA.top.indexOf(k);if(i>-1)QA.top.splice(i,1);else if(QA.top.length<3)QA.top.push(k);else toast('Top 3 already picked — tap one to swap','err');renderQuiz();}
-    else if(act==='qendmonth'){QA.endmonth=a.getAttribute('data-val');QSTEP++;renderQuiz();}
-    else if(act==='qimprove'){const v=a.getAttribute('data-val');QA.improve.has(v)?QA.improve.delete(v):QA.improve.add(v);renderQuiz();}
+    else if(act==='qincome'){QA.income=+a.getAttribute('data-amt')||0;QA.incomeBracket=a.getAttribute('data-v');QA._custom=false;QSTEP++;renderQuiz();}
+    else if(act==='qincomeCustom'){QA._custom=true;renderQuiz();}
+    else if(act==='qincomeSave'){const v=+($('#incomeInput')?.value||0);if(v<=0){toast('Enter your income','err');return;}QA.income=v;QA.incomeBracket='custom';QSTEP++;renderQuiz();}
+    else if(act==='qspendNext'){const s=$('#spendSlider');if(s)QA.spend[s.getAttribute('data-cat')]=+s.value||0;advanceSpend();}
+    else if(act==='qspendSkip'){const c=SPEND_CATS[SPENDIDX];if(c)QA.spend[c[0]]=0;advanceSpend();}
+    else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=SPEND_CATS.length)QSTEP++;renderQuiz();}
+    else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
     else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
     else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
     else if(act==='approveSV'){await sb.rpc('approve_student',{p_id:a.getAttribute('data-id')});toast('Approved → Pro');render();}
     else if(act==='rejectSV'){await sb.rpc('reject_student',{p_id:a.getAttribute('data-id')});toast('Rejected');render();}
   }catch(err){toast(err.message||'Something went wrong','err');}
+});
+document.addEventListener('input',(e)=>{
+  if(e.target&&e.target.id==='spendSlider'){const cat=e.target.getAttribute('data-cat'),v=+e.target.value||0;QA.spend[cat]=v;const lbl=document.getElementById('spendVal');if(lbl)lbl.textContent=spendLabel(v);}
 });
 document.addEventListener('change',async(e)=>{
   if(e.target.id==='langSel'){setLang(e.target.value);return;}

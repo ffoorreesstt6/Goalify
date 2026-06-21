@@ -270,6 +270,11 @@ alter table public.profiles add column if not exists top_categories text[] defau
 alter table public.profiles add column if not exists end_of_month text;
 alter table public.profiles add column if not exists improve_goals text[] default '{}';
 alter table public.profiles add column if not exists savings_potential text;
+-- Slider quiz: frustration, reduce target, bank-check habit, money challenge
+alter table public.profiles add column if not exists frustrate_category text;
+alter table public.profiles add column if not exists reduce_category text;
+alter table public.profiles add column if not exists bank_check text;
+alter table public.profiles add column if not exists money_challenge text;
 
 -- Public leaderboard source: only public, onboarded profiles are exposed.
 -- Ready for real ranking once accounts go live; ordered by prestige then XP.
