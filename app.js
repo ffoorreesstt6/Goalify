@@ -321,6 +321,9 @@ function canPrestige(level){return (level||1)>=100;}
 function prestigeStars(n){n=+n||0;return n>0?'⭐'.repeat(Math.min(n,5)):'';}
 // privacy — persisted in localStorage in demo, column-backed when the backend is live
 function profVisibility(){return localStorage.getItem('goalify_visibility')||ME?.profile_visibility||'public';}
+// saved payment method (display-only: brand + last4 + expiry — never full PAN/CVC). Stripe holds the real card when live.
+function getPM(){try{return JSON.parse(localStorage.getItem('goalify_pm_'+uid()))||null;}catch(e){return null;}}
+function setPM(o){if(o)localStorage.setItem('goalify_pm_'+uid(),JSON.stringify(o));else localStorage.removeItem('goalify_pm_'+uid());}
 function showActiveGoalsPref(){const v=localStorage.getItem('goalify_show_goals');return v==null?(ME?.show_active_goals!==false):v==='1';}
 // leaderboard — demo-honest: only the real signed-in user exists, so rank is 1
 function leaderboardPosition(){return 1;}
@@ -1305,6 +1308,7 @@ function rewardsView(){
 function settingsView(){
   const p=ME;
   const vis=profVisibility();
+  const pm=getPM();
   const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Blue','#6366f1'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
@@ -1332,7 +1336,14 @@ function settingsView(){
     <a href="#app/profile" class="btn btn-ghost mt-4 text-sm">View my profile →</a></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">💪 Savings strategy</h2><p class="mt-1 text-sm text-slate-400">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Security · Password</h2><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly AI reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
+  <div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">💳 Payment method</h2>${pm?`<span class="rounded-full px-2.5 py-1 text-[10px] font-medium" style="background:var(--glass);color:var(--muted)">Default</span>`:''}</div>
+    <p class="mt-1 text-sm text-slate-400">${DEMO_MODE?'Demo — no real card is stored. When live, cards are entered &amp; stored securely by Stripe (we never see your full number).':'Your card is stored securely by our payment provider — we never see the full number.'}</p>
+    ${pm?`<div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl p-4" style="background:var(--glass);border:1px solid var(--border)"><div class="flex items-center gap-3"><span class="flex h-9 w-14 items-center justify-center rounded-md text-[10px] font-bold tracking-wide" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff">${esc(pm.brand.slice(0,8))}</span><div><p class="text-sm font-semibold">${esc(pm.brand)} •••• ${esc(pm.last4)}</p><p class="text-[11px]" style="color:var(--muted)">Expires ${esc(pm.exp)}</p></div></div><button class="btn btn-ghost !py-1.5 text-sm" data-action="removePm">Remove</button></div>`
+      :`<div class="mt-4 rounded-xl p-4 text-center text-sm" style="background:var(--glass);color:var(--muted)">No payment method saved.</div>
+    <button class="btn btn-primary mt-3 text-sm" data-action="togglePmForm">+ Add payment method</button>
+    <div id="pmForm" class="hidden mt-3"><div class="grid gap-3 sm:grid-cols-3"><select id="pmBrand" class="input">${['Visa','Mastercard','Amex','Other'].map(b=>`<option>${b}</option>`).join('')}</select><input id="pmLast4" class="input" maxlength="4" inputmode="numeric" placeholder="Last 4 digits"><input id="pmExp" class="input" maxlength="5" placeholder="MM/YY"></div><div class="mt-3 flex gap-2"><button class="btn btn-primary text-sm" data-action="savePm">Save card</button><button class="btn btn-ghost text-sm" data-action="togglePmForm">Cancel</button></div><p class="mt-2 text-[11px]" style="color:var(--muted)">Only the last 4 digits are stored for display — never the full card number or CVC.</p></div>`}
+  </div>
   <div class="grid gap-6 sm:grid-cols-2">
     <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Subscription</h2><p class="mt-1 text-sm text-slate-400">Current: <b class="text-white">${PLANS[p.plan].name}</b> ${planBadge(p.plan)}</p>${p.plan!=='free'?`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`:`<a href="#app/plans" class="btn btn-primary mt-4 text-sm">See plans</a>`}</div>
     <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🎟️ Redeem a code</h2><p class="mt-1 text-sm text-slate-400">Have a promo code? Activate your plan instantly.</p><div class="mt-4 flex gap-2"><input id="promoInput" class="input" placeholder="ENTER-CODE-HERE" style="text-transform:uppercase"><button class="btn btn-primary text-sm shrink-0" data-action="redeemPromo">Redeem</button></div></div>
@@ -1508,6 +1519,7 @@ async function render(){
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
+  if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));return;}
   if(hash==='reset'){siteTheme();root.innerHTML=resetView();return;}
   // need session below
   if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
@@ -1938,6 +1950,9 @@ document.addEventListener('click',async(e)=>{
     else if(act==='prestige'){const level=levelFromXp(ME.xp).level;if(!canPrestige(level)){toast('Reach Level 100 to prestige','err');return;}const np=(ME.prestige||0)+1;if(DEMO_MODE){DEMO_ME.prestige=np;DEMO_ME.xp=0;ME.prestige=np;ME.xp=0;}else{await sb.from('profiles').update({prestige:np,xp:0}).eq('id',SESSION.user.id).catch(()=>{});await loadProfile();}toast('🌟 Prestige '+np+'! A fresh climb begins.');render();}
     else if(act==='demoPlan'){const pl=a.getAttribute('data-plan');if(DEMO_MODE){DEMO_ME.plan=pl;ME.plan=pl;toast('Now previewing '+PLANS[pl].name+' plan (demo)');render();}else{toast('Upgrades are handled by an admin or via student verification.');}}
     else if(act==='redeemPromo'){const code=($('#promoInput')?.value||'').trim().toUpperCase();if(!code)return toast('Enter a code','err');const plan=PROMO_CODES[code];if(!plan)return toast('Invalid or expired code','err');const used=JSON.parse(localStorage.getItem('goalify_promo_used')||'[]');if(used.includes(code))return toast('This code has already been used','err');used.push(code);localStorage.setItem('goalify_promo_used',JSON.stringify(used));if(DEMO_MODE){DEMO_ME.plan=plan;ME.plan=plan;}else{await sb.from('profiles').update({plan}).eq('id',SESSION.user.id);await loadProfile();}toast('🎉 '+PLANS[plan].name+' plan activated!');render();}
+    else if(act==='togglePmForm'){const el=$('#pmForm');if(el)el.classList.toggle('hidden');}
+    else if(act==='savePm'){const brand=$('#pmBrand')?.value||'Card';const last4=($('#pmLast4')?.value||'').replace(/\D/g,'');const exp=($('#pmExp')?.value||'').trim();if(last4.length!==4)return toast('Enter the last 4 digits','err');if(!/^\d{2}\/\d{2}$/.test(exp))return toast('Expiry must be MM/YY','err');setPM({brand,last4,exp});toast('💳 Payment method saved');render();}
+    else if(act==='removePm'){setPM(null);toast('Payment method removed');render();}
     else if(act==='adminLogin'){const code=($('#adminInput')?.value||'').trim();if(code!==ADMIN_CODE)return toast('Incorrect access code','err');localStorage.setItem('goalify_admin','1');toast('🛡️ Admin access granted');location.hash='#admin';}
     else if(act==='adminLogout'){localStorage.removeItem('goalify_admin');toast('Admin signed out');render();}
     else if(act==='simPreset'){simPreset(a.getAttribute('data-preset'));}
@@ -2021,11 +2036,13 @@ document.addEventListener('submit',async(e)=>{
       if(score<3)return toast('Password too weak — needs 8+ chars, a number, and a letter','err');
       if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name')||'',last_name:fd.get('last_name')||'',email:fd.get('email')||DEMO_ME.email,onboarded:false});toast('Welcome to Goalify! 🎉');location.hash='#quiz';return;}
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
-      const {data,error}=await sb.auth.signUp({email:fd.get('email'),password:fd.get('password'),options:{data:{first_name:fd.get('first_name'),last_name:fd.get('last_name')}}});
+      const email=fd.get('email');
+      const redirectTo=location.protocol==='file:'?undefined:location.origin+(location.pathname==='/'?'':location.pathname);
+      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name')}}});
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
       if(data.session){location.hash='#quiz';}
-      else{toast('Account created! Log in to continue.');location.hash='#login';}
+      else{localStorage.setItem('goalify_pending_email',email);location.hash='#verify';}
     }
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
