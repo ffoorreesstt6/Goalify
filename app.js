@@ -103,6 +103,16 @@ function caps(plan){
 // Translates visible label text on every render via a dictionary.
 // ============================================================
 const LANGS=[['en','English','🇬🇧'],['sq','Shqip','🇦🇱'],['de','Deutsch','🇩🇪'],['es','Español','🇪🇸'],['it','Italiano','🇮🇹']];
+// SVG flags (emoji flags don't render on Windows) + flag-colour accents
+const FLAG_COLORS={en:['#012169','#C8102E'],sq:['#E41E20','#111111'],de:['#DD0000','#FFCE00'],es:['#AA151B','#F1BF00'],it:['#008C45','#CD212A']};
+const FLAG_SVG={
+  en:`<svg viewBox="0 0 60 40" preserveAspectRatio="none"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4"/><rect x="25" width="10" height="40" fill="#fff"/><rect y="15" width="60" height="10" fill="#fff"/><rect x="27" width="6" height="40" fill="#C8102E"/><rect y="17" width="60" height="6" fill="#C8102E"/></svg>`,
+  sq:`<svg viewBox="0 0 60 40"><rect width="60" height="40" fill="#E41E20"/><g fill="#111" transform="translate(30 20.5)"><path d="M0 -10C-3 -13 -8.5 -12 -8.5 -8C-8.5 -5.8 -6.3 -5.8 -5.2 -7C-6.3 -3.8 -4 -1.6 -2 -3L-2 4.2C-5.2 5.4 -9.4 8.6 -9.4 11.6L-3 9.4C-2 12.6 0 13.6 0 13.6C0 13.6 2 12.6 3 9.4L9.4 11.6C9.4 8.6 5.2 5.4 2 4.2L2 -3C4 -1.6 6.3 -3.8 5.2 -7C6.3 -5.8 8.5 -5.8 8.5 -8C8.5 -12 3 -13 0 -10Z"/></g></svg>`,
+  de:`<svg viewBox="0 0 60 40" preserveAspectRatio="none"><rect width="60" height="40" fill="#FFCE00"/><rect width="60" height="26.7" fill="#D00"/><rect width="60" height="13.3" fill="#000"/></svg>`,
+  es:`<svg viewBox="0 0 60 40" preserveAspectRatio="none"><rect width="60" height="40" fill="#AA151B"/><rect y="10" width="60" height="20" fill="#F1BF00"/></svg>`,
+  it:`<svg viewBox="0 0 60 40" preserveAspectRatio="none"><rect width="60" height="40" fill="#CD212A"/><rect width="40" height="40" fill="#fff"/><rect width="20" height="40" fill="#008C45"/></svg>`,
+};
+function flagSVG(code){return FLAG_SVG[code]||`<svg viewBox="0 0 60 40"><rect width="60" height="40" fill="#94a3b8"/></svg>`;}
 const I18N={
  sq:{ // Albanian
   'Dashboard':'Paneli','Goals':'Qëllimet','Analytics':'Analitika','Future Simulator':'Simulatori','AI Coach':'Trajneri AI','Challenges':'Sfidat','Social':'Social','Rewards':'Shpërblimet','Plans':'Planet','Student Verify':'Verifikim student','Settings':'Cilësimet','Theme':'Tema','Sign out':'Dilni','Owner':'Pronar',
@@ -828,8 +838,10 @@ function qFrame(key,body,nav,sub){
   const back=`<button class="text-sm font-medium" style="color:var(--muted)" data-action="qback">← Back</button>`;
   return `${bar}<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">${body}<div class="mt-7 flex items-center justify-between gap-3">${back}${nav||'<span></span>'}</div></div>`;
 }
+function qScrollTop(){try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){try{window.scrollTo(0,0);}catch(_){}}}
 function renderQuiz(){
   const inner=$('#qInner'); if(!inner) return;
+  qScrollTop();
   if(QSTEP>=QSTEPS.length) return finishQuiz(inner);
   const key=QSTEPS[QSTEP];
   if(key==='language') inner.innerHTML=stepLanguage();
@@ -848,7 +860,7 @@ function stepLanguage(){
     <div class="mb-4 text-5xl animate-float">🌍</div>
     <h1 class="text-3xl font-extrabold sm:text-4xl">Choose Your Language</h1>
     <p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify will personalize your experience in your preferred language.</p>
-    <div class="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">${LANGS.map(l=>`<button data-action="qlang" data-l="${l[0]}" class="ob-card ${cur===l[0]?'sel':''} gap-3 px-4 py-4"><span class="text-2xl">${l[2]||'🌐'}</span><span class="font-semibold">${l[1]}</span>${cur===l[0]?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`).join('')}</div>
+    <div class="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">${LANGS.map(l=>{const fc=FLAG_COLORS[l[0]]||['var(--accent1)','var(--accent2)'],on=cur===l[0];return `<button data-action="qlang" data-l="${l[0]}" class="ob-card lang-card ${on?'sel':''}" style="--fc1:${fc[0]};--fc2:${fc[1]}"><span class="lang-flag">${flagSVG(l[0])}</span><span class="font-semibold">${l[1]}</span>${on?`<span class="ml-auto" style="color:${fc[0]}">✓</span>`:''}</button>`;}).join('')}</div>
     <button class="btn btn-primary mt-7 w-full sm:w-auto sm:px-12" data-action="qnext">Continue →</button>
   </div>`;
 }
@@ -921,6 +933,7 @@ function computeQuizSpend(){
   return spend;
 }
 async function finishQuiz(inner){
+  qScrollTop();
   inner.innerHTML=`<div class="glass-strong rounded-3xl p-10 text-center anim"><div class="animate-float text-5xl">🧠</div><p class="mt-4 text-sm" style="color:var(--muted)">Building your money profile…</p></div>`;
   QA.spend=computeQuizSpend();
   const income=QA.income||0,monthly=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),weekly=Math.round(monthly/WK),yearly=monthly*12,savings=Math.max(0,income-monthly);
@@ -954,6 +967,7 @@ async function finishQuiz(inner){
 }
 // Mandatory goal — users must set a target before the dashboard unlocks.
 function stepGoalCreate(inner){
+  qScrollTop();
   const EMO=['🎯','🎮','💻','📱','🚗','✈️','🏠','🛡️','🎓','💍','🏝️','💰'];
   inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">
     <div class="text-center"><div class="text-5xl">🎯</div><h1 class="mt-2 text-2xl font-bold sm:text-3xl">Set your first goal</h1><p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify needs a target to turn your spending into savings recommendations. This is required to start.</p></div>

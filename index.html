@@ -201,6 +201,18 @@
     .ob-card{display:flex;align-items:center;border-radius:1rem;border:1px solid var(--border);background:var(--glass);cursor:pointer;color:var(--text);text-align:left;transition:transform .15s ease,border-color .15s ease,background .15s ease;-webkit-tap-highlight-color:transparent}
     .ob-card:hover{transform:translateY(-2px)}
     .ob-card.sel{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent);box-shadow:0 0 0 1px var(--accent2)}
+    /* language flags */
+    .lang-flag{display:inline-flex;width:36px;height:26px;border-radius:6px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.18);flex-shrink:0}
+    .lang-flag svg{width:100%;height:100%;display:block}
+    .lang-card{position:relative;gap:.75rem;padding:1rem 1.1rem;overflow:hidden}
+    .lang-card::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,var(--fc1),var(--fc2));opacity:0;transition:opacity .2s ease;pointer-events:none}
+    .lang-card:hover{transform:translateY(-3px);border-color:var(--fc1)}
+    .lang-card:hover::before{opacity:.10}
+    .lang-card:hover .lang-flag{transform:scale(1.06)}
+    .lang-flag{transition:transform .15s ease}
+    .lang-card.sel{border-color:var(--fc1);background:transparent;box-shadow:0 0 0 2px var(--fc1),0 12px 30px color-mix(in srgb,var(--fc1) 32%,transparent)}
+    .lang-card.sel::before{opacity:.16}
+    .lang-card>*{position:relative;z-index:1}
     .ob-chip{position:relative;display:flex;align-items:center;gap:.5rem;border-radius:.9rem;border:1px solid var(--border);background:var(--glass);padding:.7rem .8rem;font-size:.82rem;font-weight:500;color:var(--text);cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease;-webkit-tap-highlight-color:transparent}
     .ob-chip:hover{transform:translateY(-2px)}
     .ob-chip.sel{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 16%,transparent);box-shadow:0 0 0 1px var(--accent2)}
@@ -228,6 +240,6 @@
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=42"></script>
+  <script type="module" src="./app.js?v=43"></script>
 </body>
 </html>
