@@ -32,7 +32,8 @@ const DEMO_ME = {
   budget:{groceries:420,restaurants:250,shopping:180,entertainment:120,subscriptions:60,transportation:90},
   notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null,
-  profile_visibility:'public', show_active_goals:true, prestige:0
+  profile_visibility:'public', show_active_goals:true, prestige:0,
+  country:'Kosovo', spend_freq:{}, created_at:'2025-08-01T00:00:00Z'
 };
 const DEMO_GOALS = [
   {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,status:'active',created_at:'2024-01-01',missions:[
@@ -386,7 +387,7 @@ function whatToReduce(){
     if(g&&save>0){
       const remaining=Math.max(0,g.target_amount-g.saved_amount);
       const base=Math.max(0,Number(g.monthly_contribution)||0);
-      if(base>0){const dn=Math.max(0,Math.round((remaining/base-remaining/(base+save))*30));if(dn>0)impact=`reach “${g.name}” ${dn} days sooner`;}
+      if(base>0){const dn=Math.max(0,Math.round((remaining/base-remaining/(base+save))*DAYS_MO));if(dn>0)impact=`reach “${g.name}” ${dn} days sooner`;}
       else{impact=`covers “${g.name}” in ~${Math.ceil(remaining/save)} mo`;}
     }
     return {cat:c,spend:map[c],save,impact};
@@ -755,7 +756,8 @@ const spendLabel=(v)=>v>=1000?'€1000+':'€'+v;
 // delivery order, etc.). Figures are approximate market averages (2024–25) used
 // only to estimate spending; users can fine-tune amounts later.
 const COUNTRY_LIST=['Kosovo','Albania','North Macedonia','Serbia','Greece','Spain','Italy','France','Germany','Netherlands','United Kingdom','Ireland','United States','Switzerland','Other'];
-const WK=4.3; // weeks per month
+const WK=4.345;   // accurate weeks per month (52.14/12)
+const DAYS_MO=30.44; // accurate days per month (365.25/12)
 // price per unit, by country (key order matches COUNTRY_LIST)
 const PRICE_DB={
   cigarettes:{Kosovo:2.0,Albania:2.5,'North Macedonia':2.5,Serbia:3.0,Greece:4.8,Spain:5.5,Italy:6.0,France:12.0,Germany:8.5,Netherlands:9.5,'United Kingdom':15.5,Ireland:17.0,'United States':8.0,Switzerland:9.0,Other:6.0},
@@ -785,8 +787,10 @@ const FREQ_CATS=[
 ];
 const QUIZ_SUBS=[['Netflix',13],['Spotify',11],['YouTube Premium',12],['Disney+',9],['HBO / Max',10],['Gym',30],['iCloud',3],['Amazon Prime',5]];
 const FCAT=(k)=>FREQ_CATS.find(c=>c.key===k);
-// average local price (€) for one unit of a product in the chosen country
-function priceFor(key){const t=PRICE_DB[key]||{};const c=QA?.country;return (c&&t[c]!=null)?t[c]:(t.Other!=null?t.Other:0);}
+// average local price (€) for one unit of a product in a given country
+function unitPrice(key,country){const t=PRICE_DB[key]||{};return (country&&t[country]!=null)?t[country]:(t.Other!=null?t.Other:0);}
+// during the quiz we price by the answer (QA.country); elsewhere by the saved profile (ME.country)
+function priceFor(key){return unitPrice(key,(typeof QA!=='undefined'&&QA&&QA.country)||(typeof ME!=='undefined'&&ME&&ME.country)||'Other');}
 function catMonthly(c,freq){return Math.round((+freq||0)*priceFor(c.key)*(c.per==='wk'?WK:1));}
 const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
@@ -923,7 +927,7 @@ async function finishQuiz(inner){
   const potential=savings<=0?'Low':savings<150?'Low':savings<400?'Medium':savings<800?'High':'Very High';
   const persona=computePersona2();
   const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
-  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
+  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
   else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
   await loadProfile();
   const p=PERSONAS[persona]||PERSONAS.goal_chaser;
@@ -993,7 +997,7 @@ function goalOverviewHTML(){
   if(!g) return `<div class="glass-strong rounded-2xl p-6"><div class="flex flex-wrap items-center justify-between gap-4"><div><h2 class="text-lg font-semibold">No active goal yet</h2><p class="text-sm" style="color:var(--muted)">Set a goal and Goalify shows exactly what to cut to reach it faster.</p></div><a href="#app/goals" class="btn btn-primary !py-2.5 text-sm">+ Create a goal</a></div></div>`;
   const p=pct(g.saved_amount,g.target_amount),remaining=Math.max(0,g.target_amount-g.saved_amount);
   const base=Math.max(0,Number(g.monthly_contribution)||0),months=base>0?Math.ceil(remaining/base):null;
-  const daysLeft=months!=null?months*30:null,perDay=daysLeft?remaining/daysLeft:null;
+  const daysLeft=months!=null?Math.round(months*DAYS_MO):null,perDay=daysLeft?remaining/daysLeft:null;
   return `<div class="glass-strong rounded-2xl p-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3"><span class="text-3xl">${g.emoji||'🎯'}</span><div><p class="text-[11px] uppercase tracking-widest" style="color:var(--muted)">Top goal</p><h2 class="text-xl font-bold">${esc(g.name)}</h2></div></div>
@@ -1090,8 +1094,25 @@ function achievementsLatestHTML(){
   const got=[...earnedBadges()],latest=got.slice(-3).map(k=>BADGES.find(b=>b.key===k)).filter(Boolean);
   return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold">🏆 Achievements</h3><a href="#app/profile" class="text-sm text-accent-purple hover:underline">View all</a></div>${latest.length?`<div class="grid grid-cols-3 gap-2">${latest.map(b=>`<div class="flex flex-col items-center rounded-xl p-3 text-center" style="background:var(--glass)"><span class="text-2xl badge-pop">${b.emoji}</span><p class="mt-1 text-[10px] font-semibold">${esc(b.name)}</p></div>`).join('')}</div>`:`<p class="py-2 text-center text-sm" style="color:var(--muted)">Earn your first badge by creating a goal.</p>`}</div>`;
 }
-// ── Savings Opportunity Engine — ties each spending habit to goal progress ──
-const OPP_CATS=['cigarettes','coffee','delivery','fastfood','restaurants','taxi','nightlife','gaming','shopping','subscriptions'];
+// ══════════════════════════════════════════════════════════════════
+// REACH YOUR GOAL FASTER — Goalify's core savings engine.
+// Turns every spending habit from onboarding into a concrete, goal-linked
+// money-saving opportunity: how much to cut, € saved per month & year, and
+// exactly how many days sooner the user's goal arrives (with new date).
+// ══════════════════════════════════════════════════════════════════
+const OPP_KEYS=['cigarettes','coffee','delivery','fastfood','restaurants','taxi','nightlife','gaming','shopping','fuel','groceries','subscriptions'];
+const REC_UNIT={cigarettes:['pack','packs'],coffee:['coffee','coffees'],delivery:['delivery','deliveries'],fastfood:['meal','meals'],restaurants:['meal out','meals out'],taxi:['ride','rides'],nightlife:['night out','nights out'],gaming:['purchase','purchases'],shopping:['shopping trip','shopping trips'],groceries:['grocery run','grocery runs'],fuel:['tank','tanks'],subscriptions:['subscription','subscriptions']};
+function recUnit(key,n){const u=REC_UNIT[key]||['time','times'];return Math.abs(+n)===1?u[0]:u[1];}
+function addMonthsDays(months){const d=new Date();d.setDate(d.getDate()+Math.round((+months||0)*DAYS_MO));return d;}
+function fmtMD(d){try{return d.toLocaleDateString('en-US',{month:'long',day:'numeric'});}catch(e){return '';}}
+// reconstruct how often a habit happens — exact saved freq, else derived from € budget
+function freqFor(key){
+  const sf=ME.spend_freq||{}; if(sf[key]!=null)return +sf[key]||0;
+  const cat=FCAT(key); if(!cat)return 0;
+  const price=unitPrice(key,ME.country); if(price<=0)return 0;
+  const monthly=+(ME.budget||{})[key]||0, div=price*(cat.per==='wk'?WK:1);
+  return div>0?Math.round(monthly/div):0;
+}
 function goalPace(){
   const g=topGoal();if(!g)return null;
   const remaining=Math.max(0,(+g.target_amount||0)-(+g.saved_amount||0));
@@ -1100,39 +1121,84 @@ function goalPace(){
   return {g,remaining,base,monthsNow};
 }
 function savingsOpportunities(){
-  const budget=ME.budget||{},pace=goalPace();
-  return OPP_CATS.map(k=>{
-    const cur=+budget[k]||0;if(cur<=0)return null;
-    const save=Math.round(cur*0.5); // halving the habit
-    let daysEarlier=null,coversIn=null;
-    if(pace){
-      if(pace.base>0&&pace.monthsNow!=null){const newMonths=pace.remaining/(pace.base+save);daysEarlier=Math.max(0,Math.round((pace.monthsNow-newMonths)*30.4));}
-      if(save>0)coversIn=Math.ceil(pace.remaining/save);
+  const budget=ME.budget||{},pace=goalPace(),out=[];
+  OPP_KEYS.forEach(key=>{
+    const monthly=Math.round(+budget[key]||0); if(monthly<=0)return;
+    const cat=FCAT(key), isSub=key==='subscriptions', essential=cat&&cat.disc===false;
+    const per=isSub?'mo':(cat?cat.per:'mo'), span=per==='wk'?'week':'month';
+    let current,suggestion,saveMonthly;
+    if(isSub){
+      saveMonthly=Math.round(monthly*0.4);
+      current=`${fmt(monthly)}/mo on subscriptions`;
+      suggestion='Drop the ones you rarely use';
+    } else {
+      const freq=freqFor(key), price=unitPrice(key,ME.country);
+      if(essential){
+        // essentials (fuel, groceries) — don't tell people to stop; suggest a smart ~15% trim
+        saveMonthly=Math.round(monthly*0.15);
+        current=freq>0?`${freq} ${recUnit(key,freq)}/${span}`:`${fmt(monthly)}/mo`;
+        suggestion='Shop smarter — save about 15%';
+      } else if(freq>0&&price>0){
+        let reduceBy=Math.max(1,Math.round(freq*0.4));
+        if(reduceBy>=freq)reduceBy=Math.max(1,freq-1);
+        saveMonthly=Math.round(reduceBy*price*(per==='wk'?WK:1));
+        current=`${freq} ${recUnit(key,freq)}/${span}`;
+        suggestion=`Reduce by ${reduceBy} ${recUnit(key,reduceBy)}/${span}`;
+      } else {
+        saveMonthly=Math.round(monthly*0.5);
+        current=`${fmt(monthly)}/mo`;
+        suggestion='Cut this in half';
+      }
     }
-    return {key:k,label:catLabel(k),emoji:catEmoji(k),cur,save,yearly:save*12,daysEarlier,coversIn};
-  }).filter(Boolean).sort((a,b)=>b.save-a.save).slice(0,3);
+    if(saveMonthly<=0)return;
+    let daysEarlier=null,curDate=null,newDate=null,coversIn=null;
+    if(pace&&pace.base>0&&pace.monthsNow!=null){
+      const newMonths=pace.remaining/(pace.base+saveMonthly);
+      daysEarlier=Math.max(0,Math.round((pace.monthsNow-newMonths)*DAYS_MO));
+      curDate=addMonthsDays(pace.monthsNow); newDate=addMonthsDays(newMonths);
+    } else if(pace&&saveMonthly>0){ coversIn=Math.ceil(pace.remaining/saveMonthly); }
+    out.push({key,label:catLabel(key),emoji:catEmoji(key),monthly,saveMonthly,yearly:saveMonthly*12,current,suggestion,daysEarlier,curDate,newDate,coversIn,essential});
+  });
+  return out.sort((a,b)=>b.saveMonthly-a.saveMonthly);
 }
 function savingsOpportunitiesHTML(){
-  const opps=savingsOpportunities();if(!opps.length)return '';
-  const g=topGoal(),applied=new Set(chalState().map(c=>c.key));
-  const rows=opps.map(o=>{
+  const opps=savingsOpportunities(),g=topGoal();
+  const head=(sub)=>`<div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">🚀</span><div><h2 class="text-lg font-bold sm:text-xl">Reach your goal faster</h2><p class="text-[12px]" style="color:var(--muted)">${sub}</p></div></div>${g?`<a href="#app/goals" class="text-xs font-medium text-accent-purple hover:underline shrink-0">${g.emoji||'🎯'} ${esc(g.name)}</a>`:''}</div>`;
+  if(!opps.length){
+    return `<section class="glass-strong rounded-2xl p-6 sm:p-8">${head('Your personalised savings coach')}
+      <div class="mt-6 rounded-2xl p-8 text-center" style="background:var(--glass)"><div class="text-4xl">📊</div><h3 class="mt-3 font-semibold">No spending tracked yet</h3><p class="mx-auto mt-1 max-w-sm text-sm" style="color:var(--muted)">Add a few expenses or retake the spending quiz and Goalify will show exactly which habits to trim — and how many days sooner you'll hit your goal.</p><a href="#app/analytics" class="btn btn-primary mt-4 !py-2 text-sm">+ Add spending</a></div></section>`;
+  }
+  const applied=new Set(chalState().map(c=>c.key));
+  const totalMo=opps.reduce((a,o)=>a+o.saveMonthly,0), maxDays=opps.reduce((a,o)=>Math.max(a,o.daysEarlier||0),0);
+  const chip=(emoji,val,lbl)=>`<div class="rounded-xl px-3 py-2 text-center" style="background:var(--glass)"><p class="text-base font-extrabold gtext sm:text-lg">${emoji} ${val}</p><p class="text-[10px]" style="color:var(--muted)">${lbl}</p></div>`;
+  const summary=`<div class="mt-5 grid grid-cols-3 gap-2 sm:gap-3">${chip('💸',fmt(totalMo),'total / month')}${chip('📅',fmt(totalMo*12),'total / year')}${g&&maxDays>0?chip('⚡',maxDays+' days','goal sooner'):chip('🎯',opps.length,'opportunities')}</div>`;
+  const cards=opps.map(o=>{
     const key='save_'+o.key,isApplied=applied.has(key);
-    const impact=g?(o.daysEarlier?`reach <b>${esc(g.name)}</b> <b class="text-emerald-400">${o.daysEarlier} days sooner</b>`:(o.coversIn?`covers <b>${esc(g.name)}</b> in ~${o.coversIn} mo`:'')):'';
-    return `<div class="rounded-2xl p-4" style="background:var(--glass)">
-      <div class="flex items-center gap-3">
+    let impact='';
+    if(o.daysEarlier!=null){
+      impact=`<div class="mt-3 rounded-xl p-3" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 14%,transparent),color-mix(in srgb,var(--accent2) 14%,transparent))">
+        <p class="text-[11px] font-semibold uppercase tracking-wide" style="color:var(--muted)">Goal impact</p>
+        <p class="mt-0.5 text-sm">Arrives <b class="text-emerald-400">${o.daysEarlier} day${o.daysEarlier===1?'':'s'} earlier</b></p>
+        ${o.newDate?`<p class="text-[11px]" style="color:var(--muted)">New date <b style="color:var(--text)">${fmtMD(o.newDate)}</b>${o.curDate?` · was <span style="text-decoration:line-through">${fmtMD(o.curDate)}</span>`:''}</p>`:''}
+      </div>`;
+    } else if(o.coversIn!=null&&g){ impact=`<div class="mt-3 text-[11px]" style="color:var(--muted)">Covers <b style="color:var(--text)">${esc(g.name)}</b> in ~${o.coversIn} mo</div>`; }
+    return `<div class="flex flex-col rounded-2xl p-4" style="background:var(--glass);border:1px solid var(--border)">
+      <div class="flex items-start gap-3">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style="background:var(--bg)">${o.emoji}</span>
-        <div class="min-w-0 flex-1"><p class="font-semibold">${esc(o.label)}</p><p class="text-[11px]" style="color:var(--muted)">Now ${fmt(o.cur)}/mo · halve it${impact?' to '+impact:''}</p></div>
-        <div class="text-right shrink-0"><p class="text-sm font-bold text-emerald-400">+${fmt(o.save)}/mo</p><p class="text-[11px]" style="color:var(--muted)">${fmt(o.yearly)}/yr</p></div>
+        <div class="min-w-0 flex-1"><p class="font-semibold leading-tight">${esc(o.label)}${o.essential?' <span class="align-middle text-[9px] rounded-full px-1.5 py-0.5" style="background:var(--glass);color:var(--muted)">essential</span>':''}</p><p class="text-[11px]" style="color:var(--muted)">Now: ${esc(o.current)}</p></div>
       </div>
-      <button class="btn ${isApplied?'btn-ghost':'btn-primary'} mt-3 w-full !py-2 text-sm" data-action="applyOpp" data-k="${o.key}" ${isApplied?'disabled':''}>${isApplied?'✓ Challenge active':'⚡ Apply challenge (+XP)'}</button>
+      <p class="mt-3 text-sm">💡 ${esc(o.suggestion)}</p>
+      <div class="mt-2 flex items-baseline gap-2"><span class="text-xl font-extrabold text-emerald-400">+${fmt(o.saveMonthly)}</span><span class="text-[11px]" style="color:var(--muted)">/mo · ${fmt(o.yearly)}/yr</span></div>
+      ${impact}
+      <button class="btn ${isApplied?'btn-ghost':'btn-primary'} mt-3 w-full !py-2 text-sm" data-action="applyOpp" data-k="${o.key}" ${isApplied?'disabled':''}>${isApplied?'✓ Challenge active':'⚡ Turn into a challenge'}</button>
     </div>`;
   }).join('');
-  const total=opps.reduce((a,o)=>a+o.save,0);
-  return `<div class="glass-strong rounded-2xl p-5 sm:p-6">
-    <h3 class="font-semibold">💡 Reach your goal faster</h3>
-    <p class="mb-4 mt-1 text-sm" style="color:var(--muted)">${g?`Cut these habits and put the money toward <b>${esc(g.name)}</b>.`:'Set a goal to see how cutting these habits speeds it up.'} Halving all three frees <b class="text-emerald-400">${fmt(total)}/mo</b>.</p>
-    <div class="grid gap-3 sm:grid-cols-3">${rows}</div>
-  </div>`;
+  return `<section class="glass-strong rounded-2xl p-5 sm:p-7">
+    ${head(g?`Cut these habits to reach <b style="color:var(--text)">${esc(g.name)}</b> sooner`:'Your personalised savings coach')}
+    ${summary}
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">${cards}</div>
+    <p class="mt-4 text-center text-[11px]" style="color:var(--muted)">Estimates use average ${esc(ME.country||'local')} prices · adjust your spending anytime in Analytics</p>
+  </section>`;
 }
 function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),h=healthScore(s),c=caps(plan);
@@ -1307,6 +1373,8 @@ function profileProgressHTML(){
 // ============================================================
 // PUBLIC PROFILE & PROGRESSION
 // ============================================================
+// the most prestigious badge the user has earned (later in the list = rarer)
+function featuredBadge(got){let best=null;BADGES.forEach(b=>{if(got&&got.has&&got.has(b.key))best=b;});return best;}
 function profileView(){
   const lvl=levelFromXp(ME.xp),level=lvl.level,tier=profileTier(level),nxt=nextTier(level);
   const title=tier.title,vis=profVisibility(),isPublic=vis==='public';
@@ -1332,14 +1400,22 @@ function profileView(){
         <div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${lvl.inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
     </div></div>`;
 
-  const stats=`<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  const curStreak=(streakState().count)||0;
+  const joinD=ME.created_at?new Date(ME.created_at):null;
+  const joinTxt=(joinD&&!isNaN(joinD))?joinD.toLocaleDateString('en-US',{month:'short',year:'numeric'}):'—';
+  const stats=`<div class="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
     ${statCard('Level',level,(ME.xp||0)+' XP','⭐')}
-    ${statCard('Current title',title,'tier '+(LEVEL_TIERS.indexOf(tier)+1)+'/'+LEVEL_TIERS.length,tierEmoji(tier))}
     ${statCard('Goals completed',completed.length,'all-time','✅')}
     ${statCard('Total saved',fmt(saved),'across all goals','💰')}
-    ${statCard('Longest streak',best+' days','your record','🔥')}
+    ${statCard('Current streak',curStreak+(curStreak===1?' day':' days'),'keep it alive 🔥','🔥')}
+    ${statCard('Longest streak',best+' days','your record','🏅')}
+    ${statCard('Badges earned',got.size+' / '+totalB,'achievements','🎖️')}
+    ${statCard('Member since',joinTxt,'thanks for being here 💜','📅')}
     ${statCard('Leaderboard',isPublic?'#'+pos:'—',isPublic?'global rank':'private','🏆')}
   </div>`;
+
+  const fav=featuredBadge(got);
+  const featured=fav?`<div class="glass-strong rounded-2xl p-6 overflow-hidden relative"><div class="flex items-center gap-5"><div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-4xl badge-pop" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 8px 24px color-mix(in srgb,var(--accent2) 40%,transparent)">${fav.emoji}</div><div class="min-w-0"><p class="text-[11px] font-semibold uppercase tracking-widest gtext">⭐ Featured achievement</p><h3 class="mt-1 text-xl font-bold">${esc(fav.name)}</h3><p class="text-sm" ${M}>${esc(fav.desc)}</p></div></div></div>`:'';
 
   const prog=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🎖️ Profile progression</h3><p class="text-[11px]" ${M}>Level up to unlock frames, titles and visual effects.</p></div><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span></div>
     <div class="flex items-center gap-6 flex-wrap">
@@ -1364,7 +1440,7 @@ function profileView(){
   const tiersCard=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🎖️ All progression tiers</h3><div class="grid gap-2 sm:grid-cols-2">${LEVEL_TIERS.map(t=>{const on=level>=t.lvl;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${on?'box-shadow:0 0 0 1px var(--accent2)':'opacity:.55'}"><span class="pf-frame ${t.frame} pf-mini" style="width:40px;height:40px">${t.crown?'<span class="pf-crown" aria-hidden="true">👑</span>':''}<span class="pf-frame-inner"><span class="flex h-full w-full items-center justify-center rounded-full text-xs font-bold text-white" style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${t.lvl}</span></span></span><div class="flex-1 min-w-0"><p class="text-sm font-semibold">Lvl ${t.lvl} · ${esc(t.title)}</p><p class="text-[11px]" ${M}>${esc(t.unlock)}</p></div>${on?'<span class="text-xs font-semibold text-emerald-400">✓</span>':'<span class="text-xs" '+M+'>🔒</span>'}</div>`;}).join('')}</div></div>`;
 
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Profile</h1><p class="mt-1 text-sm text-slate-400">Your public profile, level progression and achievements.</p></div>
-    ${visBar}${hero}${stats}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${leaderboard}${tiersCard}
+    ${visBar}${hero}${stats}${featured}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${leaderboard}${tiersCard}
     <p class="text-xs text-slate-500">Other people's profiles open here once accounts go live — no placeholder users in demo.</p></div>`;
 }
 
