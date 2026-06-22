@@ -80,7 +80,7 @@ function isDemoAdmin(){return localStorage.getItem('goalify_admin')==='1';}
 const PLAN_FEATURES={
   free:['Up to 3 goals (archive, no delete)','Basic goal tracking','Basic profile & sharing','Follow / unfollow people','Simple, distraction-free'],
   pro:['Unlimited goals','Advanced analytics & insights','Future Simulator','Focused pro dashboard','One signature red theme'],
-  premium:['Everything in Pro','Full social: feed, reactions, memories','Themes, banners & chat wallpapers','AI coach & smart reminders','Weekly & monthly reports','Streaks, challenges & badges'],
+  premium:['Everything in Pro','Full social: feed, reactions, memories','Themes, banners & chat wallpapers','Smart insights & reminders','Weekly & monthly reports','Streaks, challenges & badges'],
   business:['A complete business OS','Companies, employees & assets','Invoices, payments & taxes','Cash flow, net worth & reports','Executive gold interface','No games — pure operations'],
 };
 // ── central capability map: the single source of truth for plan gating ──
@@ -216,7 +216,6 @@ function planNav(plan){
   const c=caps(plan);
   const nav=[['dashboard','Dashboard','📊'],['goals','Goals','🎯']];
   if(c.analytics){nav.push(['analytics','Analytics','📈'],['simulator','Future Simulator','🔮']);}
-  if(c.ai)nav.push(['ai','AI Coach','✨']);
   if(c.gamify)nav.push(['challenges','Challenges','🏆']);
   if(c.social!=='none')nav.push(['social','Social','👥']);
   nav.push(['profile','Profile','🪪']);
@@ -1056,7 +1055,7 @@ function goalCard(g){
 function goalsView(){
   const limit=PLANS[ME.plan].goalLimit, total=GOALS.length, atLimit=limit!==-1&&total>=limit;
   return `<div class="space-y-6"><div class="flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-3xl font-bold">Goals</h1><p class="mt-1 text-sm text-slate-400">Long-term goals, broken into weekly missions you check in on. ${limit===-1?'Unlimited goals.':total+' / '+limit+' goals used (Free — archived goals still count).'}</p></div><button class="btn btn-primary !py-2.5 text-sm" data-action="newGoal" ${atLimit?'disabled':''}>+ New goal</button></div>
-  ${atLimit?`<div class="glass rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--accent2)"><div><p class="text-sm font-semibold">🔒 You've used all ${limit} Free goals</p><p class="mt-0.5 text-sm text-slate-400">Upgrade for <b>unlimited goals & missions</b>, AI insights and more.</p></div><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">Upgrade</a></div>`:''}
+  ${atLimit?`<div class="glass rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4" style="border:1px solid var(--accent2)"><div><p class="text-sm font-semibold">🔒 You've used all ${limit} Free goals</p><p class="mt-0.5 text-sm text-slate-400">Upgrade for <b>unlimited goals & missions</b>, smart insights and more.</p></div><a href="#app/plans" class="btn btn-primary !py-2 text-sm shrink-0">Upgrade</a></div>`:''}
   ${GOALS.length===0?`<div class="glass rounded-2xl p-16 text-center"><div class="text-5xl">🎯</div><h3 class="mt-4 text-lg font-semibold">No goals yet</h3><p class="mt-1 text-sm text-slate-400">Create your first goal, then add missions that drive it.</p><button class="btn btn-primary mt-5 text-sm" data-action="newGoal">+ Create a goal</button></div>`:
   `<div class="grid gap-5 lg:grid-cols-2">${GOALS.map(goalCard).join('')}</div>`}</div>`;
 }
@@ -1319,10 +1318,7 @@ function settingsView(){
       <p class="mt-2 text-xs" style="color:var(--muted)">${vis==='public'?'Public: other users can view your profile, find you in search and see you on leaderboards.':'Private: hidden from all users, searches and leaderboards. Only personal statistics remain visible to you.'}</p></div>
     <label class="mt-4 flex items-center justify-between rounded-xl px-4 py-3 text-sm" style="background:var(--glass)"><span>Show my active goals on my public profile</span><input type="checkbox" data-action="setShowGoals" ${showActiveGoalsPref()?'checked':''}></label>
     <a href="#app/profile" class="btn btn-ghost mt-4 text-sm">View my profile →</a></div>
-  <div class="grid gap-6 sm:grid-cols-2">
-    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">💪 Savings strategy</h2><p class="mt-1 text-sm text-slate-400">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
-    <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">✨ AI coach personality</h2><p class="mt-1 text-sm text-slate-400">How your coach talks to you.</p><div class="mt-4 grid grid-cols-2 gap-2">${Object.keys(COACH_MODES).map(k=>{const m=COACH_MODES[k],on=(p.coach_mode||'fun')===k;return `<button data-action="setCoachMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${m.desc}</div></button>`;}).join('')}</div></div>
-  </div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">💪 Savings strategy</h2><p class="mt-1 text-sm text-slate-400">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Security · Password</h2><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Notifications</h2><div class="mt-4 space-y-3">${[['weekly','Weekly AI reports'],['alerts','Budget alerts'],['goals','Goal updates'],['news','Product news']].map(n=>`<label class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"><span>${n[1]}</span><input type="checkbox" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
   <div class="grid gap-6 sm:grid-cols-2">
@@ -1358,7 +1354,7 @@ async function adminView(){
   const list=users||[]; const mrr=list.reduce((a,u)=>a+(PLANS[u.plan]?.price||0),0);
   const counts=PLAN_ORDER.reduce((o,p)=>{o[p]=list.filter(u=>u.plan===p).length;return o;},{});
   return `<div class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8 flex items-center justify-between"><div class="flex items-center gap-3">${brand('#admin',{dark:true})}<span class="rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-300">Admin</span></div><div class="flex items-center gap-3 text-sm"><a href="#app/dashboard" class="text-slate-400 hover:text-white">← App</a><button class="btn btn-ghost !py-2 text-sm" data-action="logout">Sign out</button></div></div>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${statCard('Total users',list.length,'','👥')}${statCard('MRR',fmt(mrr),'','📈')}${statCard('AI calls',aiCount||0,'','✨')}${statCard('Pending students',(pending||[]).length,'','🎓')}</div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${statCard('Total users',list.length,'','👥')}${statCard('MRR',fmt(mrr),'','📈')}${statCard('Insights used',aiCount||0,'','✨')}${statCard('Pending students',(pending||[]).length,'','🎓')}</div>
   <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Plan distribution</h3>${PLAN_ORDER.map(id=>{const n=counts[id]||0,p=list.length?Math.round(n/list.length*100):0;return `<div class="mb-3"><div class="mb-1 flex justify-between text-sm"><span>${PLANS[id].name}</span><span class="text-slate-400">${n} (${p}%)</span></div><div class="h-2 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div>`;}).join('')}</div>
   <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎓 Student verification requests</h3>${(pending||[]).length===0?'<p class="py-6 text-center text-sm text-slate-400">No pending requests.</p>':`<div class="space-y-3">${pending.map(v=>`<div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3"><div><p class="text-sm font-medium">${esc(v.university)}</p><p class="text-xs text-slate-400">${esc(v.student_email)} ${v.document_url?`· <a href="${esc(v.document_url)}" target="_blank" class="text-accent-purple">document</a>`:''}</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveSV" data-id="${v.id}">Approve → Pro</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectSV" data-id="${v.id}">Reject</button></div></div>`).join('')}</div>`}</div>
   <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Users (${list.length})</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-white/10 text-left text-xs text-slate-400"><th class="pb-2">User</th><th class="pb-2">Joined</th><th class="pb-2">Role</th><th class="pb-2">Plan</th></tr></thead><tbody>${list.map(u=>`<tr class="border-b border-white/5"><td class="py-3"><p class="font-medium">${esc((u.first_name||'')+' '+(u.last_name||''))||'—'}</p><p class="text-xs text-slate-400">${esc(u.email)}</p></td><td class="py-3 text-slate-400">${(u.created_at||'').slice(0,10)}</td><td class="py-3">${u.role==='admin'?'<span class="text-amber-300">admin</span>':'user'}</td><td class="py-3"><select data-action="setPlan" data-id="${u.id}" class="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs">${PLAN_ORDER.map(pp=>`<option value="${pp}" ${u.plan===pp?'selected':''}>${PLANS[pp].name}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div></div></div>`;
@@ -1522,7 +1518,7 @@ async function render(){
     // ── BUSINESS PLAN → entirely separate Business OS ──
     if(ME.plan==='business'){
       document.documentElement.setAttribute('data-biz','1');document.documentElement.classList.remove('light');
-      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,ai:bizAi,team:bizTeam,marketplace:bizMarketplace,profile:bizProfile,reports:bizReports,settings:settingsView,plans:plansView};
+      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,team:bizTeam,marketplace:bizMarketplace,profile:bizProfile,reports:bizReports,settings:settingsView,plans:plansView};
       root.innerHTML=bizShell(route,(bviews[route]||bizDashboard)());
       window.scrollTo(0,0);
       bizAfterRender(route);
@@ -1533,13 +1529,12 @@ async function render(){
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
     const route2=(allowed.has(route)||route==='student')?route:'dashboard';
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,ai:aiView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.analytics){drawSpend('year');drawCat();}
     if(route2==='analytics'){drawSpend('year');}
     if(route2==='simulator'){runSim();}
-    if(route2==='ai'){chat=[{role:'ai',text:"Hi! I'm your AI coach. Ask me about saving, spending, or a plan."}];renderChat();}
     if(route2==='student'){renderSVStatus();}
     return;
   }
@@ -1554,7 +1549,7 @@ async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MO
 // calendar, cash flow, net worth, AI advisor, team, marketplace.
 // All data persists in localStorage (demo). Distinct gold theme.
 // ============================================================
-const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['ai','AI Advisor','🤖'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['profile','Profile','🪪'],['reports','Reports','📄'],['settings','Settings','⚙️']];
+const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['profile','Profile','🪪'],['reports','Reports','📄'],['settings','Settings','⚙️']];
 
 const BIZ_SPECS={
  businesses:{title:'Company',required:['name'],fields:[{key:'name',label:'Company name',type:'text',wide:true},{key:'logo',label:'Logo (emoji)',type:'text',default:'🏢'},{key:'industry',label:'Industry',type:'select',options:['Restaurant','Construction','Real Estate','Retail','Online Store','Services','Other']},{key:'founded',label:'Founded (year)',type:'number',default:new Date().getFullYear()},{key:'cash',label:'Cash balance',type:'number'},{key:'revenue',label:'Core sales / mo',type:'number'}]},
