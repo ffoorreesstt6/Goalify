@@ -750,27 +750,44 @@ const BANKCHECK=[['rarely','Rarely','😅'],['weekly','Weekly','🙂'],['fewdays
 const CHALLENGE=[['impulse','Impulse spending','💸'],['saving','Saving consistently','📉'],['unexpected','Unexpected expenses','😬'],['bills','Bills','🧾'],['goals','Reaching goals','🎯'],['understand','Understanding spending','📊']];
 const spendCat=(k)=>SPEND_CATS.find(x=>x[0]===k);
 const spendLabel=(v)=>v>=1000?'€1000+':'€'+v;
-// ── real-world price database (base €, scaled by country) ──
-const COUNTRY_PRICES={'Kosovo':1.0,'Albania':1.05,'North Macedonia':1.05,'Serbia':1.1,'Greece':1.5,'Spain':1.8,'Italy':1.9,'France':2.2,'Germany':2.4,'Netherlands':2.4,'United Kingdom':2.3,'Ireland':2.4,'United States':2.3,'Switzerland':2.9,'Other':1.6};
-const COUNTRY_LIST=Object.keys(COUNTRY_PRICES);
+// ── real-world price database — average € price PER PRODUCT, PER COUNTRY ──
+// Each value is the typical local price of one unit (one pack, one coffee, one
+// delivery order, etc.). Figures are approximate market averages (2024–25) used
+// only to estimate spending; users can fine-tune amounts later.
+const COUNTRY_LIST=['Kosovo','Albania','North Macedonia','Serbia','Greece','Spain','Italy','France','Germany','Netherlands','United Kingdom','Ireland','United States','Switzerland','Other'];
 const WK=4.3; // weeks per month
+// price per unit, by country (key order matches COUNTRY_LIST)
+const PRICE_DB={
+  cigarettes:{Kosovo:2.0,Albania:2.5,'North Macedonia':2.5,Serbia:3.0,Greece:4.8,Spain:5.5,Italy:6.0,France:12.0,Germany:8.5,Netherlands:9.5,'United Kingdom':15.5,Ireland:17.0,'United States':8.0,Switzerland:9.0,Other:6.0},
+  coffee:{Kosovo:1.0,Albania:1.0,'North Macedonia':1.2,Serbia:1.5,Greece:3.2,Spain:1.8,Italy:1.5,France:3.0,Germany:3.3,Netherlands:3.4,'United Kingdom':3.6,Ireland:3.7,'United States':4.7,Switzerland:5.0,Other:2.5},
+  delivery:{Kosovo:6,Albania:6,'North Macedonia':6,Serbia:7,Greece:12,Spain:14,Italy:15,France:18,Germany:18,Netherlands:18,'United Kingdom':20,Ireland:22,'United States':26,Switzerland:32,Other:15},
+  fastfood:{Kosovo:4,Albania:4,'North Macedonia':4.5,Serbia:5,Greece:7,Spain:8,Italy:8.5,France:9,Germany:9,Netherlands:10,'United Kingdom':7.5,Ireland:9.5,'United States':9.5,Switzerland:15,Other:8},
+  restaurants:{Kosovo:8,Albania:8,'North Macedonia':9,Serbia:10,Greece:15,Spain:15,Italy:18,France:20,Germany:18,Netherlands:20,'United Kingdom':20,Ireland:22,'United States':23,Switzerland:32,Other:16},
+  taxi:{Kosovo:3,Albania:3,'North Macedonia':3,Serbia:4,Greece:7,Spain:9,Italy:11,France:13,Germany:13,Netherlands:15,'United Kingdom':13,Ireland:14,'United States':16,Switzerland:26,Other:10},
+  nightlife:{Kosovo:15,Albania:15,'North Macedonia':16,Serbia:20,Greece:30,Spain:35,Italy:38,France:45,Germany:42,Netherlands:45,'United Kingdom':50,Ireland:55,'United States':58,Switzerland:75,Other:38},
+  gaming:{Kosovo:12,Albania:12,'North Macedonia':12,Serbia:13,Greece:15,Spain:15,Italy:15,France:17,Germany:17,Netherlands:17,'United Kingdom':17,Ireland:18,'United States':18,Switzerland:20,Other:15},
+  shopping:{Kosovo:25,Albania:25,'North Macedonia':28,Serbia:30,Greece:40,Spain:45,Italy:50,France:55,Germany:55,Netherlands:55,'United Kingdom':55,Ireland:60,'United States':62,Switzerland:85,Other:45},
+  groceries:{Kosovo:20,Albania:20,'North Macedonia':22,Serbia:25,Greece:35,Spain:38,Italy:40,France:45,Germany:42,Netherlands:45,'United Kingdom':45,Ireland:50,'United States':58,Switzerland:72,Other:40},
+  fuel:{Kosovo:58,Albania:68,'North Macedonia':63,Serbia:68,Greece:85,Spain:72,Italy:85,France:83,Germany:81,Netherlands:90,'United Kingdom':74,Ireland:77,'United States':42,Switzerland:82,Other:72},
+};
 const FREQ_CATS=[
-  {key:'cigarettes',emoji:'🚬',label:'Cigarettes',q:'How many packs per week?',unit:3,per:'wk',disc:true},
-  {key:'coffee',emoji:'☕',label:'Coffee',q:'How many coffees per week?',unit:1.5,per:'wk',disc:true},
-  {key:'delivery',emoji:'🍕',label:'Food Delivery',q:'How many orders per week?',unit:8,per:'wk',disc:true},
-  {key:'fastfood',emoji:'🍔',label:'Fast Food',q:'How many meals per week?',unit:5,per:'wk',disc:true},
-  {key:'restaurants',emoji:'🍽️',label:'Restaurants',q:'Meals out per week?',unit:18,per:'wk',disc:true},
-  {key:'taxi',emoji:'🚕',label:'Taxi / Rideshare',q:'How many rides per week?',unit:4,per:'wk',disc:true},
-  {key:'nightlife',emoji:'🍻',label:'Nightlife',q:'Nights out per month?',unit:35,per:'mo',disc:true},
-  {key:'gaming',emoji:'🎮',label:'Gaming',q:'Purchases per month?',unit:15,per:'mo',disc:true},
-  {key:'shopping',emoji:'🛍️',label:'Shopping',q:'Shopping trips per month?',unit:40,per:'mo',disc:true},
-  {key:'groceries',emoji:'🛒',label:'Groceries',q:'Grocery runs per week?',unit:35,per:'wk',disc:false},
-  {key:'fuel',emoji:'⛽',label:'Fuel',q:'Tank fills per week?',unit:45,per:'wk',disc:false},
+  {key:'cigarettes',emoji:'🚬',label:'Cigarettes',q:'How many packs per week?',per:'wk',disc:true},
+  {key:'coffee',emoji:'☕',label:'Coffee',q:'How many coffees per week?',per:'wk',disc:true},
+  {key:'delivery',emoji:'🍕',label:'Food Delivery',q:'How many orders per week?',per:'wk',disc:true},
+  {key:'fastfood',emoji:'🍔',label:'Fast Food',q:'How many meals per week?',per:'wk',disc:true},
+  {key:'restaurants',emoji:'🍽️',label:'Restaurants',q:'Meals out per week?',per:'wk',disc:true},
+  {key:'taxi',emoji:'🚕',label:'Taxi / Rideshare',q:'How many rides per week?',per:'wk',disc:true},
+  {key:'nightlife',emoji:'🍻',label:'Nightlife',q:'Nights out per month?',per:'mo',disc:true},
+  {key:'gaming',emoji:'🎮',label:'Gaming',q:'Purchases per month?',per:'mo',disc:true},
+  {key:'shopping',emoji:'🛍️',label:'Shopping',q:'Shopping trips per month?',per:'mo',disc:true},
+  {key:'groceries',emoji:'🛒',label:'Groceries',q:'Grocery runs per week?',per:'wk',disc:false},
+  {key:'fuel',emoji:'⛽',label:'Fuel',q:'Tank fills per week?',per:'wk',disc:false},
 ];
 const QUIZ_SUBS=[['Netflix',13],['Spotify',11],['YouTube Premium',12],['Disney+',9],['HBO / Max',10],['Gym',30],['iCloud',3],['Amazon Prime',5]];
 const FCAT=(k)=>FREQ_CATS.find(c=>c.key===k);
-function quizMult(){return COUNTRY_PRICES[QA?.country]||COUNTRY_PRICES['Other'];}
-function catMonthly(c,freq){return Math.round((+freq||0)*c.unit*quizMult()*(c.per==='wk'?WK:1));}
+// average local price (€) for one unit of a product in the chosen country
+function priceFor(key){const t=PRICE_DB[key]||{};const c=QA?.country;return (c&&t[c]!=null)?t[c]:(t.Other!=null?t.Other:0);}
+function catMonthly(c,freq){return Math.round((+freq||0)*priceFor(c.key)*(c.per==='wk'?WK:1));}
 const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
 let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
@@ -797,7 +814,7 @@ function spendInsight(idx){
 }
 
 function quizView(){
-  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
   QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
   return `<div class="relative flex min-h-screen flex-col items-center justify-center px-4 py-10"><div class="mb-6">${brand('#home',{size:32})}</div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
 }
@@ -851,7 +868,7 @@ function stepSpend(){
   const opts=FREQ_OPTS.map(n=>`<button data-action="qfreq" data-f="${n}" class="ob-freq ${f===n?'sel':''}">${n}</button>`).join('')+`<button data-action="qfreq" data-f="8" class="ob-freq ${f>=8?'sel':''}">8+</button>`;
   const body=`<div class="text-center"><div class="mb-2 text-5xl">${c.emoji}</div><h2 class="text-2xl font-bold">${c.label}</h2><p class="mt-1 text-sm" style="color:var(--muted)">${c.q}</p>
     <div class="mt-5 flex flex-wrap justify-center gap-2">${opts}</div>
-    <div class="mt-5 text-sm" style="color:var(--muted)">${f>0?`${f} ${c.per==='wk'?'/week':'/month'} · ${quizMult()>1?'local price ':''}€${c.unit} each`:'Tap a number — leave at 0 if none'}</div>
+    <div class="mt-5 text-sm" style="color:var(--muted)">${f>0?`${f} ${c.per==='wk'?'/week':'/month'} · avg ${esc(QA.country||'local')} price €${priceFor(c.key)} each`:'Tap a number — leave at 0 if none'}</div>
     <div class="mt-1 text-3xl font-extrabold gtext" id="freqVal">${mo>0?fmt(mo)+'/mo':'€0'}</div></div>`;
   return qFrame('spend',body,`<div class="flex gap-2"><button class="btn btn-ghost" data-action="qspendSkip">Skip</button><button class="btn btn-primary" data-action="qspendNext">Continue →</button></div>`,`Category ${SPENDIDX+1} of ${FREQ_CATS.length}`);
 }
