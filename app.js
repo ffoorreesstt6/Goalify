@@ -322,6 +322,7 @@ function prestigeStars(n){n=+n||0;return n>0?'⭐'.repeat(Math.min(n,5)):'';}
 // privacy — persisted in localStorage in demo, column-backed when the backend is live
 function profVisibility(){return localStorage.getItem('goalify_visibility')||ME?.profile_visibility||'public';}
 // saved payment method (display-only: brand + last4 + expiry — never full PAN/CVC). Stripe holds the real card when live.
+function bannerImg(){return localStorage.getItem('goalify_banner_'+uid())||ME?.banner_url||null;}
 function getPM(){try{return JSON.parse(localStorage.getItem('goalify_pm_'+uid()))||null;}catch(e){return null;}}
 function setPM(o){if(o)localStorage.setItem('goalify_pm_'+uid(),JSON.stringify(o));else localStorage.removeItem('goalify_pm_'+uid());}
 function showActiveGoalsPref(){const v=localStorage.getItem('goalify_show_goals');return v==null?(ME?.show_active_goals!==false):v==='1';}
@@ -1151,15 +1152,16 @@ function studentView(){
 function socialView(){
   const c=caps(ME.plan);const full=c.social==='full';
   const completed=GOALS.filter(g=>g.completed&&!g.private); // private goals never appear on social
-  const nm=`${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}`.trim();
+  const nm=esc(`${(ME.first_name||'').trim()} ${(ME.last_name||'').trim()}`.trim()||ME.username||(ME.email?String(ME.email).split('@')[0]:'')||'Your name');
   const un=esc(ME.username||(ME.first_name||'you').toLowerCase());
   const got=[...earnedBadges()];
   const miniBadges=got.slice(-7).map(k=>{const b=BADGES.find(x=>x.key===k);return b?`<span title="${esc(b.name)} — ${esc(b.desc)}" class="text-lg badge-pop">${b.emoji}</span>`:'';}).join('');
   const bannerCls=ME.plan==='premium'?'pf-banner-premium':ME.plan==='pro'?'pf-banner-pro':'';
-  const banner=bannerCls?`<div class="relative h-24 ${bannerCls}">${ME.plan==='premium'?'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">✨ Premium</span><a href="#app/settings" class="absolute right-3 bottom-3 rounded-lg bg-black/25 px-2.5 py-1 text-[11px] text-white hover:bg-black/40">🎨 Customize</a>':'<span class="absolute right-4 top-3 text-xs font-semibold text-white/90">PRO</span>'}</div>`:'';
+  const bn=bannerImg();
+  const banner=bannerCls?`<div class="relative h-24 ${bannerCls} overflow-hidden">${bn?`<img src="${esc(bn)}" class="absolute inset-0 h-full w-full object-cover" alt="">`:''}<span class="absolute right-4 top-3 z-10 text-xs font-semibold text-white/90">${ME.plan==='premium'?'✨ Premium':'PRO'}</span><div class="absolute right-3 bottom-3 z-10 flex items-center gap-2"><label class="cursor-pointer rounded-lg bg-black/35 px-2.5 py-1 text-[11px] text-white hover:bg-black/55">📷 ${bn?'Change picture':'Add picture'}<input id="bannerInput" type="file" accept="image/*" class="hidden"></label>${bn?`<button class="rounded-lg bg-black/35 px-2.5 py-1 text-[11px] text-white hover:bg-black/55" data-action="rmBanner">Remove</button>`:''}${ME.plan==='premium'?`<a href="#app/settings" class="rounded-lg bg-black/25 px-2.5 py-1 text-[11px] text-white hover:bg-black/40">🎨 Customize</a>`:''}</div></div>`:'';
   const stats=`<div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div>`;
   const me = bannerCls
-   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6"><div class="-mt-12 mb-3"><span class="inline-flex h-24 w-24 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(80)}</span></div><div class="flex items-center gap-2 flex-wrap"><h2 class="text-xl font-bold">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
+   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6"><div class="-mt-12 flex items-end gap-4"><span class="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(80)}</span><div class="min-w-0 pb-2"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
    : `<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${stats}</div>`;
   const find=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">Find people</h3><div class="flex gap-2"><input class="input" placeholder="Search by username…" id="findUser"><button class="btn btn-primary shrink-0" data-action="findUser">Search</button></div><p class="mt-3 text-sm text-center py-6" style="color:var(--muted)">No profiles to show yet. Real people appear here once accounts go live — no placeholder users.</p></div>`;
   const shared = completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Your achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p><button class="btn !bg-white/20 !text-white mt-3 !py-1.5 text-xs" data-action="shareCard">📤 Share</button></div>`).join('')}</div></div>`:`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">🏆 Achievement cards</h3><p class="text-sm text-center py-6" style="color:var(--muted)">Complete a goal to unlock a shareable achievement card.</p></div>`;
@@ -1191,7 +1193,7 @@ function profileView(){
   const got=earnedBadges(),totalB=BADGES.length;
   const completed=GOALS.filter(g=>g.completed);
   const saved=totalSavedAll(),best=bestStreakRecord(),pos=leaderboardPosition();
-  const nm=`${esc(ME.first_name||'You')} ${esc(ME.last_name||'')}`.trim();
+  const nm=esc(`${(ME.first_name||'').trim()} ${(ME.last_name||'').trim()}`.trim()||ME.username||(ME.email?String(ME.email).split('@')[0]:'')||'Your name');
   const un=esc(ME.username||(ME.first_name||'you').toLowerCase());
   const progPct=nxt?Math.max(0,Math.min(100,Math.round(((level-tier.lvl)/(nxt.lvl-tier.lvl))*100))):100;
   const M='style="color:var(--muted)"';
@@ -1984,6 +1986,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='leaveChal'){const k=a.getAttribute('data-key');setChalState(chalState().filter(c=>c.key!==k));toast('Left challenge');render();}
     else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
     else if(act==='rmAvatar'){ME.avatar_url=null;localStorage.removeItem('goalify_avatar_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({avatar_url:null}).eq('id',SESSION.user.id);}toast('Photo removed');render();}
+    else if(act==='rmBanner'){ME.banner_url=null;localStorage.removeItem('goalify_banner_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({banner_url:null}).eq('id',SESSION.user.id).catch(()=>{});}toast('Banner removed');render();}
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}
     else if(act==='delAcct'){if(DEMO_MODE){toast('Account deletion is disabled in demo mode','err');return;}if(confirm('Delete all your data? This cannot be undone.')){await sb.from('goals').delete().eq('user_id',SESSION.user.id);await sb.from('expenses').delete().eq('user_id',SESSION.user.id);await sb.from('profiles').delete().eq('id',SESSION.user.id);await sb.auth.signOut();toast('Account data deleted');location.hash='#home';}}
     else if(act==='qback'){quizBack();}
@@ -2018,6 +2021,15 @@ document.addEventListener('change',async(e)=>{
       if(DEMO_MODE){localStorage.setItem('goalify_avatar_'+uid(),url);}
       else{try{await sb.from('profiles').update({avatar_url:url}).eq('id',SESSION.user.id);}catch(err){}}
       toast('Photo updated');render();};
+    reader.readAsDataURL(file);
+  }
+  if(e.target.id==='bannerInput'){
+    const file=e.target.files&&e.target.files[0]; if(!file)return;
+    if(file.size>3*1024*1024){toast('Image too large (max 3MB)','err');return;}
+    const reader=new FileReader();
+    reader.onload=async()=>{const url=reader.result;ME.banner_url=url;localStorage.setItem('goalify_banner_'+uid(),url);
+      if(!DEMO_MODE){try{await sb.from('profiles').update({banner_url:url}).eq('id',SESSION.user.id);}catch(err){}}
+      toast('Banner updated');render();};
     reader.readAsDataURL(file);
   }
 });

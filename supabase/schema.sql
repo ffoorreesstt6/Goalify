@@ -251,6 +251,7 @@ alter table public.profiles add column if not exists theme text default 'dark';
 alter table public.profiles add column if not exists theme_color text default 'blue';
 alter table public.profiles add column if not exists bg text default 'none';
 alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists banner_url text;
 
 -- ============================================================
 -- V3: Public profiles, visibility & prestige progression
