@@ -213,6 +213,17 @@
     .lang-card.sel{border-color:var(--fc1);background:transparent;box-shadow:0 0 0 2px var(--fc1),0 12px 30px color-mix(in srgb,var(--fc1) 32%,transparent)}
     .lang-card.sel::before{opacity:.16}
     .lang-card>*{position:relative;z-index:1}
+    /* payment success */
+    @keyframes ps-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    .ps-anim{animation:ps-rise .5s cubic-bezier(.2,.7,.3,1) both}
+    @keyframes ck-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+    .ps-check{animation:ck-pop .5s ease both}
+    .ps-check path{stroke-dasharray:42;stroke-dashoffset:42;animation:ck-draw .45s .35s ease forwards}
+    @keyframes ck-draw{to{stroke-dashoffset:0}}
+    @keyframes confetti-fall{0%{transform:translateY(-12vh) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:.85}}
+    #confettiWrap{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
+    .confetti-pc{position:absolute;top:-12vh;border-radius:2px;animation:confetti-fall linear forwards}
+    @media (prefers-reduced-motion:reduce){.ps-anim,.ps-check,.ps-check path,.confetti-pc{animation:none!important}.ps-check path{stroke-dashoffset:0}}
     .ob-chip{position:relative;display:flex;align-items:center;gap:.5rem;border-radius:.9rem;border:1px solid var(--border);background:var(--glass);padding:.7rem .8rem;font-size:.82rem;font-weight:500;color:var(--text);cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease;-webkit-tap-highlight-color:transparent}
     .ob-chip:hover{transform:translateY(-2px)}
     .ob-chip.sel{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 16%,transparent);box-shadow:0 0 0 1px var(--accent2)}
@@ -240,6 +251,6 @@
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=43"></script>
+  <script type="module" src="./app.js?v=45"></script>
 </body>
 </html>
