@@ -216,6 +216,9 @@
     .ob-slider::-webkit-slider-thumb:active{transform:scale(1.18)}
     .ob-slider::-moz-range-thumb{width:28px;height:28px;border-radius:9999px;background:#fff;border:3px solid var(--accent2);box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:pointer}
     .blur-lock{filter:blur(6px);user-select:none;pointer-events:none}
+    .ob-freq{display:flex;align-items:center;justify-content:center;height:52px;border-radius:14px;font-size:17px;font-weight:700;background:var(--card);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+    .ob-freq:hover{border-color:var(--accent2)}
+    .ob-freq.sel{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;border-color:transparent;transform:translateY(-1px)}
     .lp-side{display:none}
     @media(min-width:1024px){.lp-side{display:block}}
     @media (prefers-reduced-motion:reduce){.pf-frame::before,.pf-frame::after,.pf-crown{animation:none!important}.ob-card,.ob-chip,.ob-row{transition:none}}
@@ -225,6 +228,6 @@
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=39"></script>
+  <script type="module" src="./app.js?v=40"></script>
 </body>
 </html>

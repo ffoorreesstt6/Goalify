@@ -750,11 +750,33 @@ const BANKCHECK=[['rarely','Rarely','😅'],['weekly','Weekly','🙂'],['fewdays
 const CHALLENGE=[['impulse','Impulse spending','💸'],['saving','Saving consistently','📉'],['unexpected','Unexpected expenses','😬'],['bills','Bills','🧾'],['goals','Reaching goals','🎯'],['understand','Understanding spending','📊']];
 const spendCat=(k)=>SPEND_CATS.find(x=>x[0]===k);
 const spendLabel=(v)=>v>=1000?'€1000+':'€'+v;
+// ── real-world price database (base €, scaled by country) ──
+const COUNTRY_PRICES={'Kosovo':1.0,'Albania':1.05,'North Macedonia':1.05,'Serbia':1.1,'Greece':1.5,'Spain':1.8,'Italy':1.9,'France':2.2,'Germany':2.4,'Netherlands':2.4,'United Kingdom':2.3,'Ireland':2.4,'United States':2.3,'Switzerland':2.9,'Other':1.6};
+const COUNTRY_LIST=Object.keys(COUNTRY_PRICES);
+const WK=4.3; // weeks per month
+const FREQ_CATS=[
+  {key:'cigarettes',emoji:'🚬',label:'Cigarettes',q:'How many packs per week?',unit:3,per:'wk',disc:true},
+  {key:'coffee',emoji:'☕',label:'Coffee',q:'How many coffees per week?',unit:1.5,per:'wk',disc:true},
+  {key:'delivery',emoji:'🍕',label:'Food Delivery',q:'How many orders per week?',unit:8,per:'wk',disc:true},
+  {key:'fastfood',emoji:'🍔',label:'Fast Food',q:'How many meals per week?',unit:5,per:'wk',disc:true},
+  {key:'restaurants',emoji:'🍽️',label:'Restaurants',q:'Meals out per week?',unit:18,per:'wk',disc:true},
+  {key:'taxi',emoji:'🚕',label:'Taxi / Rideshare',q:'How many rides per week?',unit:4,per:'wk',disc:true},
+  {key:'nightlife',emoji:'🍻',label:'Nightlife',q:'Nights out per month?',unit:35,per:'mo',disc:true},
+  {key:'gaming',emoji:'🎮',label:'Gaming',q:'Purchases per month?',unit:15,per:'mo',disc:true},
+  {key:'shopping',emoji:'🛍️',label:'Shopping',q:'Shopping trips per month?',unit:40,per:'mo',disc:true},
+  {key:'groceries',emoji:'🛒',label:'Groceries',q:'Grocery runs per week?',unit:35,per:'wk',disc:false},
+  {key:'fuel',emoji:'⛽',label:'Fuel',q:'Tank fills per week?',unit:45,per:'wk',disc:false},
+];
+const QUIZ_SUBS=[['Netflix',13],['Spotify',11],['YouTube Premium',12],['Disney+',9],['HBO / Max',10],['Gym',30],['iCloud',3],['Amazon Prime',5]];
+const FCAT=(k)=>FREQ_CATS.find(c=>c.key===k);
+function quizMult(){return COUNTRY_PRICES[QA?.country]||COUNTRY_PRICES['Other'];}
+function catMonthly(c,freq){return Math.round((+freq||0)*c.unit*quizMult()*(c.per==='wk'?WK:1));}
+const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
 let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
-let QA={lang:'en',income:0,incomeBracket:'',_custom:false,spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
-const QSTEPS=['language','income','spend','frustrate','reduce','bankcheck','challenge'];
-const QPROG=['income','spend','frustrate','reduce','bankcheck','challenge'];
+let QA={lang:'en',income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+const QSTEPS=['language','income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
+const QPROG=['income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
 
 function computePersona2(){
   const t={saver:0,goal_chaser:0,student_budgeter:0,lifestyle_spender:0,impulse_buyer:0,future_investor:0};
@@ -767,14 +789,11 @@ function computePersona2(){
   let best='goal_chaser',bs=-1; for(const k in t) if(t[k]>bs){bs=t[k];best=k;} return best;
 }
 function spendInsight(idx){
-  const slice=SPEND_CATS.slice(Math.max(0,idx-4),idx);
-  let best=null,bestRatio=-1;
-  slice.forEach(c=>{const v=QA.spend[c[0]]||0,r=v/(c[3]||1);if(r>bestRatio){bestRatio=r;best=c;}});
-  const v=best?(QA.spend[best[0]]||0):0;
-  if(!best||v===0) return {title:'Nice and lean 👌',msg:'You skipped those — keeping it minimal so far.'};
-  if(bestRatio>=1.3){const pctMore=Math.min(95,55+Math.round((bestRatio-1)*30));return {title:'Interesting…',msg:`You spend more on ${best[1].toLowerCase()} than about ${pctMore}% of people. Worth a closer look.`};}
-  if(bestRatio<=0.6) return {title:'Nice! 🎉',msg:`Your ${best[1].toLowerCase()} spending is below average — nicely controlled.`};
-  return {title:'Looking balanced ⚖️',msg:`Your ${best[1].toLowerCase()} spending is around average.`};
+  const slice=FREQ_CATS.slice(Math.max(0,idx-4),idx);
+  let best=null,bestMo=-1;
+  slice.forEach(c=>{const mo=catMonthly(c,QA.freq[c.key]||0);if(mo>bestMo){bestMo=mo;best=c;}});
+  if(!best||bestMo<=0) return {title:'Nice and lean 👌',msg:'Barely spending on those — keeping it minimal so far.'};
+  return {title:'Interesting…',msg:`That's about <b>${fmt(bestMo)}/month</b> on ${best.label.toLowerCase()} — roughly <b>${fmt(bestMo*12)}/year</b>. We'll show how cutting it speeds up your goal.`};
 }
 
 function quizView(){
@@ -794,7 +813,9 @@ function renderQuiz(){
   const key=QSTEPS[QSTEP];
   if(key==='language') inner.innerHTML=stepLanguage();
   else if(key==='income') inner.innerHTML=stepIncome();
+  else if(key==='country') inner.innerHTML=stepCountry();
   else if(key==='spend') inner.innerHTML=stepSpend();
+  else if(key==='subs') inner.innerHTML=stepSubs();
   else if(key==='frustrate') inner.innerHTML=stepPick('frustrate','Which spending category frustrates you most?','',FRUSTRATE);
   else if(key==='reduce') inner.innerHTML=stepPick('reduce','If you could reduce ONE expense, which would it be?','',FRUSTRATE);
   else if(key==='bankcheck') inner.innerHTML=stepPick('bankcheck','How often do you check your bank account?','',BANKCHECK);
@@ -819,33 +840,48 @@ function stepIncome(){
       <button data-action="qincomeCustom" class="ob-row"><span class="text-2xl">✏️</span><span class="font-semibold">Custom amount</span><span class="ml-auto" style="color:var(--muted)">→</span></button></div>`;
   return qFrame('income',body,QA._custom?`<button class="btn btn-primary" data-action="qincomeSave">Continue →</button>`:'');
 }
+function stepCountry(){
+  const body=`<h2 class="text-2xl font-bold">Where do you live?</h2><p class="mt-1 text-sm" style="color:var(--muted)">We use local prices to estimate your spending accurately.</p>
+    <div class="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 max-h-[50vh] overflow-y-auto pr-1">${COUNTRY_LIST.map(c=>{const on=QA.country===c;return `<button data-action="qcountry" data-c="${esc(c)}" class="ob-chip ${on?'sel':''}"><span>${esc(c)}</span></button>`;}).join('')}</div>`;
+  return qFrame('country',body,`<button class="btn btn-primary" data-action="qnextStep">Continue →</button>`);
+}
 function stepSpend(){
-  if(SHOWINSIGHT){const ins=spendInsight(SPENDIDX);return qFrame('spend',`<div class="text-center anim"><div class="mb-3 text-5xl">💡</div><h2 class="text-2xl font-bold">${ins.title}</h2><p class="mx-auto mt-2 max-w-sm text-sm" style="color:var(--muted)">${ins.msg}</p></div>`,`<button class="btn btn-primary" data-action="qInsightNext">Continue →</button>`,`${SPENDIDX} of ${SPEND_CATS.length}`);}
-  const c=SPEND_CATS[SPENDIDX],v=QA.spend[c[0]]??0;
-  const body=`<div class="text-center"><div class="mb-2 text-5xl">${c[2]}</div><h2 class="text-2xl font-bold">${c[1]}</h2><p class="mt-1 text-sm" style="color:var(--muted)">Drag to estimate your monthly spend.</p>
-    <div class="mt-6 text-4xl font-extrabold gtext" id="spendVal">${spendLabel(v)}</div>
-    <input id="spendSlider" type="range" min="0" max="1000" step="10" value="${v}" data-cat="${c[0]}" class="ob-slider mt-5">
-    <div class="mt-1 flex justify-between text-[11px]" style="color:var(--muted)"><span>€0</span><span>€1000+</span></div></div>`;
-  return qFrame('spend',body,`<div class="flex gap-2"><button class="btn btn-ghost" data-action="qspendSkip">Skip</button><button class="btn btn-primary" data-action="qspendNext">Continue →</button></div>`,`Category ${SPENDIDX+1} of ${SPEND_CATS.length}`);
+  if(SHOWINSIGHT){const ins=spendInsight(SPENDIDX);return qFrame('spend',`<div class="text-center anim"><div class="mb-3 text-5xl">💡</div><h2 class="text-2xl font-bold">${ins.title}</h2><p class="mx-auto mt-2 max-w-sm text-sm" style="color:var(--muted)">${ins.msg}</p></div>`,`<button class="btn btn-primary" data-action="qInsightNext">Continue →</button>`,`${SPENDIDX} of ${FREQ_CATS.length}`);}
+  const c=FREQ_CATS[SPENDIDX],f=QA.freq[c.key]??0,mo=catMonthly(c,f);
+  const opts=FREQ_OPTS.map(n=>`<button data-action="qfreq" data-f="${n}" class="ob-freq ${f===n?'sel':''}">${n}</button>`).join('')+`<button data-action="qfreq" data-f="8" class="ob-freq ${f>=8?'sel':''}">8+</button>`;
+  const body=`<div class="text-center"><div class="mb-2 text-5xl">${c.emoji}</div><h2 class="text-2xl font-bold">${c.label}</h2><p class="mt-1 text-sm" style="color:var(--muted)">${c.q}</p>
+    <div class="mt-5 flex flex-wrap justify-center gap-2">${opts}</div>
+    <div class="mt-5 text-sm" style="color:var(--muted)">${f>0?`${f} ${c.per==='wk'?'/week':'/month'} · ${quizMult()>1?'local price ':''}€${c.unit} each`:'Tap a number — leave at 0 if none'}</div>
+    <div class="mt-1 text-3xl font-extrabold gtext" id="freqVal">${mo>0?fmt(mo)+'/mo':'€0'}</div></div>`;
+  return qFrame('spend',body,`<div class="flex gap-2"><button class="btn btn-ghost" data-action="qspendSkip">Skip</button><button class="btn btn-primary" data-action="qspendNext">Continue →</button></div>`,`Category ${SPENDIDX+1} of ${FREQ_CATS.length}`);
+}
+function stepSubs(){
+  const total=QA.subs.reduce((a,n)=>{const s=QUIZ_SUBS.find(x=>x[0]===n);return a+(s?s[1]:0);},0);
+  const body=`<h2 class="text-2xl font-bold">Which subscriptions do you pay for?</h2><p class="mt-1 text-sm" style="color:var(--muted)">Select all that apply — we'll add them to your monthly spend.</p>
+    <div class="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-2">${QUIZ_SUBS.map(s=>{const on=QA.subs.includes(s[0]);return `<button data-action="qsub" data-s="${esc(s[0])}" class="ob-row ${on?'sel':''}"><span class="font-semibold">${esc(s[0])}</span><span class="ml-auto text-sm" style="color:var(--muted)">€${s[1]}/mo</span>${on?'<span class="ml-2 text-accent-purple">✓</span>':''}</button>`;}).join('')}</div>
+    <div class="mt-4 text-center text-sm" style="color:var(--muted)">Subscriptions total: <b class="gtext">${fmt(total)}/mo</b></div>`;
+  return qFrame('subs',body,`<button class="btn btn-primary" data-action="qnextStep">Continue →</button>`);
 }
 function stepPick(field,title,sub,opts){
   const cur=QA[field];
   const body=`<h2 class="text-2xl font-bold">${title}</h2>${sub?`<p class="mt-1 text-sm" style="color:var(--muted)">${sub}</p>`:''}<div class="mt-6 space-y-3">${opts.map(o=>{const on=cur===o[0];return `<button data-action="qpick" data-field="${field}" data-val="${o[0]}" class="ob-row ${on?'sel':''}"><span class="text-2xl">${o[2]}</span><span class="font-semibold">${o[1]}</span>${on?'<span class="ml-auto text-accent-purple">✓</span>':''}</button>`;}).join('')}</div>`;
   return qFrame(field,body,'');
 }
-function advanceSpend(){ SPENDIDX++; if(SPENDIDX>=SPEND_CATS.length){SHOWINSIGHT=false;QSTEP++;} else if(SPENDIDX%4===0){SHOWINSIGHT=true;} renderQuiz(); }
+function advanceSpend(){ SPENDIDX++; if(SPENDIDX>=FREQ_CATS.length){SHOWINSIGHT=false;QSTEP++;} else if(SPENDIDX%4===0){SHOWINSIGHT=true;} renderQuiz(); }
 function quizBack(){
   const key=QSTEPS[QSTEP];
   if(key==='spend'){ if(SHOWINSIGHT){SHOWINSIGHT=false;renderQuiz();return;} if(SPENDIDX>0){SPENDIDX--;renderQuiz();return;} }
   QSTEP=Math.max(0,QSTEP-1);
-  if(QSTEPS[QSTEP]==='spend'){SPENDIDX=SPEND_CATS.length-1;SHOWINSIGHT=false;}
+  if(QSTEPS[QSTEP]==='spend'){SPENDIDX=FREQ_CATS.length-1;SHOWINSIGHT=false;}
   renderQuiz();
 }
+const catLabel=(k)=>{if(k==='subscriptions')return 'Subscriptions';const c=FCAT(k);return c?c.label:k;};
+const catEmoji=(k)=>{if(k==='subscriptions')return '📱';const c=FCAT(k);return c?c.emoji:'•';};
 function drawQuizChart(spend){
   const el=$('#quizChart'); if(!el||typeof Chart==='undefined') return;
   const ent=Object.entries(spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if(!ent.length){el.parentElement.innerHTML='<p class="flex h-full items-center justify-center text-sm" style="color:var(--muted)">No spending entered.</p>';return;}
-  const lbls=ent.map(([k])=>{const c=spendCat(k);return c?c[1]:k;}),data=ent.map(([,v])=>v);
+  const lbls=ent.map(([k])=>catLabel(k)),data=ent.map(([,v])=>v);
   const palette=['#8b5cf6','#6366f1','#22c55e','#f59e0b','#ec4899','#3b82f6','#ef4444','#14b8a6'];
   if(charts.quiz)charts.quiz.destroy();
   charts.quiz=new Chart(el,{type:'doughnut',data:{labels:lbls,datasets:[{data,backgroundColor:palette,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},boxWidth:10}}},cutout:'60%'}});
@@ -856,37 +892,60 @@ function premiumTeaserHTML(){
     <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4" style="background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 78%,transparent) 55%)"><div class="text-2xl">🔒</div><p class="font-bold">Unlock Full Spending Breakdown</p><p class="max-w-xs text-[11px]" style="color:var(--muted)">Premium adds spending trends, detailed category analytics, monthly reports, savings forecasts & advanced insights.</p><a href="#app/plans" class="btn btn-primary !py-2 text-sm">Upgrade</a></div>
   </div>`;
 }
+function computeQuizSpend(){
+  const spend={};
+  FREQ_CATS.forEach(c=>{const mo=catMonthly(c,QA.freq[c.key]||0);if(mo>0)spend[c.key]=mo;});
+  const subTotal=QA.subs.reduce((a,n)=>{const s=QUIZ_SUBS.find(x=>x[0]===n);return a+(s?s[1]:0);},0);
+  if(subTotal>0)spend.subscriptions=subTotal;
+  return spend;
+}
 async function finishQuiz(inner){
   inner.innerHTML=`<div class="glass-strong rounded-3xl p-10 text-center anim"><div class="animate-float text-5xl">🧠</div><p class="mt-4 text-sm" style="color:var(--muted)">Building your money profile…</p></div>`;
-  const income=QA.income||0,spend=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),savings=Math.max(0,income-spend);
+  QA.spend=computeQuizSpend();
+  const income=QA.income||0,monthly=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),weekly=Math.round(monthly/WK),yearly=monthly*12,savings=Math.max(0,income-monthly);
   const potential=savings<=0?'Low':savings<150?'Low':savings<400?'Medium':savings<800?'High':'Very High';
   const persona=computePersona2();
   const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
-  const disc=new Set(['food','coffee','gaming','apps','streaming','clothing','shopping','travel','nightlife','cigarettes','delivery','gym','tech','gifts']);
-  let opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>disc.has(k))||sorted[0]||null);
-  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},personality:persona,onboarded:true,savings_potential:potential,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
-  else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
+  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
+  else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
   await loadProfile();
-  const p=PERSONAS[persona]||PERSONAS.goal_chaser,catName=(k)=>{const c=spendCat(k);return c?[c[1],c[2]]:[k,'•'];};
-  const topRows=top3.length?top3.map(([k,v])=>{const [n,e]=catName(k);return `<div class="ob-result-card"><span class="text-2xl">${e}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${n}</p></div><span class="font-bold">${fmt(v)}</span></div>`;}).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
+  const p=PERSONAS[persona]||PERSONAS.goal_chaser;
+  const topRows=top3.length?top3.map(([k,v])=>`<div class="ob-result-card"><span class="text-2xl">${catEmoji(k)}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${catLabel(k)}</p></div><span class="font-bold">${fmt(v)}/mo</span></div>`).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
+  const opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>k!=='groceries'&&k!=='fuel'&&k!=='subscriptions')||sorted[0]||null);
   let oppHTML='';
-  if(opp){const [n,e]=catName(opp[0]),yr=Math.round(opp[1]*0.25*12);oppHTML=`<div class="mt-4 rounded-2xl p-4 text-left" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 16%,transparent),color-mix(in srgb,var(--accent2) 16%,transparent));border:1px solid var(--border)"><p class="text-sm"><b>💡 Biggest opportunity:</b> reducing ${e} ${n.toLowerCase()} by 25% could save <b class="gtext">${fmt(yr)}/year</b>.</p></div>`;}
+  if(opp){const yr=Math.round(opp[1]*0.5*12);oppHTML=`<div class="mt-4 rounded-2xl p-4 text-left" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 16%,transparent),color-mix(in srgb,var(--accent2) 16%,transparent));border:1px solid var(--border)"><p class="text-sm"><b>💡 Biggest opportunity:</b> halving ${catEmoji(opp[0])} ${catLabel(opp[0]).toLowerCase()} could save <b class="gtext">${fmt(yr)}/year</b> — we'll turn that into goal progress next.</p></div>`;}
   inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-7 anim">
     <div class="text-center"><div class="text-5xl">${p.emoji}</div><p class="mt-2 text-xs font-semibold uppercase tracking-widest gtext">Your Money Profile</p><h2 class="mt-1 text-2xl font-bold">${p.name}</h2></div>
     <div class="mt-5 grid grid-cols-3 gap-2 text-center">
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Income</p><p class="text-lg font-extrabold">${fmt(income)}</p></div>
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Spending</p><p class="text-lg font-extrabold">${fmt(spend)}</p></div>
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Potential savings</p><p class="text-lg font-extrabold gtext">${fmt(savings)}</p></div>
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Weekly</p><p class="text-lg font-extrabold">${fmt(weekly)}</p></div>
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Monthly</p><p class="text-lg font-extrabold">${fmt(monthly)}</p></div>
+      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Yearly</p><p class="text-lg font-extrabold">${fmt(yearly)}</p></div>
     </div>
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
-      <div><p class="label">Top expenses</p><div class="space-y-2">${topRows}</div></div>
+      <div><p class="label">Top spending categories</p><div class="space-y-2">${topRows}</div></div>
       <div><p class="label">Spending breakdown</p><div class="glass rounded-2xl p-3" style="height:210px"><canvas id="quizChart"></canvas></div></div>
     </div>
     ${oppHTML}
     ${premiumTeaserHTML()}
-    <button class="btn btn-primary mt-5 w-full" onclick="location.hash='#app/dashboard'">Continue To Dashboard →</button>
+    <button class="btn btn-primary mt-5 w-full" data-action="qgoal">Next: set your goal →</button>
   </div>`;
   drawQuizChart(QA.spend);
+}
+// Mandatory goal — users must set a target before the dashboard unlocks.
+function stepGoalCreate(inner){
+  const EMO=['🎯','🎮','💻','📱','🚗','✈️','🏠','🛡️','🎓','💍','🏝️','💰'];
+  inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">
+    <div class="text-center"><div class="text-5xl">🎯</div><h1 class="mt-2 text-2xl font-bold sm:text-3xl">Set your first goal</h1><p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify needs a target to turn your spending into savings recommendations. This is required to start.</p></div>
+    <div class="mt-6 space-y-4">
+      <div><span class="label">Pick an icon</span><div id="qgEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-10 w-10 items-center justify-center rounded-lg text-lg ${i===0?'sel ob-chip':'ob-chip'}">${x}</button>`).join('')}</div></div>
+      <div><label class="label">Goal name</label><input id="qgName" class="input" placeholder="e.g. Gaming Setup"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" class="input" placeholder="1500"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input"></div></div>
+      <p id="qgErr" class="text-sm text-red-400 h-4"></p>
+      <button class="btn btn-primary w-full" data-action="qcreategoal">Create goal & open dashboard →</button>
+    </div></div>`;
+  let emo='🎯';
+  $('#qgEmo').addEventListener('click',e=>{const b=e.target.closest('[data-e]');if(!b)return;emo=b.getAttribute('data-e');QA._goalEmo=emo;$('#qgEmo').querySelectorAll('button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  QA._goalEmo='🎯';
 }
 
 // ============================================================
@@ -1014,6 +1073,50 @@ function achievementsLatestHTML(){
   const got=[...earnedBadges()],latest=got.slice(-3).map(k=>BADGES.find(b=>b.key===k)).filter(Boolean);
   return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold">🏆 Achievements</h3><a href="#app/profile" class="text-sm text-accent-purple hover:underline">View all</a></div>${latest.length?`<div class="grid grid-cols-3 gap-2">${latest.map(b=>`<div class="flex flex-col items-center rounded-xl p-3 text-center" style="background:var(--glass)"><span class="text-2xl badge-pop">${b.emoji}</span><p class="mt-1 text-[10px] font-semibold">${esc(b.name)}</p></div>`).join('')}</div>`:`<p class="py-2 text-center text-sm" style="color:var(--muted)">Earn your first badge by creating a goal.</p>`}</div>`;
 }
+// ── Savings Opportunity Engine — ties each spending habit to goal progress ──
+const OPP_CATS=['cigarettes','coffee','delivery','fastfood','restaurants','taxi','nightlife','gaming','shopping','subscriptions'];
+function goalPace(){
+  const g=topGoal();if(!g)return null;
+  const remaining=Math.max(0,(+g.target_amount||0)-(+g.saved_amount||0));
+  const base=Math.max(0,Number(g.monthly_contribution)||0)||Math.max(0,snapshot(ME,EXPENSES).leftover);
+  const monthsNow=base>0?remaining/base:null;
+  return {g,remaining,base,monthsNow};
+}
+function savingsOpportunities(){
+  const budget=ME.budget||{},pace=goalPace();
+  return OPP_CATS.map(k=>{
+    const cur=+budget[k]||0;if(cur<=0)return null;
+    const save=Math.round(cur*0.5); // halving the habit
+    let daysEarlier=null,coversIn=null;
+    if(pace){
+      if(pace.base>0&&pace.monthsNow!=null){const newMonths=pace.remaining/(pace.base+save);daysEarlier=Math.max(0,Math.round((pace.monthsNow-newMonths)*30.4));}
+      if(save>0)coversIn=Math.ceil(pace.remaining/save);
+    }
+    return {key:k,label:catLabel(k),emoji:catEmoji(k),cur,save,yearly:save*12,daysEarlier,coversIn};
+  }).filter(Boolean).sort((a,b)=>b.save-a.save).slice(0,3);
+}
+function savingsOpportunitiesHTML(){
+  const opps=savingsOpportunities();if(!opps.length)return '';
+  const g=topGoal(),applied=new Set(chalState().map(c=>c.key));
+  const rows=opps.map(o=>{
+    const key='save_'+o.key,isApplied=applied.has(key);
+    const impact=g?(o.daysEarlier?`reach <b>${esc(g.name)}</b> <b class="text-emerald-400">${o.daysEarlier} days sooner</b>`:(o.coversIn?`covers <b>${esc(g.name)}</b> in ~${o.coversIn} mo`:'')):'';
+    return `<div class="rounded-2xl p-4" style="background:var(--glass)">
+      <div class="flex items-center gap-3">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style="background:var(--bg)">${o.emoji}</span>
+        <div class="min-w-0 flex-1"><p class="font-semibold">${esc(o.label)}</p><p class="text-[11px]" style="color:var(--muted)">Now ${fmt(o.cur)}/mo · halve it${impact?' to '+impact:''}</p></div>
+        <div class="text-right shrink-0"><p class="text-sm font-bold text-emerald-400">+${fmt(o.save)}/mo</p><p class="text-[11px]" style="color:var(--muted)">${fmt(o.yearly)}/yr</p></div>
+      </div>
+      <button class="btn ${isApplied?'btn-ghost':'btn-primary'} mt-3 w-full !py-2 text-sm" data-action="applyOpp" data-k="${o.key}" ${isApplied?'disabled':''}>${isApplied?'✓ Challenge active':'⚡ Apply challenge (+XP)'}</button>
+    </div>`;
+  }).join('');
+  const total=opps.reduce((a,o)=>a+o.save,0);
+  return `<div class="glass-strong rounded-2xl p-5 sm:p-6">
+    <h3 class="font-semibold">💡 Reach your goal faster</h3>
+    <p class="mb-4 mt-1 text-sm" style="color:var(--muted)">${g?`Cut these habits and put the money toward <b>${esc(g.name)}</b>.`:'Set a goal to see how cutting these habits speeds it up.'} Halving all three frees <b class="text-emerald-400">${fmt(total)}/mo</b>.</p>
+    <div class="grid gap-3 sm:grid-cols-3">${rows}</div>
+  </div>`;
+}
 function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),h=healthScore(s),c=caps(plan);
   const persona=ME.personality?PERSONAS[ME.personality]:null;
@@ -1027,7 +1130,7 @@ function dashboardView(){
   }
   const gamify=c.gamify?`<div class="grid gap-4 lg:grid-cols-2">${missionsCompactHTML()}${levelXpHTML()}</div><div class="grid gap-4 lg:grid-cols-2">${weeklyCompactHTML()}${achievementsLatestHTML()}</div>`:'';
   const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🚀 Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro adds advanced analytics, category breakdowns & trends. Premium adds XP, levels, achievements & challenges.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
-  return `<div class="space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${goalsOverviewHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${freePerk}</div>`;
+  return `<div class="space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${freePerk}</div>`;
 }
 
 function missionRow(m){
@@ -1109,7 +1212,7 @@ function aiView(){
 
 let CHAL_FILTER=0; // 0=all, 1, 7, 14
 function activeChalCard(c){
-  const def=CHALLENGES.find(x=>x.key===c.key);if(!def)return '';
+  const def=CHALLENGES.find(x=>x.key===c.key)||(c.custom?{key:c.key,title:c.title||'Savings challenge',desc:c.desc||'',emoji:c.emoji||'💸',days:c.days||14,xp:c.xp||80}:null);if(!def)return '';
   const day=chalDayNum(c),proofs=c.proofs||[],done=proofs.length,ready=day>=def.days&&done>=def.days;
   const status=c.status;
   let badge='',action='';
@@ -1548,7 +1651,9 @@ async function render(){
     const c=caps(ME.plan);
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
-    const route2=(allowed.has(route)||route==='student')?route:'dashboard';
+    const route2base=(allowed.has(route)||route==='student')?route:'dashboard';
+    // mandatory goal — dashboard stays blocked until at least one goal exists
+    const route2=(route2base==='dashboard'&&GOALS.length===0)?'goals':route2base;
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
@@ -1981,6 +2086,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='checkIn'){const r=doCheckIn();if(r.already){toast('Already checked in today ✓');}else{if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+10;else await sb.rpc('award_xp',{p_amount:10}).catch(()=>{});await loadProfile();toast('🔥 '+r.count+'-day streak! +10 XP');}render();}
     else if(act==='chalFilter'){CHAL_FILTER=+a.getAttribute('data-d');render();}
     else if(act==='joinChal'){const k=a.getAttribute('data-key');const arr=chalState();if(!arr.find(c=>c.key===k)){arr.push({key:k,start:todayISO(),proofs:[],status:'active'});setChalState(arr);}toast('Challenge started — log proof daily 💪');render();}
+    else if(act==='applyOpp'){const ck=a.getAttribute('data-k');const cur=+((ME.budget||{})[ck])||0;const save=Math.round(cur*0.5);const key='save_'+ck;const arr=chalState();if(arr.find(x=>x.key===key)){toast('You already have this challenge','err');}else{arr.push({key,custom:true,title:'Halve '+catLabel(ck),desc:`Cut ${catLabel(ck).toLowerCase()} in half — about ${fmt(save)}/mo toward your goal.`,emoji:catEmoji(ck),days:14,xp:80,start:todayISO(),proofs:[],status:'active'});setChalState(arr);toast('⚡ Challenge added — log proof to earn XP & a badge!');}render();}
     else if(act==='proofChal'){openProofModal(a.getAttribute('data-key'));}
     else if(act==='reviewChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='pending';setChalState(arr);}toast('Submitted for review — XP is granted after approval ⏳');render();}
     else if(act==='leaveChal'){const k=a.getAttribute('data-key');setChalState(chalState().filter(c=>c.key!==k));toast('Left challenge');render();}
@@ -1995,10 +2101,16 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qincome'){QA.income=+a.getAttribute('data-amt')||0;QA.incomeBracket=a.getAttribute('data-v');QA._custom=false;QSTEP++;renderQuiz();}
     else if(act==='qincomeCustom'){QA._custom=true;renderQuiz();}
     else if(act==='qincomeSave'){const v=+($('#incomeInput')?.value||0);if(v<=0){toast('Enter your income','err');return;}QA.income=v;QA.incomeBracket='custom';QSTEP++;renderQuiz();}
-    else if(act==='qspendNext'){const s=$('#spendSlider');if(s)QA.spend[s.getAttribute('data-cat')]=+s.value||0;advanceSpend();}
-    else if(act==='qspendSkip'){const c=SPEND_CATS[SPENDIDX];if(c)QA.spend[c[0]]=0;advanceSpend();}
-    else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=SPEND_CATS.length)QSTEP++;renderQuiz();}
+    else if(act==='qnextStep'){QSTEP++;renderQuiz();}
+    else if(act==='qcountry'){QA.country=a.getAttribute('data-c');renderQuiz();}
+    else if(act==='qfreq'){const c=FREQ_CATS[SPENDIDX];if(c)QA.freq[c.key]=+a.getAttribute('data-f')||0;renderQuiz();}
+    else if(act==='qsub'){const s=a.getAttribute('data-s');QA.subs.includes(s)?QA.subs=QA.subs.filter(x=>x!==s):QA.subs.push(s);renderQuiz();}
+    else if(act==='qspendNext'){advanceSpend();}
+    else if(act==='qspendSkip'){const c=FREQ_CATS[SPENDIDX];if(c)QA.freq[c.key]=0;advanceSpend();}
+    else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=FREQ_CATS.length)QSTEP++;renderQuiz();}
     else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
+    else if(act==='qgoal'){const inner=$('#qInner');if(inner)stepGoalCreate(inner);}
+    else if(act==='qcreategoal'){const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}const emo=QA._goalEmo||'🎯';const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};if(DEMO_MODE){DEMO_GOALS.unshift(g);}else{try{await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null});}catch(e){}}toast('🎯 Goal created!');location.hash='#app/dashboard';}
     else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
     else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
     else if(act==='approveSV'){await sb.rpc('approve_student',{p_id:a.getAttribute('data-id')});toast('Approved → Pro');render();}
