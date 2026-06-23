@@ -1575,13 +1575,26 @@ function profileView(){
     <div><p class="text-sm font-semibold">${isPublic?'🌍 Public profile':'🔒 Private profile'}</p><p class="text-[11px]" ${M}>${isPublic?'Visible to other Goalify users, searches and leaderboards.':'Hidden from everyone — only you can see these stats.'}</p></div>
     <div class="flex gap-1 rounded-xl p-1" style="background:var(--glass)">${[['public','🌍 Public'],['private','🔒 Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="rounded-lg px-3 py-1.5 text-xs ${vis===o[0]?'text-white':''}" style="${vis===o[0]?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${o[1]}</button>`).join('')}</div></div>`;
 
-  const hero=`<div class="glass-strong rounded-2xl overflow-hidden">${bannerCls?`<div class="relative h-28 ${bannerCls}"></div>`:'<div class="h-5"></div>'}
-    <div class="px-6 pb-6"><div class="-mt-14 mb-2 flex items-end gap-4 flex-wrap">${framedAvatar(96,level)}
-      <div class="pb-1"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold">${nm}</h2>${planBadge(ME.plan)}${ME.prestige?`<span class="pf-title-chip">${prestigeStars(ME.prestige)} Prestige ${ME.prestige}</span>`:''}</div>
-        <p class="mt-1.5 text-sm" ${M}>@${un}</p>
-        <div class="mt-2 flex items-center gap-2 flex-wrap"><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span><span class="text-xs" ${M}>Level ${level} · ${ME.xp||0} XP</span></div></div></div>
-      ${ME.bio?`<p class="mt-3 text-sm" style="color:var(--text)">${esc(ME.bio)}</p>`:''}
-      <div class="mt-3"><div class="flex justify-between text-[11px] mb-1" ${M}><span>Level ${level}</span><span>${nxt?`${nxt.lvl-level} level${nxt.lvl-level>1?'s':''} to ${esc(nxt.title)}`:'Max tier reached 👑'}</span></div>
+  const hero=`<div class="glass-strong rounded-2xl overflow-hidden">
+    <div class="relative ${bannerCls?'h-28 '+bannerCls:'h-24'}" ${bannerCls?'':'style="background:linear-gradient(120deg,var(--accent1),var(--accent2))"'}>
+      <div class="absolute right-3 top-3 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" class="pf-hero-btn" onclick="document.getElementById('avatarInput').click()" title="Change profile picture">📷 <span class="pf-hero-btn-t">Change picture</span></button>
+        <a href="#app/settings" class="pf-hero-btn" title="Customize your profile">🎨 <span class="pf-hero-btn-t">Customize</span></a>
+      </div>
+    </div>
+    <div class="px-6 pb-6">
+      <div class="-mt-12 flex flex-col items-start gap-3">
+        <div class="relative shrink-0">${framedAvatar(96,level)}
+          <label class="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-sm" style="background:var(--accent2);color:#fff;box-shadow:0 0 0 3px var(--bg)" title="Change profile picture">📷<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>
+        </div>
+        <div class="min-w-0 w-full">
+          <div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold">${nm}</h2>${planBadge(ME.plan)}${ME.prestige?`<span class="pf-title-chip">${prestigeStars(ME.prestige)} Prestige ${ME.prestige}</span>`:''}</div>
+          <p class="mt-1 text-sm" ${M}>@${un}</p>
+          <div class="mt-2 flex items-center gap-2 flex-wrap"><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span><span class="text-xs" ${M}>Level ${level} · ${ME.xp||0} XP</span></div>
+          ${ME.bio?`<p class="mt-3 text-sm" style="color:var(--text)">${esc(ME.bio)}</p>`:''}
+        </div>
+      </div>
+      <div class="mt-4"><div class="flex justify-between text-[11px] mb-1" ${M}><span>Level ${level}</span><span>${nxt?`${nxt.lvl-level} level${nxt.lvl-level>1?'s':''} to ${esc(nxt.title)}`:'Max tier reached 👑'}</span></div>
         <div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${lvl.inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
     </div></div>`;
 
