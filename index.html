@@ -278,12 +278,21 @@
       .goal-mini{padding:.7rem!important;border-radius:1rem}
       .sec-pad{padding:1rem!important}
     }
+    /* ============================================================
+       SPENDING IMPACT CALCULATOR
+       Period chip row — hide scrollbar cross-browser
+       ============================================================ */
+    .sc-presets::-webkit-scrollbar{display:none}
+    @media(max-width:640px){
+      /* period cards: 2 per row, no overflow */
+      .sc-pcard{min-width:0;word-break:break-word}
+    }
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=50"></script>
+  <script type="module" src="./app.js?v=51"></script>
 </body>
 </html>

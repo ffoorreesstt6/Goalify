@@ -250,7 +250,7 @@ function setLang(l){localStorage.setItem('goalify_lang',l);render();}
 function planNav(plan){
   const c=caps(plan);
   const nav=[['dashboard','Dashboard','📊'],['goals','Goals','🎯']];
-  if(c.analytics){nav.push(['analytics','Analytics','📈'],['simulator','Future Simulator','🔮']);}
+  if(c.analytics){nav.push(['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['spendcalc','Impact Calculator','💸']);}
   if(c.gamify)nav.push(['challenges','Challenges','🏆']);
   if(c.social!=='none')nav.push(['social','Social','👥']);
   nav.push(['profile','Profile','🪪']);
@@ -1038,6 +1038,80 @@ function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid=
 
 let GOALS=[],EXPENSES=[],AIUSED=0;
 
+// ============================================================
+// SPENDING IMPACT CALCULATOR — state
+// ============================================================
+let SC_PRESET='coffee', SC_PERIOD='1y';
+const SC_PRESETS=[
+  {key:'coffee',    emoji:'☕',label:'Coffee'},
+  {key:'cigarettes',emoji:'🚬',label:'Cigarettes'},
+  {key:'delivery',  emoji:'🍕',label:'Food Delivery'},
+  {key:'fastfood',  emoji:'🍔',label:'Fast Food'},
+  {key:'gaming',    emoji:'🎮',label:'Gaming'},
+  {key:'taxi',      emoji:'🚕',label:'Taxi'},
+  {key:'nightlife', emoji:'🍻',label:'Nightlife'},
+  {key:'shopping',  emoji:'🛍️',label:'Shopping'},
+  {key:'fuel',      emoji:'⛽',label:'Fuel'},
+  {key:'subscriptions',emoji:'📱',label:'Subscriptions'},
+];
+const SC_PERIODS=[
+  {k:'1w', label:'1 Week',  months:1/WK},
+  {k:'1m', label:'1 Month', months:1},
+  {k:'6m', label:'6 Months',months:6},
+  {k:'1y', label:'1 Year',  months:12},
+  {k:'3y', label:'3 Years', months:36},
+  {k:'5y', label:'5 Years', months:60},
+  {k:'10y',label:'10 Years',months:120},
+];
+function scMonthly(price,times,freq){return freq==='wk'?times*price*WK:times*price;}
+window.updateSpendCalc=function(){
+  const price=Math.max(0,parseFloat(document.getElementById('scPrice')?.value||0)||0);
+  const times=Math.max(0,parseFloat(document.getElementById('scTimes')?.value||0)||0);
+  const freq=document.getElementById('scFreq')?.value||'wk';
+  const name=(document.getElementById('scName')?.value||'').trim()||'This habit';
+  const out=document.getElementById('scOutput');
+  const glink=document.getElementById('scGoalLink');
+  if(!out)return;
+  if(!price||!times){
+    out.innerHTML=`<div class="glass rounded-2xl p-8 text-center" style="color:var(--muted)"><p class="text-4xl mb-3">💸</p><p class="font-medium">Enter a price and frequency above</p><p class="text-sm mt-1">See exactly what this habit costs over 10 years</p></div>`;
+    if(glink)glink.innerHTML='';return;
+  }
+  const monthly=scMonthly(price,times,freq);
+  const costs=SC_PERIODS.map(p=>({...p,cost:monthly*p.months}));
+  const maxCost=Math.max(...costs.map(c=>c.cost),0.01);
+  const curEmoji=(SC_PRESETS.find(p=>p.key===SC_PRESET)||{emoji:'💸'}).emoji;
+  out.innerHTML=`<div class="space-y-4">
+    <div class="grid grid-cols-3 gap-2">
+      ${[['📅','per month',fmt(monthly),'#22c55e'],['📆','per year',fmt(monthly*12),'var(--accent2)'],['🗓️','in 10 yrs',fmt(monthly*120),'var(--accent1)']].map(([ico,lbl,val,clr])=>`<div class="glass rounded-xl p-2.5 sm:p-3 text-center"><p class="text-xl sm:text-2xl">${ico}</p><p class="font-extrabold mt-0.5 leading-tight" style="color:${clr};font-size:clamp(.8rem,3.5vw,1.2rem)">${val}</p><p class="text-[10px] mt-0.5" style="color:var(--muted)">${lbl}</p></div>`).join('')}
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+      ${costs.map(c=>{const sel=c.k===SC_PERIOD;const barW=Math.round((c.cost/maxCost)*100);return `<div data-action="scPeriod" data-period="${c.k}" class="glass rounded-2xl p-3 text-center" style="cursor:pointer;transition:border .15s,box-shadow .15s;${sel?'border:1.5px solid var(--accent1);box-shadow:0 0 0 1px var(--accent1)':'border:1px solid var(--border)'}"><p class="text-[10px] font-semibold uppercase tracking-wide" style="color:${sel?'var(--accent2)':'var(--muted)'}">${c.label}</p><p class="font-extrabold mt-1 leading-tight" style="color:${sel?'var(--accent2)':'var(--text)'};font-size:clamp(.82rem,3vw,${sel?'1.25rem':'1.1rem'})">${fmt(c.cost)}</p><div class="mt-2 h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,.08)"><div style="height:100%;width:${barW}%;border-radius:99px;background:${sel?'linear-gradient(90deg,var(--accent1),var(--accent2))':'rgba(255,255,255,.2)'};transition:width .5s ease"></div></div></div>`;}).join('')}
+    </div>
+    <div class="glass-strong rounded-2xl p-4 sm:p-5 flex items-center gap-3">
+      <span class="text-3xl shrink-0">${curEmoji}</span>
+      <div class="min-w-0">
+        <p class="font-semibold truncate">${esc(name)}</p>
+        <p class="text-sm" style="color:var(--muted)">${freq==='wk'?`${times}× per week at ${fmt(price)} each → ${fmt(monthly)}/month`:`${times}× per month at ${fmt(price)} each → ${fmt(monthly)}/month`}</p>
+        ${freq==='wk'?`<p class="text-[11px] mt-0.5" style="color:var(--muted)">Using <b style="color:var(--text)">4.345 weeks/month</b> — accurate 52-week year, not a rounded ×4</p>`:''}
+      </div>
+    </div>
+  </div>`;
+  const pace=goalPace();
+  if(glink){
+    if(!pace||!pace.base||pace.monthsNow==null){glink.innerHTML='';return;}
+    const {g,remaining,base,monthsNow}=pace;
+    const rows=[1,2,3].map(r=>{
+      const saveMonthly=freq==='wk'?r*price*WK:r*price;
+      if(saveMonthly<=0)return '';
+      const newMonths=remaining/(base+saveMonthly);
+      const daysEarlier=Math.max(0,Math.round((monthsNow-newMonths)*DAYS_MO));
+      const newDate=addMonthsDays(newMonths);
+      return `<div class="flex items-center justify-between gap-3 rounded-2xl p-3.5" style="background:var(--glass)"><div class="min-w-0"><p class="text-sm font-semibold">Cut by ${r} ${freq==='wk'?'per week':'per month'}</p><p class="text-[11px] mt-0.5" style="color:var(--muted)">Save <b style="color:#22c55e">${fmt(saveMonthly)}/mo</b> · <b style="color:var(--accent2)">${fmt(saveMonthly*12)}/yr</b></p></div>${daysEarlier>0?`<div class="shrink-0 text-right"><p class="text-sm font-extrabold text-emerald-400">⚡ ${daysEarlier} days</p><p class="text-[10px]" style="color:var(--muted)">sooner · ${fmtMD(newDate)}</p></div>`:`<span class="text-[11px] shrink-0" style="color:var(--muted)">no change</span>`}</div>`;
+    }).filter(Boolean);
+    glink.innerHTML=rows.length?`<div class="glass-strong rounded-2xl p-5"><div class="flex items-center gap-3 mb-4"><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style="background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(59,130,246,.2))">${g.emoji||'🎯'}</span><div><h3 class="font-semibold">Impact on <b>${esc(g.name)}</b></h3><p class="text-xs" style="color:var(--muted)">${fmt(remaining)} remaining · ~${Math.round(monthsNow)} months at current pace</p></div></div><div class="space-y-2">${rows.join('')}</div><p class="mt-4 text-[11px] text-center" style="color:var(--muted)">Reducing ${esc(name.toLowerCase())} frees up savings toward your goal</p></div>`:'';
+  }
+};
+
 // ---- minimal dashboard building blocks ----
 function goalOverviewHTML(){
   const g=topGoal();
@@ -1328,6 +1402,32 @@ function simulatorView(){
   <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">🏁 Milestones on the way</h3><div id="simMilestones" class="grid gap-3 sm:grid-cols-2"></div></div>
   <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">⚡ Try a scenario</h3><div class="flex flex-wrap gap-2">${[['Cut €100/mo more','cut100'],['Save aggressively','aggressive'],['Invest at 7%','invest'],['Reset','reset']].map(s=>`<button class="rounded-full px-3 py-1.5 text-xs" style="background:var(--glass);color:var(--muted)" data-action="simPreset" data-preset="${s[1]}">${s[0]}</button>`).join('')}</div></div>
   </div></div></div>`;
+}
+
+function spendingCalcView(){
+  const pr=SC_PRESETS.find(p=>p.key===SC_PRESET)||SC_PRESETS[0];
+  const defPrice=Math.round((priceFor(pr.key)||2)*100)/100||2;
+  const defTimes=Math.max(1,freqFor(pr.key)||1);
+  return `<div class="space-y-5">
+    <div>
+      <h1 class="text-2xl font-bold sm:text-3xl">💸 Spending Impact Calculator</h1>
+      <p class="mt-1 text-sm" style="color:var(--muted)">See what daily habits really cost over weeks, months and years.</p>
+    </div>
+    <div style="display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.3rem;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+      ${SC_PRESETS.map(p=>{const sel=p.key===SC_PRESET;return `<button data-action="scPreset" data-key="${p.key}" class="shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium whitespace-nowrap" style="${sel?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted)'}">${p.emoji} ${p.label}</button>`;}).join('')}
+    </div>
+    <div class="glass-strong rounded-2xl p-5">
+      <h3 class="font-semibold mb-4">Your habit</h3>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="sm:col-span-2"><label class="label">Habit name</label><input id="scName" class="input" value="${esc(pr.label)}" placeholder="e.g. Morning coffee" oninput="updateSpendCalc()"></div>
+        <div><label class="label">Price per purchase</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium" style="color:var(--muted)">${esc(ME.currency||'€')}</span><input id="scPrice" type="number" min="0" step="0.01" class="input" style="padding-left:2rem" value="${defPrice}" oninput="updateSpendCalc()"></div></div>
+        <div><label class="label">How many times</label><input id="scTimes" type="number" min="0" step="1" class="input" value="${defTimes}" oninput="updateSpendCalc()"></div>
+        <div class="sm:col-span-2"><label class="label">Frequency</label><select id="scFreq" class="input" onchange="updateSpendCalc()"><option value="wk">per week</option><option value="mo">per month</option></select></div>
+      </div>
+    </div>
+    <div id="scOutput"></div>
+    <div id="scGoalLink"></div>
+  </div>`;
 }
 
 function aiView(){
@@ -1869,12 +1969,13 @@ async function render(){
     const route2base=(allowed.has(route)||route==='student')?route:'dashboard';
     // mandatory goal — dashboard stays blocked until at least one goal exists
     const route2=(route2base==='dashboard'&&GOALS.length===0)?'goals':route2base;
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.analytics){drawSpend('year');drawCat();}
     if(route2==='analytics'){drawSpend('year');}
     if(route2==='simulator'){runSim();}
+    if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
     if(route2==='student'){renderSVStatus();}
     return;
   }
@@ -2278,6 +2379,8 @@ document.addEventListener('click',async(e)=>{
     else if(act==='adminLogin'){const code=($('#adminInput')?.value||'').trim();if(code!==ADMIN_CODE)return toast('Incorrect access code','err');localStorage.setItem('goalify_admin','1');toast('🛡️ Admin access granted');location.hash='#admin';}
     else if(act==='adminLogout'){localStorage.removeItem('goalify_admin');toast('Admin signed out');render();}
     else if(act==='simPreset'){simPreset(a.getAttribute('data-preset'));}
+    else if(act==='scPreset'){const k=a.getAttribute('data-key');SC_PRESET=k;const pr=SC_PRESETS.find(p=>p.key===k)||SC_PRESETS[0];const nameEl=document.getElementById('scName');const priceEl=document.getElementById('scPrice');const timesEl=document.getElementById('scTimes');if(nameEl)nameEl.value=pr.label;if(priceEl)priceEl.value=Math.round((priceFor(pr.key)||2)*100)/100;if(timesEl)timesEl.value=Math.max(1,freqFor(pr.key)||1);document.querySelectorAll('[data-action="scPreset"]').forEach(b=>{const sel=b.getAttribute('data-key')===k;b.style.background=sel?'linear-gradient(135deg,var(--accent1),var(--accent2))':'var(--glass)';b.style.color=sel?'#fff':'var(--muted)';});updateSpendCalc();}
+    else if(act==='scPeriod'){SC_PERIOD=a.getAttribute('data-period');updateSpendCalc();}
     else if(act==='bizAdd'){openBizForm(a.getAttribute('data-coll'));}
     else if(act==='bizEdit'){openBizForm(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
     else if(act==='bizDel'){bizDelete(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
