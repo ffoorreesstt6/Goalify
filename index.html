@@ -287,12 +287,28 @@
       /* period cards: 2 per row, no overflow */
       .sc-pcard{min-width:0;word-break:break-word}
     }
+    /* ============================================================
+       RESPONSIVE NATIVE DATE / MONTH INPUTS
+       Analytics expense date, goal target date, signup birth date —
+       native pickers overflow on iOS/Android without these rules.
+       ============================================================ */
+    input[type=date],input[type=month]{
+      -webkit-appearance:none;appearance:none;
+      width:100%;max-width:100%;box-sizing:border-box;min-height:44px;
+    }
+    input[type=date]::-webkit-calendar-picker-indicator,
+    input[type=month]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
+    @media(max-width:640px){
+      input[type=date],input[type=month]{font-size:16px}  /* stops iOS auto-zoom */
+    }
+    /* goal date quick-pick buttons stay readable when wrapped */
+    .gm-qbtn{transition:background .15s,color .15s}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=51"></script>
+  <script type="module" src="./app.js?v=52"></script>
 </body>
 </html>

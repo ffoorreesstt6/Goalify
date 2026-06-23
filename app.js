@@ -66,10 +66,10 @@ const PLANS = {
   free:{name:'Free',price:0,goalLimit:3,ai:5},
   pro:{name:'Pro',price:3,goalLimit:-1,ai:50,highlight:true},
   premium:{name:'Premium',price:5,goalLimit:-1,ai:-1},
-  business:{name:'Business',price:10,goalLimit:-1,ai:-1},
+  business:{name:'Business',price:9,goalLimit:-1,ai:-1},
 };
-// monthly + yearly pricing (yearly = a few months free)
-const PRICING={pro:{mo:3,yr:30},premium:{mo:5,yr:50},business:{mo:10,yr:100}};
+// monthly + yearly pricing (yearly = a few months free) — EUR only
+const PRICING={pro:{mo:3,yr:29},premium:{mo:5,yr:49},business:{mo:9,yr:75}};
 // referral reward tiers
 const REWARD_TIERS=[[10,'1 month Pro free'],[25,'3 months Pro free'],[50,'1 year Pro free'],[100,'1 year Premium free']];
 const PLAN_ORDER=['free','pro','premium','business'];
@@ -736,6 +736,9 @@ function signupView(){
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
       <div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)"></p></div>
       <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div>
+      <div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" required></div>
+      <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+      <div><label class="label">Language</label><select name="language" class="input">${LANGS.map(l=>`<option value="${l[0]}">${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select></div>
       <button class="btn btn-primary w-full" id="signupBtn">Create account</button>
     </form>
     <p class="mt-3 text-center text-[11px]" style="color:var(--muted)">By continuing you agree to our <a href="#home" class="hover:underline">Terms</a> & <a href="#home" class="hover:underline">Privacy Policy</a>.</p>
@@ -1291,9 +1294,32 @@ function savingsOpportunitiesHTML(){
       <div class="mt-6 rounded-2xl p-8 text-center" style="background:var(--glass)"><div class="text-4xl">📊</div><h3 class="mt-3 font-semibold">No spending tracked yet</h3><p class="mx-auto mt-1 max-w-sm text-sm" style="color:var(--muted)">Add a few expenses or retake the spending quiz and Goalify will show exactly which habits to trim — and how many days sooner you'll hit your goal.</p><a href="#app/analytics" class="btn btn-primary mt-4 !py-2 text-sm">+ Add spending</a></div></section>`;
   }
   const applied=new Set(chalState().map(c=>c.key));
-  const totalMo=opps.reduce((a,o)=>a+o.saveMonthly,0), maxDays=opps.reduce((a,o)=>Math.max(a,o.daysEarlier||0),0);
+  const totalMo=opps.reduce((a,o)=>a+o.saveMonthly,0);
   const chip=(emoji,val,lbl)=>`<div class="rounded-xl px-3 py-2 text-center" style="background:var(--glass)"><p class="text-base font-extrabold gtext sm:text-lg">${emoji} ${val}</p><p class="text-[10px]" style="color:var(--muted)">${lbl}</p></div>`;
-  const summary=`<div class="mt-5 grid grid-cols-3 gap-2 sm:gap-3">${chip('💸',fmt(totalMo),'total / month')}${chip('📅',fmt(totalMo*12),'total / year')}${g&&maxDays>0?chip('⚡',maxDays+' days','goal sooner'):chip('🎯',opps.length,'opportunities')}</div>`;
+  // ── COMBINED RESULT: apply ALL savings at once → one honest "reach goal in X months" figure ──
+  const pace=goalPace();
+  let hero='';
+  if(g&&pace&&pace.remaining>0){
+    const base=Math.max(0,pace.base);
+    const newBase=base+totalMo;                       // contribution + everything trimmed
+    const newMonths=newBase>0?pace.remaining/newBase:null;
+    const curMonths=base>0?pace.remaining/base:null;
+    if(newMonths!=null&&isFinite(newMonths)){
+      const m=Math.max(1,Math.ceil(newMonths));
+      const yrs=Math.floor(m/12),rem=m%12;
+      const human=m<=18?`${m} month${m===1?'':'s'}`:(rem===0?`${yrs} year${yrs===1?'':'s'}`:`${yrs}y ${rem}mo`);
+      const date=addMonthsDays(newMonths);
+      const sooner=(curMonths!=null&&isFinite(curMonths))?Math.max(0,Math.round(curMonths-newMonths)):null;
+      hero=`<div class="rounded-2xl p-5 sm:p-6 mt-5 text-center" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 22%,transparent),color-mix(in srgb,var(--accent2) 22%,transparent));border:1px solid color-mix(in srgb,var(--accent2) 35%,transparent)">
+        <p class="text-[11px] font-semibold uppercase tracking-widest" style="color:var(--muted)">Apply every suggestion below and</p>
+        <p class="mt-1 text-sm">your <b>${g.emoji||'🎯'} ${esc(g.name)}</b> goal is reached in</p>
+        <p class="my-1 font-extrabold gtext leading-none" style="font-size:clamp(2.4rem,11vw,4rem)">${human}</p>
+        <p class="text-sm" style="color:var(--muted)">around <b style="color:var(--text)">${fmtMD(date)} ${date.getFullYear()}</b>${sooner&&sooner>0?` · <b class="text-emerald-400">${sooner} month${sooner===1?'':'s'} sooner</b>`:''}</p>
+        <div class="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs" style="background:var(--glass)">💸 Saving <b class="gtext">${fmt(totalMo)}/mo</b> by trimming ${opps.length} habit${opps.length===1?'':'s'}</div>
+      </div>`;
+    }
+  }
+  const summary=`${hero}<div class="mt-3 grid grid-cols-3 gap-2 sm:gap-3">${chip('💸',fmt(totalMo),'total / month')}${chip('📅',fmt(totalMo*12),'total / year')}${chip('🎯',opps.length,'opportunities')}</div>`;
   const cards=opps.map(o=>{
     const key='save_'+o.key,isApplied=applied.has(key);
     let impact='';
@@ -1303,7 +1329,7 @@ function savingsOpportunitiesHTML(){
         <p class="mt-0.5 text-sm">Arrives <b class="text-emerald-400">${o.daysEarlier} day${o.daysEarlier===1?'':'s'} earlier</b></p>
         ${o.newDate?`<p class="text-[11px]" style="color:var(--muted)">New date <b style="color:var(--text)">${fmtMD(o.newDate)}</b>${o.curDate?` · was <span style="text-decoration:line-through">${fmtMD(o.curDate)}</span>`:''}</p>`:''}
       </div>`;
-    } else if(o.coversIn!=null&&g){ impact=`<div class="mt-3 text-[11px]" style="color:var(--muted)">Covers <b style="color:var(--text)">${esc(g.name)}</b> in ~${o.coversIn} mo</div>`; }
+    } else if(o.coversIn!=null&&g&&o.coversIn<=120){ impact=`<div class="mt-3 text-[11px]" style="color:var(--muted)">Covers <b style="color:var(--text)">${esc(g.name)}</b> in ~${o.coversIn} mo</div>`; }
     return `<div class="flex flex-col rounded-2xl p-4" style="background:var(--glass);border:1px solid var(--border)">
       <div class="flex items-start gap-3">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style="background:var(--bg)">${o.emoji}</span>
@@ -1484,28 +1510,38 @@ function studentView(){
 }
 
 function socialView(){
-  const c=caps(ME.plan);const full=c.social==='full';
-  const completed=GOALS.filter(g=>g.completed&&!g.private); // private goals never appear on social
+  // Social is READ-ONLY: profile preview, followers/following, streak, level, badges.
+  // All editing & customization lives in Profile Settings.
   const nm=esc(`${(ME.first_name||'').trim()} ${(ME.last_name||'').trim()}`.trim()||ME.username||(ME.email?String(ME.email).split('@')[0]:'')||'Your name');
   const un=esc(ME.username||(ME.first_name||'you').toLowerCase());
-  const got=[...earnedBadges()];
-  const miniBadges=got.slice(-7).map(k=>{const b=BADGES.find(x=>x.key===k);return b?`<span title="${esc(b.name)} — ${esc(b.desc)}" class="text-lg badge-pop">${b.emoji}</span>`:'';}).join('');
+  const lvl=levelFromXp(ME.xp),level=lvl.level,tier=profileTier(level);
+  const curStreak=(streakState().count)||0;
+  const got=earnedBadges(),totalB=BADGES.length;
   const bannerCls=ME.plan==='premium'?'pf-banner-premium':ME.plan==='pro'?'pf-banner-pro':'';
-  const bn=bannerImg();
-  const banner=bannerCls?`<div class="relative h-24 ${bannerCls} overflow-hidden">${bn?`<img src="${esc(bn)}" class="absolute inset-0 h-full w-full object-cover" alt="">`:''}<span class="absolute right-4 top-3 z-10 text-xs font-semibold text-white/90">${ME.plan==='premium'?'✨ Premium':'PRO'}</span><div class="absolute right-3 bottom-3 z-10 flex items-center gap-2"><label class="cursor-pointer rounded-lg bg-black/35 px-2.5 py-1 text-[11px] text-white hover:bg-black/55">📷 ${bn?'Change picture':'Add picture'}<input id="bannerInput" type="file" accept="image/*" class="hidden"></label>${bn?`<button class="rounded-lg bg-black/35 px-2.5 py-1 text-[11px] text-white hover:bg-black/55" data-action="rmBanner">Remove</button>`:''}${ME.plan==='premium'?`<a href="#app/settings" class="rounded-lg bg-black/25 px-2.5 py-1 text-[11px] text-white hover:bg-black/40">🎨 Customize</a>`:''}</div></div>`:'';
-  const stats=`<div class="mt-4 grid grid-cols-3 gap-3 text-center">${[['Followers',0],['Following',0],['Shared',completed.length]].map(x=>`<div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${x[1]}</p><p class="text-[11px]" style="color:var(--muted)">${x[0]}</p></div>`).join('')}</div>`;
-  const me = bannerCls
-   ? `<div class="glass-strong rounded-2xl overflow-hidden">${banner}<div class="px-6 pb-6"><div class="-mt-12 flex items-end gap-4"><span class="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-full" style="box-shadow:0 0 0 4px var(--bg)">${avatarHTML(80)}</span><div class="min-w-0" style="transform:translateY(16px)"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${miniBadges?`<div class="mt-3 flex items-center gap-2 flex-wrap">${miniBadges}<a href="#app/dashboard" class="text-[11px] ml-1" style="color:var(--muted)">see all →</a></div>`:''}${stats}</div></div>`
-   : `<div class="glass-strong rounded-2xl p-6"><div class="flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="text-xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div><p class="text-sm" style="color:var(--muted)">@${un}</p></div></div>${stats}</div>`;
-  const find=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">Find people</h3><div class="flex gap-2"><input class="input" placeholder="Search by username…" id="findUser"><button class="btn btn-primary shrink-0" data-action="findUser">Search</button></div><p class="mt-3 text-sm text-center py-6" style="color:var(--muted)">No profiles to show yet. Real people appear here once accounts go live — no placeholder users.</p></div>`;
-  const shared = completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Your achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p><button class="btn !bg-white/20 !text-white mt-3 !py-1.5 text-xs" data-action="shareCard">📤 Share</button></div>`).join('')}</div></div>`:`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">🏆 Achievement cards</h3><p class="text-sm text-center py-6" style="color:var(--muted)">Complete a goal to unlock a shareable achievement card.</p></div>`;
-  if(!full){
-    return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">Follow people and share your wins. Upgrade to Premium for the full feed, reactions and goal memories.</p></div>${me}${find}${shared}
-    <a href="#app/plans" class="block glass rounded-2xl p-5 text-center text-sm" style="border:1px solid var(--border)">✨ <b>Premium</b> unlocks the social feed, reactions, profile banners and goal memories. <span class="text-accent-purple">See plans →</span></a></div>`;
-  }
-  const feed=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-2">📰 Feed</h3><p class="text-sm text-center py-10" style="color:var(--muted)">Your feed is empty. When people you follow share goals, their updates show here — with reactions. No fake posts.</p></div>`;
-  const memories=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🧠 Goal memories <span class="text-[10px] align-middle rounded-full px-2 py-0.5" style="background:var(--glass);color:var(--muted)">progress history</span></h3>${GOALS.length?`<div class="space-y-3">${GOALS.slice(0,6).map(g=>{const p=pct(g.saved_amount,g.target_amount);return `<div class="flex items-center gap-3"><span class="text-xl">${g.emoji||'🎯'}</span><div class="flex-1"><div class="flex justify-between text-sm"><span>${esc(g.name)}</span><span style="color:var(--muted)">${p}%</span></div><div class="h-2 rounded-full mt-1" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>`;}).join('')}</div>`:`<p class="text-sm text-center py-6" style="color:var(--muted)">Your progress history builds here as you work toward goals.</p>`}</div>`;
-  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">Your network, feed, achievement cards and goal memories.</p></div>${me}<div class="grid gap-6 lg:grid-cols-2">${feed}${find}</div>${shared}${memories}</div>`;
+  const M='style="color:var(--muted)"';
+
+  const preview=`<div class="glass-strong rounded-2xl overflow-hidden">
+    ${bannerCls?`<div class="relative h-24 ${bannerCls}"></div>`:'<div class="h-4"></div>'}
+    <div class="px-6 pb-6"><div class="-mt-12 flex items-end gap-4 flex-wrap">${framedAvatar(88,level)}
+      <div class="min-w-0 pb-1" style="transform:translateY(10px)"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold truncate">${nm}</h2>${planBadge(ME.plan)}</div>
+        <p class="mt-1 text-sm" ${M}>@${un}</p>
+        <div class="mt-2"><span class="pf-title-chip">${tierEmoji(tier)} ${esc(tier.title)}</span></div></div></div>
+      ${ME.bio?`<p class="mt-3 text-sm" style="color:var(--text)">${esc(ME.bio)}</p>`:''}</div></div>`;
+
+  const stat=(v,l,e)=>`<div class="glass rounded-2xl p-4 text-center"><p class="text-2xl font-extrabold">${e?e+' ':''}${v}</p><p class="text-[11px] mt-0.5" ${M}>${l}</p></div>`;
+  const stats=`<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    ${stat(0,'Followers','👥')}
+    ${stat(0,'Following','➕')}
+    ${stat(curStreak,curStreak===1?'day streak':'day streak','🔥')}
+    ${stat('Lvl '+level,(ME.xp||0)+' XP','⭐')}
+  </div>`;
+
+  const badges=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Badges</h3><span class="text-xs" ${M}>${got.size} / ${totalB} earned</span></div>
+    <div class="grid grid-cols-4 gap-4 sm:grid-cols-6">${BADGES.map(b=>{const on=got.has(b.key);return `<div class="flex flex-col items-center text-center" title="${esc(b.desc)}"><span class="flex h-13 w-13 items-center justify-center rounded-2xl text-2xl ${on?'':'grayscale'}" style="height:52px;width:52px;background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':'opacity:.4'}">${b.emoji}</span><p class="mt-1.5 text-[10px] font-medium ${on?'':'opacity-50'}">${b.name}</p></div>`;}).join('')}</div></div>`;
+
+  return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Social</h1><p class="mt-1 text-sm text-slate-400">How your profile looks to other Goalify members. To edit anything, go to <a href="#app/settings" class="text-accent-purple hover:underline">Profile Settings</a>.</p></div>
+    ${preview}${stats}${badges}
+    <p class="text-xs text-slate-500">Followers, following and discovery activate once accounts go live — no placeholder users in demo.</p></div>`;
 }
 
 // ── compact progression strip used on the dashboard ──
@@ -1542,8 +1578,9 @@ function profileView(){
   const hero=`<div class="glass-strong rounded-2xl overflow-hidden">${bannerCls?`<div class="relative h-28 ${bannerCls}"></div>`:'<div class="h-5"></div>'}
     <div class="px-6 pb-6"><div class="-mt-14 mb-2 flex items-end gap-4 flex-wrap">${framedAvatar(96,level)}
       <div class="pb-1"><div class="flex items-center gap-2 flex-wrap"><h2 class="text-2xl font-bold">${nm}</h2>${planBadge(ME.plan)}${ME.prestige?`<span class="pf-title-chip">${prestigeStars(ME.prestige)} Prestige ${ME.prestige}</span>`:''}</div>
-        <p class="text-sm" ${M}>@${un}</p>
+        <p class="mt-1.5 text-sm" ${M}>@${un}</p>
         <div class="mt-2 flex items-center gap-2 flex-wrap"><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span><span class="text-xs" ${M}>Level ${level} · ${ME.xp||0} XP</span></div></div></div>
+      ${ME.bio?`<p class="mt-3 text-sm" style="color:var(--text)">${esc(ME.bio)}</p>`:''}
       <div class="mt-3"><div class="flex justify-between text-[11px] mb-1" ${M}><span>Level ${level}</span><span>${nxt?`${nxt.lvl-level} level${nxt.lvl-level>1?'s':''} to ${esc(nxt.title)}`:'Max tier reached 👑'}</span></div>
         <div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${lvl.inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>
     </div></div>`;
@@ -1696,6 +1733,57 @@ function plansView(){
   ${DEMO_MODE?`<p class="text-xs text-slate-500">Demo: selecting a plan previews how that tier looks — no payment is taken. Real billing activates when the backend goes live.</p>`:''}
   </div>`;
 }
+// -------------------- Premium gift tickets --------------------
+// Premium members get 3 gift tickets each month. Each gifts another user
+// 1 week of Premium. Tickets reset at the start of every month.
+const GIFT_MONTHLY=3;
+function giftMonthKey(){return new Date().toISOString().slice(0,7);}
+function giftState(){
+  let s=null; try{s=JSON.parse(localStorage.getItem('goalify_gifts')||'null');}catch(e){s=null;}
+  const mk=giftMonthKey();
+  if(!s||s.month!==mk){s={month:mk,used:0,sent:[]};localStorage.setItem('goalify_gifts',JSON.stringify(s));}
+  if(!Array.isArray(s.sent))s.sent=[];
+  return s;
+}
+function giftRemaining(){return Math.max(0,GIFT_MONTHLY-(giftState().used||0));}
+function recordGift(recipient){const s=giftState();if((s.used||0)>=GIFT_MONTHLY)return false;s.used=(s.used||0)+1;s.sent.unshift({to:recipient,at:new Date().toISOString()});localStorage.setItem('goalify_gifts',JSON.stringify(s));return true;}
+function giftCanUse(){return ME&&(ME.plan==='premium'||ME.plan==='business');}
+function giftSectionHTML(){
+  const rem=giftRemaining(),sent=giftState().sent;
+  const dots=Array.from({length:GIFT_MONTHLY},(_,i)=>`<span class="flex h-9 w-9 items-center justify-center rounded-xl text-lg" style="${i<rem?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted);opacity:.5'}">🎟️</span>`).join('');
+  if(!giftCanUse()){
+    return `<div class="glass-strong rounded-2xl p-6"><div class="flex items-start gap-3"><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">🎁</span><div class="flex-1"><h3 class="font-semibold">Gift Premium <span class="ml-1 align-middle text-[10px] rounded-full px-2 py-0.5" style="background:var(--glass);color:var(--muted)">Premium</span></h3><p class="mt-1 text-sm" style="color:var(--muted)">Premium members get <b style="color:var(--text)">3 gift tickets every month</b> — each gives a friend <b style="color:var(--text)">1 week of Premium</b>, free. Like Snapchat+ gifting.</p><a href="#app/plans" class="btn btn-primary mt-4 text-sm">Upgrade to Premium</a></div></div></div>`;
+  }
+  return `<div class="glass-strong rounded-2xl p-6">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="flex items-start gap-3"><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">🎁</span>
+        <div><h3 class="font-semibold">Gift Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Each ticket gives a friend <b style="color:var(--text)">1 week of Premium</b>. Tickets reset monthly.</p></div></div>
+      <div class="text-right"><p class="text-3xl font-extrabold gtext leading-none">${rem}</p><p class="text-[11px]" style="color:var(--muted)">tickets left</p></div>
+    </div>
+    <div class="mt-4 flex items-center gap-2">${dots}</div>
+    <button class="btn btn-primary mt-4 w-full text-sm" data-action="openGift" ${rem<=0?'disabled':''}>${rem>0?'🎟️ Gift a week of Premium':'No tickets left — resets next month'}</button>
+    ${sent.length?`<div class="mt-4"><p class="label">Gifted this month</p><div class="space-y-1.5">${sent.map(x=>`<div class="flex items-center justify-between rounded-xl px-3 py-2 text-sm" style="background:var(--glass)"><span>🎉 ${esc(x.to)}</span><span class="text-[11px]" style="color:var(--muted)">${new Date(x.at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>`).join('')}</div></div>`:''}
+  </div>`;
+}
+function openGiftModal(){
+  if(!giftCanUse()){toast('Gifting is a Premium feature','err');return;}
+  if(giftRemaining()<=0){toast('No gift tickets left this month','err');return;}
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gfBack"><div class="w-full max-w-sm glass-strong rounded-2xl p-6 anim"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎁 Gift Premium</h2><button id="gfX" style="color:var(--muted)">✕</button></div>
+    <p class="mt-1 text-sm" style="color:var(--muted)">Send a friend <b style="color:var(--text)">1 week of Premium</b>. You have <b class="gtext">${giftRemaining()}</b> ticket${giftRemaining()===1?'':'s'} left this month.</p>
+    <div class="mt-4 space-y-3"><div><label class="label">Friend's username or email</label><input id="gfTo" class="input" placeholder="@username or email"></div>
+    <p id="gfErr" class="text-sm text-red-300"></p>
+    <button id="gfSend" class="btn btn-primary w-full">Send gift 🎟️</button></div></div></div>`;
+  const close=()=>m.innerHTML='';
+  $('#gfBack').addEventListener('click',e=>{if(e.target.id==='gfBack')close();});
+  $('#gfX').addEventListener('click',close);
+  $('#gfSend').addEventListener('click',()=>{
+    const to=($('#gfTo').value||'').trim();
+    if(!to){$('#gfErr').textContent='Enter a username or email.';return;}
+    if(!recordGift(to)){$('#gfErr').textContent='No tickets left this month.';return;}
+    close();toast('🎉 Premium week gifted to '+to+'!');render();
+  });
+}
 // -------------------- Rewards / referrals --------------------
 function referralCode(){let c=localStorage.getItem('goalify_refcode');if(!c){c=(ME?.first_name||'GOAL').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)||'GOAL';c+=Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('goalify_refcode',c);}return c;}
 function rewardsView(){
@@ -1707,6 +1795,7 @@ function rewardsView(){
   const earned=REWARD_TIERS.filter(t=>invited>=t[0]);
   const tierRows=REWARD_TIERS.map(t=>{const done=invited>=t[0];return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${done?'box-shadow:0 0 0 1px var(--accent2)':''}"><span class="text-xl">${done?'✅':'🎁'}</span><div class="flex-1"><p class="text-sm font-medium">${t[0]} friends</p><p class="text-[11px]" style="color:var(--muted)">${t[1]}</p></div>${done?'<span class="text-xs text-emerald-400 font-semibold">Earned</span>':`<span class="text-xs" style="color:var(--muted)">${invited}/${t[0]}</span>`}</div>`;}).join('');
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">🎁 Rewards</h1><p class="mt-1 text-sm text-slate-400">Invite friends to Goalify and earn free Pro & Premium. Real sign-ups only — verified by email.</p></div>
+  ${giftSectionHTML()}
   <div class="glass-strong rounded-2xl p-6">
     <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="text-[11px] uppercase tracking-widest" style="color:var(--muted)">Progress to next reward</p><h2 class="mt-1 text-2xl font-bold">${invited} / ${nextTier[0]} friends invited</h2><p class="text-sm gtext font-semibold">Reward: ${nextTier[1]}</p></div><div class="text-right"><p class="text-3xl font-extrabold gtext">${prog}%</p></div></div>
     <div class="mt-4 h-3 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div>
@@ -1747,7 +1836,7 @@ function settingsView(){
   ${appearance}
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Profile</h2>
     <div class="mt-4 flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full">${avatarHTML(64)}</span><div><label class="btn btn-ghost text-sm cursor-pointer">📷 Upload photo<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>${p.avatar_url?'<button class="btn btn-ghost text-sm ml-2" data-action="rmAvatar">Remove</button>':''}</div></div>
-    <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
+    <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><label class="label">Bio</label><textarea name="bio" rows="2" maxlength="160" class="input" placeholder="Tell people a bit about your goals…">${esc(p.bio||'')}</textarea><p class="mt-1 text-[11px]" style="color:var(--muted)">Shown on your public profile · max 160 characters</p></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🪪 Public profile</h2><p class="mt-1 text-sm text-slate-400">Control who can see your profile, level, achievements and leaderboard rank.</p>
     <div class="mt-4"><p class="label">Profile visibility</p><div class="flex gap-2">${[['public','🌍 Public'],['private','🔒 Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="rounded-xl px-4 py-2.5 text-sm ${vis===o[0]?'text-white':''}" style="${vis===o[0]?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted)'}">${o[1]}</button>`).join('')}</div>
       <p class="mt-2 text-xs" style="color:var(--muted)">${vis==='public'?'Public: other users can view your profile, find you in search and see you on leaderboards.':'Private: hidden from all users, searches and leaderboards. Only personal statistics remain visible to you.'}</p></div>
@@ -2381,6 +2470,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='simPreset'){simPreset(a.getAttribute('data-preset'));}
     else if(act==='scPreset'){const k=a.getAttribute('data-key');SC_PRESET=k;const pr=SC_PRESETS.find(p=>p.key===k)||SC_PRESETS[0];const nameEl=document.getElementById('scName');const priceEl=document.getElementById('scPrice');const timesEl=document.getElementById('scTimes');if(nameEl)nameEl.value=pr.label;if(priceEl)priceEl.value=Math.round((priceFor(pr.key)||2)*100)/100;if(timesEl)timesEl.value=Math.max(1,freqFor(pr.key)||1);document.querySelectorAll('[data-action="scPreset"]').forEach(b=>{const sel=b.getAttribute('data-key')===k;b.style.background=sel?'linear-gradient(135deg,var(--accent1),var(--accent2))':'var(--glass)';b.style.color=sel?'#fff':'var(--muted)';});updateSpendCalc();}
     else if(act==='scPeriod'){SC_PERIOD=a.getAttribute('data-period');updateSpendCalc();}
+    else if(act==='openGift'){openGiftModal();}
     else if(act==='bizAdd'){openBizForm(a.getAttribute('data-coll'));}
     else if(act==='bizEdit'){openBizForm(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
     else if(act==='bizDel'){bizDelete(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
@@ -2476,11 +2566,15 @@ document.addEventListener('submit',async(e)=>{
       if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');
       const {score}=pwStrength(fd.get('password'));
       if(score<3)return toast('Password too weak — needs 8+ chars, a number, and a letter','err');
-      if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name')||'',last_name:fd.get('last_name')||'',email:fd.get('email')||DEMO_ME.email,onboarded:false});toast('Welcome to Goalify! 🎉');location.hash='#quiz';return;}
+      const bd=fd.get('birthdate')||'',ctry=fd.get('country')||'',lng=fd.get('language')||'en';
+      if(lng){localStorage.setItem('goalify_lang',lng);}
+      // seed onboarding state so the quiz can skip language & country (already collected here)
+      if(typeof QA!=='undefined'&&QA){QA.lang=lng;QA.country=ctry||QA.country;}
+      if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name')||'',last_name:fd.get('last_name')||'',email:fd.get('email')||DEMO_ME.email,birthdate:bd,country:ctry||DEMO_ME.country,language:lng,onboarded:false});toast('Welcome to Goalify! 🎉');location.hash='#quiz';return;}
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
       const email=fd.get('email');
       const redirectTo=location.protocol==='file:'?undefined:location.origin+(location.pathname==='/'?'':location.pathname);
-      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name')}}});
+      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),birthdate:bd,country:ctry,language:lng}}});
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
       if(data.session){location.hash='#quiz';}
@@ -2499,7 +2593,7 @@ document.addEventListener('submit',async(e)=>{
     else if(f.id==='forgotForm'){const fd=new FormData(f);if(DEMO_MODE){toast('Reset link sent — check your email (demo).');location.hash='#login';return;}const {error}=await sb.auth.resetPasswordForEmail(fd.get('email'),{redirectTo:location.origin+location.pathname+'#reset'});if(error)return toast(error.message,'err');toast('Reset link sent — check your email.');}
     else if(f.id==='resetForm'){const fd=new FormData(f);if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');location.hash='#app/dashboard';}
     else if(f.id==='expForm'){const fd=new FormData(f);if(DEMO_MODE){const exp={id:'e'+Date.now(),user_id:'demo',amount:+fd.get('amount'),category:fd.get('category'),merchant:fd.get('merchant'),spent_at:fd.get('date')||todayISO()};DEMO_EXPENSES.unshift(exp);toast('Expense added (demo)');render();}else{await sb.from('expenses').insert({user_id:SESSION.user.id,amount:+fd.get('amount'),category:fd.get('category'),merchant:fd.get('merchant'),spent_at:fd.get('date')||todayISO()});toast('Expense added');render();}}
-    else if(f.id==='profForm'){const fd=new FormData(f);if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')});toast('Profile saved (demo)');render();}else{await sb.from('profiles').update({first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')}).eq('id',SESSION.user.id);await loadProfile();toast('Profile saved');render();}}
+    else if(f.id==='profForm'){const fd=new FormData(f);if(DEMO_MODE){Object.assign(DEMO_ME,{first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),bio:fd.get('bio'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')});toast('Profile saved (demo)');render();}else{await sb.from('profiles').update({first_name:fd.get('first_name'),last_name:fd.get('last_name'),username:fd.get('username'),country:fd.get('country'),bio:fd.get('bio'),monthly_income:+fd.get('monthly_income')||0,currency:fd.get('currency')}).eq('id',SESSION.user.id);await loadProfile();toast('Profile saved');render();}}
     else if(f.id==='pwForm'){if(DEMO_MODE){toast('Password change is not available in demo mode','err');return;}const fd=new FormData(f);if(!fd.get('password'))return;if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');f.reset();}
     else if(f.id==='chatForm'){const inp=$('#chatInput');const v=inp.value.trim();if(v){inp.value='';sendChat(v);}}
     else if(f.id==='svForm'){
@@ -2571,25 +2665,57 @@ function openProofModal(key){
 function openGoalModal(){
   const EMO=['🎯','📱','💻','🚗','✈️','🏠','🛡️','🎓','💍','🎮','🏝️','💰'];let emo='🎯',file=null;
   const m=document.getElementById('modal');
-  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div class="grid grid-cols-2 gap-3"><div><label class="label">Target (€)</label><input id="gmTarget" type="number" class="input" placeholder="1200"></div><div><label class="label">Monthly (€)</label><input id="gmMonthly" type="number" class="input" placeholder="150"></div></div><div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><label class="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer" style="background:var(--glass)"><input id="gmPrivate" type="checkbox" class="h-4 w-4"><span><span class="text-sm font-medium">🔒 Make this goal private</span><span class="block text-xs" style="color:var(--muted)">Private goals stay off your social profile and feed.</span></span></label><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div><label class="label">Target amount (€)</label><input id="gmTarget" type="number" inputmode="numeric" class="input" placeholder="1200"></div>
+    <div><span class="label">Target date</span>
+      <div id="gmQuick" class="grid grid-cols-3 gap-2 sm:grid-cols-5">${[['week','Next week'],['month','Next month'],['3m','3 months'],['6m','6 months'],['custom','Custom']].map((o,i)=>`<button type="button" data-q="${o[0]}" class="gm-qbtn rounded-xl px-2 py-2.5 text-xs font-medium ${i===1?'gm-qsel':''}" style="${i===1?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted)'}">${o[1]}</button>`).join('')}</div>
+      <input id="gmDate" type="date" class="input mt-2 hidden">
+      <p id="gmDateHint" class="mt-2 text-xs" style="color:var(--muted)"></p>
+    </div>
+    <div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><label class="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer" style="background:var(--glass)"><input id="gmPrivate" type="checkbox" class="h-4 w-4"><span><span class="text-sm font-medium">🔒 Make this goal private</span><span class="block text-xs" style="color:var(--muted)">Private goals stay off your social profile and feed.</span></span></label><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
   const close=()=>m.innerHTML='';
   $('#gmBack').addEventListener('click',e=>{if(e.target.id==='gmBack')close();});
   $('#gmX').addEventListener('click',close);
   $('#gmImg').addEventListener('change',e=>file=e.target.files[0]);
   $('#gmEmo').addEventListener('click',e=>{const b=e.target.closest('[data-e]');if(!b)return;emo=b.getAttribute('data-e');m.querySelectorAll('#gmEmo button').forEach(x=>x.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg bg-white/5');b.className='flex h-9 w-9 items-center justify-center rounded-lg text-lg ring-1 ring-accent-purple bg-accent-purple/20';});
+  // ── target date picker ──
+  let targetDate=null; // Date object
+  const addMonths=(n)=>{const d=new Date();d.setMonth(d.getMonth()+n);return d;};
+  const addDays=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d;};
+  const QMAP={week:()=>addDays(7),month:()=>addMonths(1),'3m':()=>addMonths(3),'6m':()=>addMonths(6)};
+  const refreshHint=()=>{
+    const hint=$('#gmDateHint'),tgt=+$('#gmTarget').value||0;
+    if(!targetDate){hint.textContent='';return;}
+    const now=new Date(),months=Math.max(1,Math.round((targetDate-now)/(1000*60*60*24*30.44)));
+    const monthly=tgt>0?Math.ceil(tgt/months):0;
+    hint.innerHTML=`📅 ${targetDate.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})} · ${months} month${months===1?'':'s'} away${monthly>0?` · about <b style="color:var(--text)">${fmt(monthly)}/mo</b>`:''}`;
+  };
+  $('#gmQuick').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;
+    const q=b.getAttribute('data-q');
+    m.querySelectorAll('.gm-qbtn').forEach(x=>{x.classList.remove('gm-qsel');x.style.background='var(--glass)';x.style.color='var(--muted)';});
+    b.classList.add('gm-qsel');b.style.background='linear-gradient(135deg,var(--accent1),var(--accent2))';b.style.color='#fff';
+    const dateInput=$('#gmDate');
+    if(q==='custom'){dateInput.classList.remove('hidden');dateInput.focus();targetDate=dateInput.value?new Date(dateInput.value+'T12:00:00'):null;}
+    else{dateInput.classList.add('hidden');targetDate=QMAP[q]();}
+    refreshHint();
+  });
+  $('#gmDate').addEventListener('change',e=>{targetDate=e.target.value?new Date(e.target.value+'T12:00:00'):null;refreshHint();});
+  $('#gmTarget').addEventListener('input',refreshHint);
+  targetDate=addMonths(1); refreshHint(); // default: Next month (matches preselected chip)
   $('#gmSave').addEventListener('click',async()=>{
-    const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,monthly=+$('#gmMonthly').value||0,priv=!!$('#gmPrivate')?.checked;
+    const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,priv=!!$('#gmPrivate')?.checked;
+    let monthly=0,targetISO=null;
+    if(targetDate){const now=new Date(),months=Math.max(1,Math.round((targetDate-now)/(1000*60*60*24*30.44)));monthly=target>0?Math.ceil(target/months):0;targetISO=targetDate.toISOString().slice(0,10);}
     const limit=PLANS[ME.plan].goalLimit,total=GOALS.length;
     if(!name||!target){$('#gmErr').textContent='Enter a name and target.';return;}
     if(limit!==-1&&total>=limit){$('#gmErr').innerHTML='Free plan allows '+limit+' goals (archived included). <a href="#app/plans" class="text-accent-purple underline">Upgrade</a> for unlimited.';return;}
     $('#gmSave').disabled=true;$('#gmSave').textContent='Saving…';
     let imgUrl=null;
     if(DEMO_MODE){
-      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,completed:false,status:'active',private:priv,created_at:new Date().toISOString(),image_url:null,missions:[]};
+      const newGoal={id:'g'+Date.now(),user_id:'demo',name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:targetISO,completed:false,status:'active',private:priv,created_at:new Date().toISOString(),image_url:null,missions:[]};
       DEMO_GOALS.unshift(newGoal);close();toast(priv?'Private goal created 🔒':'Goal created');render();return;
     }
     if(file){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('goal-images').upload(path,file);if(!upErr){imgUrl=sb.storage.from('goal-images').getPublicUrl(path).data.publicUrl;}}
-    const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,image_url:imgUrl,private:priv});
+    const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:targetISO,image_url:imgUrl,private:priv});
     if(error){$('#gmErr').textContent=error.message;$('#gmSave').disabled=false;$('#gmSave').textContent='Create goal';return;}
     close();toast('Goal created');render();
   });
