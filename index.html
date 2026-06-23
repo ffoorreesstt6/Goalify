@@ -245,12 +245,45 @@
     .lp-side{display:none}
     @media(min-width:1024px){.lp-side{display:block}}
     @media (prefers-reduced-motion:reduce){.pf-frame::before,.pf-frame::after,.pf-crown{animation:none!important}.ob-card,.ob-chip,.ob-row{transition:none}}
+    /* ============================================================
+       MOBILE-FIRST DASHBOARD DENSITY
+       Compact header, responsive numbers (clamp), tighter spacing
+       so the key info (welcome + 4 stats + goals) lands above the
+       fold on a phone. Banking-app density: Revolut / Monzo / Wise.
+       ============================================================ */
+    /* compact mobile top bar (target ≤60px) */
+    .mhead{padding:.5rem .9rem}
+    .mhead a>img{height:22px!important}
+    .mhead a>span{font-size:1.05rem!important}
+    .mhead .input{padding:.32rem .55rem!important;font-size:.72rem!important;border-radius:.6rem;line-height:1}
+    /* stat cards — label top, icon top-right, big responsive number below */
+    .stat-card{padding:1.25rem}
+    .stat-lbl{font-size:.68rem}
+    .stat-num{font-size:clamp(1.4rem,2.4vw,2rem);line-height:1.08;margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dash-newgoal{height:42px;padding:0 1.05rem;font-size:.85rem}
+    @media(max-width:640px){
+      .app-main{padding-top:.85rem!important;padding-bottom:1.6rem!important}
+      .dash-stack>*+*{margin-top:.85rem!important}
+      .dash-h1{font-size:1.18rem!important;line-height:1.2}
+      .dash-sub{font-size:.72rem!important;margin-top:.05rem!important}
+      .dash-newgoal{height:40px;padding:0 .82rem;font-size:.78rem;border-radius:.65rem}
+      .stat-card{padding:.78rem .85rem!important;border-radius:1rem}
+      .stat-ico{font-size:1.05rem!important}
+      .stat-lbl{font-size:.6rem!important;letter-spacing:.03em}
+      .stat-num{font-size:clamp(1.15rem,6.6vw,1.7rem)!important;margin-top:.1rem}
+      .stat-grid{gap:.6rem!important}
+      .goals-ov{padding:.95rem!important}
+      .goals-ov-head{margin-bottom:.7rem!important}
+      .goals-ov-grid{gap:.6rem!important}
+      .goal-mini{padding:.7rem!important;border-radius:1rem}
+      .sec-pad{padding:1rem!important}
+    }
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=49"></script>
+  <script type="module" src="./app.js?v=50"></script>
 </body>
 </html>
