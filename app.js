@@ -29,11 +29,11 @@ const DEMO_ME = {
   id:'demo', first_name:'Forest', last_name:'', email:'demo@goalify.app',
   plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
   monthly_income:3500, monthly_savings:700, xp:0, currency:'EUR',
-  budget:{groceries:420,restaurants:250,shopping:180,entertainment:120,subscriptions:60,transportation:90},
+  budget:{coffee:61,delivery:78,fastfood:52,restaurants:70,taxi:26,nightlife:65,gaming:26,shopping:109,beauty:17,clothing:39,groceries:435,fuel:252,subscriptions:60},
   notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null,
   profile_visibility:'public', show_active_goals:true, prestige:0,
-  country:'Kosovo', spend_freq:{}, created_at:'2025-08-01T00:00:00Z'
+  country:'Kosovo', spend_freq:{coffee:14,delivery:3,fastfood:3,restaurants:2,taxi:2,nightlife:1,gaming:1,shopping:1,beauty:1,clothing:1,groceries:5,fuel:1}, created_at:'2025-08-01T00:00:00Z'
 };
 const DEMO_GOALS = [
   {id:'g1',user_id:'demo',name:'Emergency Fund',emoji:'🛡️',image_url:null,target_amount:5000,saved_amount:2100,monthly_contribution:300,completed:false,status:'active',created_at:'2024-01-01',missions:[
@@ -803,21 +803,29 @@ const PRICE_DB={
   nightlife:{Kosovo:15,Albania:15,'North Macedonia':16,Serbia:20,Greece:30,Spain:35,Italy:38,France:45,Germany:42,Netherlands:45,'United Kingdom':50,Ireland:55,'United States':58,Switzerland:75,Other:38},
   gaming:{Kosovo:12,Albania:12,'North Macedonia':12,Serbia:13,Greece:15,Spain:15,Italy:15,France:17,Germany:17,Netherlands:17,'United Kingdom':17,Ireland:18,'United States':18,Switzerland:20,Other:15},
   shopping:{Kosovo:25,Albania:25,'North Macedonia':28,Serbia:30,Greece:40,Spain:45,Italy:50,France:55,Germany:55,Netherlands:55,'United Kingdom':55,Ireland:60,'United States':62,Switzerland:85,Other:45},
+  beauty:{Kosovo:8,Albania:8,'North Macedonia':9,Serbia:10,Greece:18,Spain:18,Italy:20,France:25,Germany:22,Netherlands:22,'United Kingdom':20,Ireland:22,'United States':28,Switzerland:35,Other:18},
+  clothing:{Kosovo:18,Albania:18,'North Macedonia':20,Serbia:22,Greece:30,Spain:32,Italy:38,France:42,Germany:40,Netherlands:40,'United Kingdom':38,Ireland:40,'United States':42,Switzerland:58,Other:32},
+  pets:{Kosovo:8,Albania:8,'North Macedonia':10,Serbia:10,Greece:18,Spain:20,Italy:22,France:25,Germany:25,Netherlands:28,'United Kingdom':25,Ireland:28,'United States':30,Switzerland:38,Other:18},
+  education:{Kosovo:5,Albania:5,'North Macedonia':5,Serbia:6,Greece:10,Spain:10,Italy:12,France:12,Germany:14,Netherlands:14,'United Kingdom':12,Ireland:14,'United States':18,Switzerland:16,Other:10},
   groceries:{Kosovo:20,Albania:20,'North Macedonia':22,Serbia:25,Greece:35,Spain:38,Italy:40,France:45,Germany:42,Netherlands:45,'United Kingdom':45,Ireland:50,'United States':58,Switzerland:72,Other:40},
   fuel:{Kosovo:58,Albania:68,'North Macedonia':63,Serbia:68,Greece:85,Spain:72,Italy:85,France:83,Germany:81,Netherlands:90,'United Kingdom':74,Ireland:77,'United States':42,Switzerland:82,Other:72},
 };
 const FREQ_CATS=[
-  {key:'cigarettes',emoji:'🚬',label:'Cigarettes',q:'How many packs per week?',per:'wk',disc:true},
-  {key:'coffee',emoji:'☕',label:'Coffee',q:'How many coffees per week?',per:'wk',disc:true},
-  {key:'delivery',emoji:'🍕',label:'Food Delivery',q:'How many orders per week?',per:'wk',disc:true},
-  {key:'fastfood',emoji:'🍔',label:'Fast Food',q:'How many meals per week?',per:'wk',disc:true},
-  {key:'restaurants',emoji:'🍽️',label:'Restaurants',q:'Meals out per week?',per:'wk',disc:true},
-  {key:'taxi',emoji:'🚕',label:'Taxi / Rideshare',q:'How many rides per week?',per:'wk',disc:true},
-  {key:'nightlife',emoji:'🍻',label:'Nightlife',q:'Nights out per month?',per:'mo',disc:true},
-  {key:'gaming',emoji:'🎮',label:'Gaming',q:'Purchases per month?',per:'mo',disc:true},
-  {key:'shopping',emoji:'🛍️',label:'Shopping',q:'Shopping trips per month?',per:'mo',disc:true},
-  {key:'groceries',emoji:'🛒',label:'Groceries',q:'Grocery runs per week?',per:'wk',disc:false},
-  {key:'fuel',emoji:'⛽',label:'Fuel',q:'Tank fills per week?',per:'wk',disc:false},
+  {key:'cigarettes',emoji:'🚬',label:'Cigarettes',q:'How many packs do you buy in a typical week?',per:'wk',disc:true},
+  {key:'coffee',emoji:'☕',label:'Coffee',q:'How many coffees do you buy in a typical week?',per:'wk',disc:true},
+  {key:'delivery',emoji:'🍕',label:'Food Delivery',q:'How many delivery orders do you place per week?',per:'wk',disc:true},
+  {key:'fastfood',emoji:'🍔',label:'Fast Food',q:'How many fast food meals do you eat per week?',per:'wk',disc:true},
+  {key:'restaurants',emoji:'🍽️',label:'Restaurants',q:'How many meals out do you have per week?',per:'wk',disc:true},
+  {key:'taxi',emoji:'🚕',label:'Taxi / Rideshare',q:'How many rides do you take per week?',per:'wk',disc:true},
+  {key:'nightlife',emoji:'🍻',label:'Nightlife',q:'How many nights out do you have per week?',per:'wk',disc:true},
+  {key:'gaming',emoji:'🎮',label:'Gaming',q:'How many gaming purchases do you make per week?',per:'wk',disc:true},
+  {key:'shopping',emoji:'🛍️',label:'Shopping',q:'How many shopping trips do you make per week?',per:'wk',disc:true},
+  {key:'beauty',emoji:'💄',label:'Beauty & Grooming',q:'How many beauty or grooming purchases per week?',per:'wk',disc:true},
+  {key:'clothing',emoji:'👕',label:'Clothing',q:'How many clothing purchases do you make per week?',per:'wk',disc:true},
+  {key:'pets',emoji:'🐶',label:'Pets',q:'How many pet-related purchases do you make per week?',per:'wk',disc:true},
+  {key:'education',emoji:'📚',label:'Education',q:'How many education purchases do you make per week?',per:'wk',disc:false},
+  {key:'groceries',emoji:'🛒',label:'Groceries',q:'How many grocery runs do you do per week?',per:'wk',disc:false},
+  {key:'fuel',emoji:'⛽',label:'Fuel',q:'How many times do you fill up with fuel per week?',per:'wk',disc:false},
 ];
 const QUIZ_SUBS=[['Netflix',13],['Spotify',11],['YouTube Premium',12],['Disney+',9],['HBO / Max',10],['Gym',30],['iCloud',3],['Amazon Prime',5]];
 const FCAT=(k)=>FREQ_CATS.find(c=>c.key===k);
@@ -825,7 +833,8 @@ const FCAT=(k)=>FREQ_CATS.find(c=>c.key===k);
 function unitPrice(key,country){const t=PRICE_DB[key]||{};return (country&&t[country]!=null)?t[country]:(t.Other!=null?t.Other:0);}
 // during the quiz we price by the answer (QA.country); elsewhere by the saved profile (ME.country)
 function priceFor(key){return unitPrice(key,(typeof QA!=='undefined'&&QA&&QA.country)||(typeof ME!=='undefined'&&ME&&ME.country)||'Other');}
-function catMonthly(c,freq){return Math.round((+freq||0)*priceFor(c.key)*(c.per==='wk'?WK:1));}
+// freq = weekly count; all categories are per-week so always multiply by WK
+function catMonthly(c,freq){return Math.round((+freq||0)*priceFor(c.key)*WK);}
 const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
 let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
@@ -848,7 +857,7 @@ function spendInsight(idx){
   let best=null,bestMo=-1;
   slice.forEach(c=>{const mo=catMonthly(c,QA.freq[c.key]||0);if(mo>bestMo){bestMo=mo;best=c;}});
   if(!best||bestMo<=0) return {title:'Nice and lean 👌',msg:'Barely spending on those — keeping it minimal so far.'};
-  return {title:'Interesting…',msg:`That's about <b>${fmt(bestMo)}/month</b> on ${best.label.toLowerCase()} — roughly <b>${fmt(bestMo*12)}/year</b>. We'll show how cutting it speeds up your goal.`};
+  return {title:'Interesting…',msg:`That works out to about <b>${fmt(bestMo)}/month</b> on ${best.label.toLowerCase()} — roughly <b>${fmt(bestMo*12)}/year</b>. We'll show how trimming weekly habits speeds up your goal.`};
 }
 
 function quizView(){
@@ -908,7 +917,7 @@ function stepSpend(){
   const opts=FREQ_OPTS.map(n=>`<button data-action="qfreq" data-f="${n}" class="ob-freq ${f===n?'sel':''}">${n}</button>`).join('')+`<button data-action="qfreq" data-f="8" class="ob-freq ${f>=8?'sel':''}">8+</button>`;
   const body=`<div class="text-center"><div class="mb-2 text-5xl">${c.emoji}</div><h2 class="text-2xl font-bold">${c.label}</h2><p class="mt-1 text-sm" style="color:var(--muted)">${c.q}</p>
     <div class="mt-5 flex flex-wrap justify-center gap-2">${opts}</div>
-    <div class="mt-5 text-sm" style="color:var(--muted)">${f>0?`${f} ${c.per==='wk'?'/week':'/month'} · avg ${esc(QA.country||'local')} price €${priceFor(c.key)} each`:'Tap a number — leave at 0 if none'}</div>
+    <div class="mt-5 text-sm" style="color:var(--muted)">${f>0?`${f}× per week · avg ${esc(QA.country||'local')} price €${priceFor(c.key)} each`:'Tap a number — leave at 0 if none'}</div>
     <div class="mt-1 text-3xl font-extrabold gtext" id="freqVal">${mo>0?fmt(mo)+'/mo':'€0'}</div></div>`;
   return qFrame('spend',body,`<div class="flex gap-2"><button class="btn btn-ghost" data-action="qspendSkip">Skip</button><button class="btn btn-primary" data-action="qspendNext">Continue →</button></div>`,`Category ${SPENDIDX+1} of ${FREQ_CATS.length}`);
 }
@@ -1138,17 +1147,19 @@ function achievementsLatestHTML(){
 // money-saving opportunity: how much to cut, € saved per month & year, and
 // exactly how many days sooner the user's goal arrives (with new date).
 // ══════════════════════════════════════════════════════════════════
-const OPP_KEYS=['cigarettes','coffee','delivery','fastfood','restaurants','taxi','nightlife','gaming','shopping','fuel','groceries','subscriptions'];
-const REC_UNIT={cigarettes:['pack','packs'],coffee:['coffee','coffees'],delivery:['delivery','deliveries'],fastfood:['meal','meals'],restaurants:['meal out','meals out'],taxi:['ride','rides'],nightlife:['night out','nights out'],gaming:['purchase','purchases'],shopping:['shopping trip','shopping trips'],groceries:['grocery run','grocery runs'],fuel:['tank','tanks'],subscriptions:['subscription','subscriptions']};
+const OPP_KEYS=['cigarettes','coffee','delivery','fastfood','restaurants','taxi','nightlife','gaming','shopping','beauty','clothing','pets','fuel','groceries','education','subscriptions'];
+const REC_UNIT={cigarettes:['pack','packs'],coffee:['coffee','coffees'],delivery:['delivery','deliveries'],fastfood:['meal','meals'],restaurants:['meal out','meals out'],taxi:['ride','rides'],nightlife:['night out','nights out'],gaming:['purchase','purchases'],shopping:['shopping trip','shopping trips'],beauty:['purchase','purchases'],clothing:['purchase','purchases'],pets:['purchase','purchases'],education:['purchase','purchases'],groceries:['grocery run','grocery runs'],fuel:['tank','tanks'],subscriptions:['subscription','subscriptions']};
 function recUnit(key,n){const u=REC_UNIT[key]||['time','times'];return Math.abs(+n)===1?u[0]:u[1];}
 function addMonthsDays(months){const d=new Date();d.setDate(d.getDate()+Math.round((+months||0)*DAYS_MO));return d;}
 function fmtMD(d){try{return d.toLocaleDateString('en-US',{month:'long',day:'numeric'});}catch(e){return '';}}
 // reconstruct how often a habit happens — exact saved freq, else derived from € budget
+// All FREQ_CATS use per:'wk'. freqFor always returns a weekly count.
 function freqFor(key){
   const sf=ME.spend_freq||{}; if(sf[key]!=null)return +sf[key]||0;
   const cat=FCAT(key); if(!cat)return 0;
   const price=unitPrice(key,ME.country); if(price<=0)return 0;
-  const monthly=+(ME.budget||{})[key]||0, div=price*(cat.per==='wk'?WK:1);
+  // derive weekly count from stored monthly € budget
+  const monthly=+(ME.budget||{})[key]||0, div=price*WK;
   return div>0?Math.round(monthly/div):0;
 }
 function goalPace(){
@@ -1163,7 +1174,6 @@ function savingsOpportunities(){
   OPP_KEYS.forEach(key=>{
     const monthly=Math.round(+budget[key]||0); if(monthly<=0)return;
     const cat=FCAT(key), isSub=key==='subscriptions', essential=cat&&cat.disc===false;
-    const per=isSub?'mo':(cat?cat.per:'mo'), span=per==='wk'?'week':'month';
     let current,suggestion,saveMonthly;
     if(isSub){
       saveMonthly=Math.round(monthly*0.4);
@@ -1172,16 +1182,16 @@ function savingsOpportunities(){
     } else {
       const freq=freqFor(key), price=unitPrice(key,ME.country);
       if(essential){
-        // essentials (fuel, groceries) — don't tell people to stop; suggest a smart ~15% trim
+        // essentials (fuel, groceries, education) — suggest smarter spending ~15%
         saveMonthly=Math.round(monthly*0.15);
-        current=freq>0?`${freq} ${recUnit(key,freq)}/${span}`:`${fmt(monthly)}/mo`;
-        suggestion='Shop smarter — save about 15%';
+        current=freq>0?`${freq} ${recUnit(key,freq)}/week`:`${fmt(monthly)}/mo`;
+        suggestion='Spend smarter — save about 15%';
       } else if(freq>0&&price>0){
         let reduceBy=Math.max(1,Math.round(freq*0.4));
         if(reduceBy>=freq)reduceBy=Math.max(1,freq-1);
-        saveMonthly=Math.round(reduceBy*price*(per==='wk'?WK:1));
-        current=`${freq} ${recUnit(key,freq)}/${span}`;
-        suggestion=`Reduce by ${reduceBy} ${recUnit(key,reduceBy)}/${span}`;
+        saveMonthly=Math.round(reduceBy*price*WK);
+        current=`${freq} ${recUnit(key,freq)}/week`;
+        suggestion=`Cut by ${reduceBy} ${recUnit(key,reduceBy)}/week`;
       } else {
         saveMonthly=Math.round(monthly*0.5);
         current=`${fmt(monthly)}/mo`;
@@ -1846,7 +1856,7 @@ async function render(){
     // ── BUSINESS PLAN → entirely separate Business OS ──
     if(ME.plan==='business'){
       document.documentElement.setAttribute('data-biz','1');document.documentElement.classList.remove('light');
-      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,team:bizTeam,marketplace:bizMarketplace,profile:bizProfile,reports:bizReports,settings:settingsView,plans:plansView};
+      const bviews={dashboard:bizDashboard,companies:bizCompanies,cashflow:bizCashflow,networth:bizNetworth,properties:bizProperties,employees:bizEmployees,payments:bizPayments,invoices:bizInvoices,clients:bizClients,investments:bizInvestments,vehicles:bizVehicles,inventory:bizInventory,taxes:bizTaxes,calendar:bizCalendar,goals:bizGoals,ai:bizAi,team:bizTeam,marketplace:bizMarketplace,profile:bizProfile,reports:bizReports,settings:settingsView,plans:plansView};
       root.innerHTML=bizShell(route,(bviews[route]||bizDashboard)());
       window.scrollTo(0,0);
       bizAfterRender(route);
@@ -1879,7 +1889,7 @@ async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MO
 // calendar, cash flow, net worth, AI advisor, team, marketplace.
 // All data persists in localStorage (demo). Distinct gold theme.
 // ============================================================
-const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['profile','Profile','🪪'],['reports','Reports','📄'],['settings','Settings','⚙️']];
+const BIZ_NAV=[['dashboard','Executive','📊'],['companies','Companies','🏢'],['cashflow','Cash Flow','💸'],['networth','Net Worth','💎'],['properties','Properties','🏗️'],['employees','Employees','👔'],['payments','Payments','💳'],['invoices','Invoices','🧾'],['clients','Clients','🤝'],['investments','Investments','📈'],['vehicles','Fleet','🚗'],['inventory','Inventory','📦'],['taxes','Tax Center','🏛️'],['calendar','Calendar','📅'],['goals','Goals','🎯'],['ai','AI Advisor','🤖'],['team','Team','👥'],['marketplace','Marketplace','🌐'],['profile','Profile','🪪'],['reports','Reports','📄'],['settings','Settings','⚙️']];
 
 const BIZ_SPECS={
  businesses:{title:'Company',required:['name'],fields:[{key:'name',label:'Company name',type:'text',wide:true},{key:'logo',label:'Logo (emoji)',type:'text',default:'🏢'},{key:'industry',label:'Industry',type:'select',options:['Restaurant','Construction','Real Estate','Retail','Online Store','Services','Other']},{key:'founded',label:'Founded (year)',type:'number',default:new Date().getFullYear()},{key:'cash',label:'Cash balance',type:'number'},{key:'revenue',label:'Core sales / mo',type:'number'}]},
@@ -2034,7 +2044,7 @@ function bizAchievements(){
 // ---------- render helpers ----------
 function statusColor(s){return ({paid:'#22c55e',occupied:'#22c55e',active:'#22c55e',unpaid:'#f59e0b',pending:'#f59e0b',vacant:'#ef4444',overdue:'#ef4444',former:'#94a3b8','on leave':'#a78bfa'})[s]||'#94a3b8';}
 function bizTag(text,color){return `<span class="biz-tag" style="background:${color}22;color:${color}">${esc(text)}</span>`;}
-function bizStat(label,val,sub,emoji,tone){const style=tone&&tone!=='gold'?`style="color:${tone}"`:'';return `<div class="biz-card biz-kpi p-5"><div class="flex items-center justify-between"><span class="text-[11px] uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2 text-2xl font-extrabold ${tone==='gold'?'gold-text':''}" ${style}>${val}</p>${sub?`<p class="mt-1 text-[11px]" style="color:var(--muted)">${esc(sub)}</p>`:''}</div>`;}
+function bizStat(label,val,sub,emoji,tone){const style=tone&&tone!=='gold'?`style="color:${tone}"`:'';return `<div class="biz-card biz-kpi p-4 sm:p-5"><div class="flex items-center justify-between"><span class="text-[11px] uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2 text-lg sm:text-2xl font-extrabold truncate ${tone==='gold'?'gold-text':''}" ${style}>${val}</p>${sub?`<p class="mt-1 text-[11px]" style="color:var(--muted)">${esc(sub)}</p>`:''}</div>`;}
 function bizPanel(title,body,actions){return `<div class="biz-card p-5"><div class="mb-4 flex items-center justify-between gap-3"><h3 class="font-semibold">${title}</h3><div class="flex gap-2">${actions||''}</div></div>${body}</div>`;}
 function bizHead(title,emoji,sub){return `<div class="mb-6 flex flex-wrap items-end justify-between gap-3"><div><h1 class="text-2xl font-bold flex items-center gap-2"><span>${emoji}</span><span class="gold-text">${title}</span></h1>${sub?`<p class="mt-1 text-sm" style="color:var(--muted)">${sub}</p>`:''}</div><span class="biz-pill">Business</span></div>`;}
 function bizEmpty(msg){return `<p class="py-10 text-center text-sm" style="color:var(--muted)">${msg}</p>`;}
@@ -2062,14 +2072,14 @@ function bizShell(route,inner){
     <nav class="flex-1 space-y-0.5 px-3 overflow-y-auto">${navLinks}</nav>
     <div class="border-t p-3" style="border-color:var(--border)"><div class="flex items-center gap-3 px-2 py-1.5">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge('business')}</p><p class="text-xs" style="color:var(--muted)">Owner</p></div></div><a href="#app/plans" class="block rounded-lg px-3 py-1.5 text-left text-xs hover:bg-white/5" style="color:var(--muted)">Switch plan</a><div class="px-1 py-1.5">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/5" style="color:var(--muted)" data-action="logout">Sign out</button></div>
   </aside>
-  <div class="lg:pl-64"><div class="flex items-center justify-between border-b px-4 py-3 lg:hidden" style="border-color:var(--border)"><a href="#app/dashboard" class="font-extrabold gold-text">GOALIFY</a><div class="flex gap-2">${langSelect()}${s.businesses.length>1?`<select id="bizSwitch" class="input !w-auto !py-1.5 text-xs">${s.businesses.map(x=>`<option value="${x.id}" ${x.id===s.active?'selected':''}>${x.logo}</option>`).join('')}</select>`:''}<select onchange="location.hash='#app/'+this.value" class="input !w-auto !py-1.5 text-sm">${BIZ_NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[1]}</option>`).join('')}</select></div></div><main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
+  <div class="lg:pl-64"><div class="border-b lg:hidden" style="border-color:var(--border)"><div class="flex items-center justify-between px-4 py-3"><div class="flex items-center gap-2"><a href="#app/dashboard" class="flex items-center gap-2"><img src="${ICON_DATA}" alt="Goalify" style="height:26px;width:auto"/><div><p class="font-extrabold gold-text leading-none text-base">GOALIFY</p><p class="text-[8px] tracking-[.2em]" style="color:var(--muted)">BUSINESS OS</p></div></a></div><div class="flex items-center gap-1.5">${langSelect()}${s.businesses.length>1?`<select id="bizSwitch" class="input !w-auto !py-1.5 text-xs">${s.businesses.map(x=>`<option value="${x.id}" ${x.id===s.active?'selected':''}>${x.logo}</option>`).join('')}</select>`:''}<select onchange="location.hash='#app/'+this.value" class="input !w-auto !py-1 text-xs font-medium" style="max-width:130px">${BIZ_NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[2]} ${n[1]}</option>`).join('')}</select></div></div></div><main class="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-8">${inner}</main></div></div>`;
 }
 
 // ---------- views ----------
 function bizDashboard(){
   const m=bizMetrics();const al=bizAlerts();const ins=bizInsights();const b=bizActive();
   const header=`<div class="mb-6 flex flex-wrap items-end justify-between gap-3"><div class="flex items-center gap-3"><span class="text-4xl">${b?.logo||'🏢'}</span><div><div class="flex items-center gap-2"><h1 class="text-2xl font-bold gold-text">${esc(b?.name||'Your Company')}</h1><span class="biz-pill">Business</span></div><p class="text-sm mt-0.5" style="color:var(--muted)">${esc(b?.industry||'')} · Founded ${esc(b?.founded||'—')} · ${m.empCount} staff</p></div></div><a href="#app/reports" class="btn btn-primary !py-2 text-sm">📄 Export report</a></div>`;
-  const k=`<div class="grid gap-3 grid-cols-2 lg:grid-cols-5 mb-5">${bizStat('Total revenue',fmt(m.revenue),'this month','💰','gold')}${bizStat('Monthly profit',fmt(m.profit),Math.round(m.margin*100)+'% margin','📈',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Expenses',fmt(m.expenses),'this month','📉')}${bizStat('Net income',fmt(m.net),'after tax set-aside','🧮',m.net>=0?'#22c55e':'#ef4444')}${bizStat('Cash balance',fmt(m.cash),'available','🏦')}${bizStat('Outstanding',fmt(m.outstanding),'unpaid in/out','⏳','#f59e0b')}${bizStat('Employees',m.empCount,'active staff','👔')}${bizStat('Properties',m.propCount,fmt(m.propVal),'🏠')}${bizStat('Investments',fmt(m.invVal),'current value','💎','gold')}${bizStat('Health score',m.health+'/100',m.health>=75?'Strong':m.health>=50?'Stable':'At risk','❤️',m.health>=75?'#22c55e':m.health>=50?'#f59e0b':'#ef4444')}</div>`;
+  const k=`<div class="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 mb-5">${bizStat('Total revenue',fmt(m.revenue),'this month','💰','gold')}${bizStat('Monthly profit',fmt(m.profit),Math.round(m.margin*100)+'% margin','📈',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Expenses',fmt(m.expenses),'this month','📉')}${bizStat('Net income',fmt(m.net),'after tax set-aside','🧮',m.net>=0?'#22c55e':'#ef4444')}${bizStat('Cash balance',fmt(m.cash),'available','🏦')}${bizStat('Outstanding',fmt(m.outstanding),'unpaid in/out','⏳','#f59e0b')}${bizStat('Employees',m.empCount,'active staff','👔')}${bizStat('Properties',m.propCount,fmt(m.propVal),'🏠')}${bizStat('Investments',fmt(m.invVal),'current value','💎','gold')}${bizStat('Health score',m.health+'/100',m.health>=75?'Strong':m.health>=50?'Stable':'At risk','❤️',m.health>=75?'#22c55e':m.health>=50?'#f59e0b':'#ef4444')}</div>`;
   const alerts=al.length?`<div class="biz-card p-4 mb-5"><p class="text-xs uppercase tracking-wider mb-2" style="color:var(--muted)">⚡ Smart alerts</p><div class="space-y-1.5">${al.slice(0,5).map(x=>`<a href="${x.href}" class="flex items-center gap-2 text-sm hover:underline"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></a>`).join('')}</div></div>`:'';
   const chartsRow=`<div class="grid gap-4 lg:grid-cols-3 mb-5"><div class="biz-card p-5 lg:col-span-2"><h3 class="font-semibold mb-3">Revenue vs Expenses</h3><div style="height:240px"><canvas id="bizRevExp"></canvas></div></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Asset allocation</h3><div style="height:240px"><canvas id="bizAssets"></canvas></div></div></div>`;
   const u=bizRecs('invoices').filter(i=>i.status==='unpaid');
@@ -2145,7 +2155,7 @@ function bizCalendar(){
   bizRecs('invoices').filter(i=>i.due&&i.status==='unpaid').forEach(i=>ev.push({date:i.due,title:'Invoice: '+i.client,type:'Deadline'}));
   ev.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const tc={Meeting:'#a78bfa',Tax:'#ef4444',Salary:'#22c55e',Payment:'#f59e0b',Deadline:'#d4af37'};
-  const body=ev.length?ev.map(e=>`<div class="flex items-center gap-3 biz-tr py-2.5"><div class="text-center w-12 shrink-0"><p class="text-[10px]" style="color:var(--muted)">${e.date?new Date(e.date).toLocaleString('en',{month:'short'}):''}</p><p class="text-lg font-bold">${e.date?new Date(e.date).getDate():'—'}</p></div><div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${esc(e.title)}</p><span class="biz-tag" style="background:${(tc[e.type]||'#94a3b8')}22;color:${tc[e.type]||'#94a3b8'}">${esc(e.type)}</span></div>${e.id?`<div>${rowActions('events',e.id)}</div>`:''}</div>`).join(''):bizEmpty('No events. Add meetings, deadlines and key dates.');
+  const body=ev.length?ev.map(e=>{const dt=e.date?new Date(e.date+'T12:00:00'):null;return `<div class="flex items-center gap-3 biz-tr py-2.5"><div class="text-center w-12 shrink-0"><p class="text-[10px]" style="color:var(--muted)">${dt?dt.toLocaleString('en',{month:'short'}):''}</p><p class="text-lg font-bold">${dt?dt.getDate():'—'}</p></div><div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${esc(e.title)}</p><span class="biz-tag" style="background:${(tc[e.type]||'#94a3b8')}22;color:${tc[e.type]||'#94a3b8'}">${esc(e.type)}</span></div>${e.id?`<div>${rowActions('events',e.id)}</div>`:''}</div>`;}).join(''):bizEmpty('No events. Add meetings, deadlines and key dates.');
   return bizHead('Business Calendar','📅','Meetings, tax dates, salary runs, deadlines')+bizPanel('Upcoming',body,addBtn('events','Event'));
 }
 function bizGoals(){
@@ -2207,7 +2217,7 @@ function openBizForm(coll,id){
     if(f.type==='textarea')return `<div class="${wrap}"><label class="label">${f.label}</label><textarea data-f="${f.key}" class="input" rows="2">${esc(v)}</textarea></div>`;
     return `<div class="${wrap}"><label class="label">${f.label}</label><input data-f="${f.key}" type="${f.type}" class="input" value="${esc(v)}"></div>`;
   }).join('');
-  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" id="bfBack"><div class="w-full max-w-lg biz-card p-6 anim" style="max-height:88vh;overflow-y:auto"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">${id?'Edit ':'New '}${spec.title}</h2><button id="bfX" style="color:var(--muted)">✕</button></div><div class="mt-4 grid grid-cols-2 gap-3">${fieldHTML}</div><button id="bfSave" class="btn btn-primary mt-5 w-full">${id?'Save changes':'Create'}</button></div></div>`;
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" id="bfBack"><div class="w-full max-w-lg biz-card p-5 sm:p-6 anim" style="max-height:90vh;overflow-y:auto"><div class="flex items-center justify-between mb-1"><h2 class="text-xl font-bold">${id?'Edit ':'New '}${spec.title}</h2><button id="bfX" class="text-lg px-2" style="color:var(--muted)">✕</button></div><div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">${fieldHTML}</div><button id="bfSave" class="btn btn-primary mt-5 w-full">${id?'Save changes':'Create'}</button></div></div>`;
   const close=()=>m.innerHTML='';
   $('#bfBack').addEventListener('click',e=>{if(e.target.id==='bfBack')close();});
   $('#bfX').addEventListener('click',close);
