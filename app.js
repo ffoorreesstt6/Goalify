@@ -20,7 +20,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
 // ============================================================
 // DEMO MODE — set to false when auth is ready
 // ============================================================
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 // Use the real OpenAI-backed Edge Function (key stays on Supabase, never here).
 // If the function isn't deployed yet, the app gracefully falls back to sample replies.
 const USE_REAL_AI = true;
@@ -2587,7 +2587,7 @@ document.addEventListener('submit',async(e)=>{
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
       const email=fd.get('email');
       const redirectTo=location.protocol==='file:'?undefined:location.origin+(location.pathname==='/'?'':location.pathname);
-      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),birthdate:bd,country:ctry,language:lng}}});
+      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),dob:bd,country:ctry,language:lng}}});
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
       if(data.session){location.hash='#quiz';}
