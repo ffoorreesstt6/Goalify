@@ -2939,6 +2939,14 @@ loadTheme();
     applyTheme(ME.theme||'dark',ME.theme_color||'blue');applyBg(localStorage.getItem('goalify_bg'));
     render(); return;
   }
-  const {data}=await sb.auth.getSession(); SESSION=data.session; if(SESSION) await loadProfile(); render();
+  // Resilient startup: never let a slow/blocked Supabase call leave the app on "Loading…".
+  // Race every auth/profile call against a timeout, and always render at the end.
+  const withTimeout=(p,ms)=>Promise.race([Promise.resolve(p).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),ms))]);
+  try{
+    const res=await withTimeout(sb.auth.getSession(),4000);
+    SESSION=(res&&res.data&&res.data.session)||null;
+    if(SESSION) await withTimeout(loadProfile(),4000);
+  }catch(e){ SESSION=null; }
+  render();
 })();
 startI18n(); // begin live translation of the UI based on saved language
