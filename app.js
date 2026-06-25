@@ -385,6 +385,15 @@ const I18N_EXTRA6={
  fr:{'Verify your email':'Vérifiez votre e-mail','Enter the 8-digit code we sent to':'Saisissez le code à 8 chiffres envoyé à','Verify & continue':'Vérifier et continuer','Resend code':'Renvoyer le code','Enter the 8-digit code.':'Saisissez le code à 8 chiffres.','Invalid or expired code.':'Code invalide ou expiré.','✓ Verified! Signing you in…':'✓ Vérifié ! Connexion en cours…','New code sent — check your inbox 📨':'Nouveau code envoyé — vérifiez votre boîte 📨','We sent an 8-digit code to your email 📨':'Nous avons envoyé un code à 8 chiffres à votre e-mail 📨','Session expired — please sign up again.':'Session expirée — inscrivez-vous à nouveau.','Verifying…':'Vérification…'}
 };
 Object.keys(I18N_EXTRA6).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA6[l],I18N[l]);});
+// ── seventh batch: Restart Quiz + login states ──
+const I18N_EXTRA7={
+ sq:{'Restart Quiz':'Rinis kuizin','🔄 Restart onboarding quiz':'🔄 Rinis kuizin e fillimit','Restart the quiz?':'Të rinis kuizin?','Restart':'Rinis','Logging in…':'Duke hyrë…','Welcome back! 👋':'Mirë se erdhe! 👋','Network is slow — please try again':'Rrjeti është i ngadaltë — provo sërish','Incorrect email or password':'Email ose fjalëkalim i pasaktë','Login failed — please try again':'Hyrja dështoi — provo sërish'},
+ de:{'Restart Quiz':'Quiz neu starten','🔄 Restart onboarding quiz':'🔄 Onboarding-Quiz neu starten','Restart the quiz?':'Quiz neu starten?','Restart':'Neu starten','Logging in…':'Anmeldung…','Welcome back! 👋':'Willkommen zurück! 👋','Network is slow — please try again':'Netzwerk langsam — bitte erneut versuchen','Incorrect email or password':'Falsche E-Mail oder Passwort','Login failed — please try again':'Anmeldung fehlgeschlagen — bitte erneut versuchen'},
+ es:{'Restart Quiz':'Reiniciar test','🔄 Restart onboarding quiz':'🔄 Reiniciar el test inicial','Restart the quiz?':'¿Reiniciar el test?','Restart':'Reiniciar','Logging in…':'Iniciando sesión…','Welcome back! 👋':'¡Bienvenido de nuevo! 👋','Network is slow — please try again':'La red está lenta — inténtalo de nuevo','Incorrect email or password':'Correo o contraseña incorrectos','Login failed — please try again':'Error al iniciar sesión — inténtalo de nuevo'},
+ it:{'Restart Quiz':'Riavvia il quiz','🔄 Restart onboarding quiz':'🔄 Riavvia il quiz iniziale','Restart the quiz?':'Riavviare il quiz?','Restart':'Riavvia','Logging in…':'Accesso…','Welcome back! 👋':'Bentornato! 👋','Network is slow — please try again':'Rete lenta — riprova','Incorrect email or password':'Email o password errati','Login failed — please try again':'Accesso non riuscito — riprova'},
+ fr:{'Restart Quiz':'Recommencer le quiz','🔄 Restart onboarding quiz':'🔄 Recommencer le quiz d\'intégration','Restart the quiz?':'Recommencer le quiz ?','Restart':'Recommencer','Logging in…':'Connexion…','Welcome back! 👋':'Content de vous revoir ! 👋','Network is slow — please try again':'Réseau lent — réessayez','Incorrect email or password':'E-mail ou mot de passe incorrect','Login failed — please try again':'Échec de la connexion — réessayez'}
+};
+Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();return `<select id="langSel" class="input !py-1.5 text-xs" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
@@ -1046,6 +1055,11 @@ const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
 let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
 let QA={lang:'en',income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+// reset quiz/onboarding answers to defaults (used by "Restart Quiz")
+function resetQuizState(){
+  QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
+  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:(ME&&ME.country)||'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+}
 const QSTEPS=['language','income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
 const QPROG=['income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
 
@@ -1215,7 +1229,7 @@ function stepGoalCreate(inner){
     <div class="mt-6 space-y-4">
       <div><span class="label">Pick an icon</span><div id="qgEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-10 w-10 items-center justify-center rounded-lg text-lg ${i===0?'sel ob-chip':'ob-chip'}">${x}</button>`).join('')}</div></div>
       <div><label class="label">Goal name</label><input id="qgName" class="input" placeholder="e.g. Gaming Setup"></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" class="input" placeholder="1500"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input"></div></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" min="1" class="input" placeholder="1500"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input" min="${new Date().toISOString().slice(0,7)}" value="${(()=>{const d=new Date();d.setMonth(d.getMonth()+6);return d.toISOString().slice(0,7);})()}"></div></div>
       <p id="qgErr" class="text-sm text-red-400 h-4"></p>
       <button class="btn btn-primary w-full" data-action="qcreategoal">Create goal & open dashboard →</button>
     </div></div>`;
@@ -2076,6 +2090,7 @@ function settingsView(){
   </div>
   <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">Privacy & Data</h2><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
   <div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🛡️ Admin access</h2>${isDemoAdmin()?'<span class="rounded-full px-2 py-0.5 text-[10px] font-medium text-amber-300" style="background:rgba(245,158,11,.15)">Signed in</span>':''}</div>${isDemoAdmin()?`<p class="mt-1 text-sm text-slate-400">You're signed in as admin.</p><div class="mt-3 flex gap-2"><a href="#admin" class="btn btn-primary text-sm">Open admin dashboard</a><button class="btn btn-ghost text-sm" data-action="adminLogout">Sign out admin</button></div>`:`<p class="mt-1 text-sm text-slate-400">Enter the admin access code to open the admin dashboard.</p><div class="mt-3 flex gap-2"><input id="adminInput" type="password" class="input" placeholder="Access code"><button class="btn btn-primary text-sm shrink-0" data-action="adminLogin">Enter</button></div>`}</div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-xl font-bold">🔄 Restart onboarding quiz</h2><p class="mt-1 text-sm text-slate-400">Retake the spending quiz and rebuild your money profile. This resets only your onboarding answers and spending preferences — your account, goals and progress stay intact.</p><button class="btn btn-ghost mt-4 text-sm" data-action="restartQuiz">Restart Quiz</button></div>
   <div class="glass rounded-2xl p-6" style="border:1px solid rgba(239,68,68,.3)"><h2 class="text-xl font-bold text-red-300">Delete account</h2><p class="mt-1 text-sm text-slate-400">Permanently delete your data. This cannot be undone.</p><button class="btn mt-4 text-sm" style="background:rgba(239,68,68,.9);color:#fff" data-action="delAcct">Delete my data</button></div></div>`;
 }
 
@@ -2274,8 +2289,9 @@ async function render(){
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
     const route2base=(allowed.has(route)||route==='student')?route:'dashboard';
-    // mandatory goal — dashboard stays blocked until at least one goal exists
-    const route2=(route2base==='dashboard'&&GOALS.length===0)?'goals':route2base;
+    // Onboarding already requires a goal. Never force completed users back to goal creation —
+    // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
+    const route2=route2base;
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
@@ -2697,6 +2713,23 @@ document.addEventListener('click',async(e)=>{
     else if(act==='scPreset'){const k=a.getAttribute('data-key');SC_PRESET=k;const pr=SC_PRESETS.find(p=>p.key===k)||SC_PRESETS[0];const nameEl=document.getElementById('scName');const priceEl=document.getElementById('scPrice');const timesEl=document.getElementById('scTimes');if(nameEl)nameEl.value=pr.label;if(priceEl)priceEl.value=Math.round((priceFor(pr.key)||2)*100)/100;if(timesEl)timesEl.value=Math.max(1,freqFor(pr.key)||1);document.querySelectorAll('[data-action="scPreset"]').forEach(b=>{const sel=b.getAttribute('data-key')===k;b.style.background=sel?'linear-gradient(135deg,var(--accent1),var(--accent2))':'var(--glass)';b.style.color=sel?'#fff':'var(--muted)';});updateSpendCalc();}
     else if(act==='scPeriod'){SC_PERIOD=a.getAttribute('data-period');updateSpendCalc();}
     else if(act==='openGift'){openGiftModal();}
+    else if(act==='restartQuiz'){
+      const m=document.getElementById('modal');
+      m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="rqBack"><div class="w-full max-w-sm glass-strong rounded-2xl p-6 anim text-center"><div class="text-4xl">🔄</div><h2 class="mt-2 text-xl font-bold">Restart the quiz?</h2><p class="mt-2 text-sm" style="color:var(--muted)">This resets only your onboarding answers and spending preferences, then takes you back to the start of the quiz. Your account, goals and progress are kept.</p><div class="mt-5 flex gap-2"><button class="btn btn-ghost flex-1 text-sm" id="rqCancel">Cancel</button><button class="btn btn-primary flex-1 text-sm" data-action="restartQuizConfirm">Restart</button></div></div></div>`;
+      $('#rqBack').addEventListener('click',e=>{if(e.target.id==='rqBack')m.innerHTML='';});
+      $('#rqCancel').addEventListener('click',()=>m.innerHTML='');
+    }
+    else if(act==='restartQuizConfirm'){
+      const m=document.getElementById('modal');if(m)m.innerHTML='';
+      // reset onboarding + spending prefs (NOT the account / goals)
+      if(DEMO_MODE){Object.assign(DEMO_ME,{onboarded:false,budget:{},spend_freq:{},personality:null,savings_potential:null});}
+      else{try{await sb.from('profiles').update({onboarded:false,budget:{},spend_freq:{}}).eq('id',SESSION.user.id);}catch(e){}}
+      if(ME){ME.onboarded=false;ME.budget={};ME.spend_freq={};}
+      localStorage.removeItem('goalify_onboarded');
+      resetQuizState();
+      toast('Quiz reset — let\'s redo your money profile');
+      location.hash='#quiz';
+    }
     else if(act==='bizAdd'){openBizForm(a.getAttribute('data-coll'));}
     else if(act==='bizEdit'){openBizForm(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
     else if(act==='bizDel'){bizDelete(a.getAttribute('data-coll'),a.getAttribute('data-id'));}
@@ -2821,17 +2854,30 @@ document.addEventListener('submit',async(e)=>{
       if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
       // verifyOtp returns a session; load profile and route (onAuthStateChange may also fire — idempotent)
       try{SESSION=(data&&data.session)||(await sb.auth.getSession()).data.session;if(SESSION)await loadProfile();}catch(e){}
-      location.hash = (ME && ME.onboarded) ? '#app/dashboard' : '#quiz';
+      location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
     }
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
       if(DEMO_MODE){toast('Welcome back! 👋');location.hash=DEMO_ME.onboarded?'#app/dashboard':'#quiz';return;}
       if(fd.get('remember'))localStorage.setItem(REMEMBER,'1');else localStorage.removeItem(REMEMBER);
       const btn=$('#loginBtn');btn.disabled=true;btn.textContent='Logging in…';
-      const {error}=await sb.auth.signInWithPassword({email:fd.get('email'),password:fd.get('password')});
-      btn.disabled=false;btn.textContent='Log in';
-      if(error)return toast(error.message,'err');
-      // onAuthStateChange handles redirect
+      const fail=(m)=>{btn.disabled=false;btn.textContent='Log in';toast(m||'Login failed — please try again','err');};
+      // Self-contained login: don't wait on onAuthStateChange (which can lag/hang on slow networks).
+      try{
+        const res=await Promise.race([
+          sb.auth.signInWithPassword({email:fd.get('email'),password:fd.get('password')}),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),12000))
+        ]);
+        if(res&&res.error){return fail(res.error.message);}
+        SESSION=(res&&res.data&&res.data.session)||(await sb.auth.getSession()).data.session;
+        if(!SESSION){return fail('Incorrect email or password');}
+        btn.textContent='Success ✓';
+        try{await Promise.race([loadProfile(),new Promise(r=>setTimeout(r,6000))]);}catch(e){}
+        toast('Welcome back! 👋');
+        location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
+      }catch(e){
+        fail(e&&e.message==='__timeout__' ? 'Network is slow — please try again' : (e&&e.message));
+      }
     }
     else if(f.id==='forgotForm'){const fd=new FormData(f);if(DEMO_MODE){toast('Reset link sent — check your email (demo).');location.hash='#login';return;}const {error}=await sb.auth.resetPasswordForEmail(fd.get('email'),{redirectTo:location.origin+location.pathname+'#reset'});if(error)return toast(error.message,'err');toast('Reset link sent — check your email.');}
     else if(f.id==='resetForm'){const fd=new FormData(f);if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');const {error}=await sb.auth.updateUser({password:fd.get('password')});if(error)return toast(error.message,'err');toast('Password updated');location.hash='#app/dashboard';}
@@ -2911,7 +2957,7 @@ function openGoalModal(){
   m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div><label class="label">Target amount (€)</label><input id="gmTarget" type="number" inputmode="numeric" class="input" placeholder="1200"></div>
     <div><span class="label">Target date</span>
       <div id="gmQuick" class="grid grid-cols-3 gap-2 sm:grid-cols-5">${[['week','Next week'],['month','Next month'],['3m','3 months'],['6m','6 months'],['custom','Custom']].map((o,i)=>`<button type="button" data-q="${o[0]}" class="gm-qbtn rounded-xl px-2 py-2.5 text-xs font-medium ${i===1?'gm-qsel':''}" style="${i===1?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted)'}">${o[1]}</button>`).join('')}</div>
-      <input id="gmDate" type="date" class="input mt-2 hidden">
+      <input id="gmDate" type="date" class="input mt-2 hidden" min="${new Date(Date.now()+86400000).toISOString().slice(0,10)}">
       <p id="gmDateHint" class="mt-2 text-xs" style="color:var(--muted)"></p>
     </div>
     <div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><label class="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer" style="background:var(--glass)"><input id="gmPrivate" type="checkbox" class="h-4 w-4"><span><span class="text-sm font-medium">🔒 Make this goal private</span><span class="block text-xs" style="color:var(--muted)">Private goals stay off your social profile and feed.</span></span></label><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
@@ -2971,7 +3017,7 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   if(DEMO_MODE) return; // demo mode ignores all real auth events
   SESSION=session; ME=null;
   if(event==='PASSWORD_RECOVERY'){location.hash='#reset';return;}
-  if(event==='SIGNED_IN'){ await loadProfile(); location.hash = ME && ME.onboarded ? '#app/dashboard' : '#quiz'; return; }
+  if(event==='SIGNED_IN'){ await loadProfile(); location.hash = isOnboarded() ? '#app/dashboard' : '#quiz'; return; }
   if(event==='SIGNED_OUT'){ localStorage.removeItem('goalify_onboarded'); render(); return; }
   render();
 });
