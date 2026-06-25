@@ -1,29 +1,27 @@
 <!--
-  Goalify — branded email template (Supabase Auth)
-  ───────────────────────────────────────────────
-  Where to use it:
-    Supabase Dashboard → Authentication → Email Templates → "Confirm signup"
-    (also reuse for Magic Link / Reset password by swapping the heading + button).
-
-  IMPORTANT — the logo must be a PUBLIC absolute URL (email clients can't load
-  local files). After you deploy, upload assets/favicon.png somewhere public
-  (e.g. your Goalify domain or a Supabase Storage public bucket) and replace
-  LOGO_URL below with that link, e.g.:
-    https://goalify.app/assets/favicon.png
+  Goalify — Confirm signup (6/8-digit OTP code) email template
+  ───────────────────────────────────────────────────────────
+  Paste into: Supabase Dashboard → Authentication → Email Templates → "Confirm signup"
+  The {{ .Token }} placeholder is what prints the verification CODE — keep it exactly.
+  The logo is drawn with HTML/CSS (no external image) so it always renders, in every
+  email client, with nothing to host.
 -->
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAFAFA;padding:32px 0;font-family:Inter,Segoe UI,Arial,sans-serif">
   <tr><td align="center">
     <table width="480" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:20px;overflow:hidden">
-      <tr><td style="padding:32px 36px 8px;text-align:center">
-        <img src="https://jcskgasaocfueneyahrk.supabase.co/storage/v1/object/public/public/favicon.png" alt="Goalify" width="60" height="60" style="display:inline-block;border-radius:14px;vertical-align:middle" />
-        <div style="margin-top:10px;font-size:23px;font-weight:800;color:#111827;letter-spacing:-.3px">Goal<span style="color:#7C3AED">ify</span></div>
-        <div style="margin-top:2px;font-size:11px;color:#9CA3AF;letter-spacing:.12em;text-transform:uppercase">Turn every euro into progress</div>
+      <tr><td style="padding:34px 36px 6px;text-align:center">
+        <!-- CSS logo badge (renders everywhere; solid purple fallback for Outlook) -->
+        <table align="center" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
+          <td width="64" height="64" align="center" valign="middle" bgcolor="#7C3AED" style="background:#7C3AED;background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:16px;color:#ffffff;font-size:32px;font-weight:800;font-family:Inter,Arial,sans-serif;line-height:64px">G</td>
+        </tr></table>
+        <div style="margin-top:12px;font-size:24px;font-weight:800;color:#111827;letter-spacing:-.3px">Goal<span style="color:#7C3AED">ify</span></div>
+        <div style="margin-top:3px;font-size:11px;color:#9CA3AF;letter-spacing:.12em;text-transform:uppercase">Turn every euro into progress</div>
       </td></tr>
-      <tr><td style="padding:8px 36px 28px;text-align:center;color:#111827">
-        <h1 style="margin:18px 0 6px;font-size:20px;font-weight:800">Your verification code</h1>
-        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#6B7280">Welcome to Goalify! Enter this 8-digit code in the app to verify your email and start turning every euro into progress.</p>
-        <div style="display:inline-block;background:#F3F0FF;border:1px solid #E5E0FB;border-radius:14px;padding:16px 24px;font-size:30px;font-weight:800;letter-spacing:7px;color:#4F46E5">{{ .Token }}</div>
-        <p style="margin:18px 0 0;font-size:12px;color:#9CA3AF">This code expires in 1 hour. If you didn't create a Goalify account, you can safely ignore this email.</p>
+      <tr><td style="padding:10px 36px 30px;text-align:center;color:#111827">
+        <h1 style="margin:20px 0 6px;font-size:20px;font-weight:800">Your verification code</h1>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#6B7280">Welcome to Goalify! Enter this code in the app to verify your email.</p>
+        <div style="display:inline-block;background:#F3F0FF;border:1px solid #E5E0FB;border-radius:14px;padding:18px 26px;font-size:34px;font-weight:800;letter-spacing:8px;color:#4F46E5;font-family:'Courier New',monospace">{{ .Token }}</div>
+        <p style="margin:20px 0 0;font-size:12px;color:#9CA3AF">This code expires in 1 hour. If you didn't create a Goalify account, you can safely ignore this email.</p>
       </td></tr>
       <tr><td style="padding:16px 36px 28px;text-align:center;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:11px">© Goalify · Track spending, build habits, reach your goals.</td></tr>
     </table>
