@@ -567,11 +567,16 @@ async function loadProfile(){
     await sb.from('profiles').insert({id:SESSION.user.id,email:SESSION.user.email});
     ({data}=await sb.from('profiles').select('*').eq('id',SESSION.user.id).maybeSingle());
   }
-  ME=data;
+  // never leave ME null on a live session — prevents the dashboard from crashing / bouncing
+  ME=data||{id:SESSION.user.id,email:SESSION.user.email,plan:'free',role:'user',onboarded:localStorage.getItem('goalify_onboarded')==='1',xp:0,currency:'EUR',monthly_income:0};
   // language preference lives in both the profile and localStorage; profile wins on load
   if(data&&data.language){localStorage.setItem('goalify_lang',data.language);}
-  return data;
+  // onboarding flag is set-only here (a lagging DB read must not undo a just-completed onboarding)
+  if(data&&data.onboarded){localStorage.setItem('goalify_onboarded','1');}
+  return ME;
 }
+// onboarding is "done" if the profile says so OR we set the local flag at the end of the quiz/goal step
+function isOnboarded(){return !!((ME&&ME.onboarded)||localStorage.getItem('goalify_onboarded')==='1');}
 const getGoals=async()=>DEMO_MODE?DEMO_GOALS:(await sb.from('goals').select('*').order('created_at',{ascending:false})).data||[];
 const getExpenses=async()=>DEMO_MODE?DEMO_EXPENSES:(await sb.from('expenses').select('*').order('spent_at',{ascending:false}).limit(1000)).data||[];
 
@@ -1178,7 +1183,7 @@ async function finishQuiz(inner){
   if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
   else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
   await loadProfile();
-  if(ME)ME.onboarded=true; // ensure in-memory state is set even if the reload lagged/failed
+  if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
   const p=PERSONAS[persona]||PERSONAS.goal_chaser;
   const topRows=top3.length?top3.map(([k,v])=>`<div class="ob-result-card"><span class="text-2xl">${catEmoji(k)}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${catLabel(k)}</p></div><span class="font-bold">${fmt(v)}/mo</span></div>`).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
   const opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>k!=='groceries'&&k!=='fuel'&&k!=='subscriptions')||sorted[0]||null);
@@ -2249,7 +2254,7 @@ async function render(){
   if(hash==='admin'){ if(ME?.role!=='admin'&&!isDemoAdmin()){toast('Admins only','err');location.hash='#app/settings';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
   if(hash==='quiz'){ siteTheme();QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
   if(hash.startsWith('app/')){
-    if(!ME?.onboarded){location.hash='#quiz';return;}
+    if(!isOnboarded()){location.hash='#quiz';return;}
     const route=hash.split('/')[1]||'dashboard';
     [GOALS,EXPENSES]=await Promise.all([getGoals(),getExpenses()]);
     if(DEMO_MODE){AIUSED=0;} else {
@@ -2661,7 +2666,7 @@ document.addEventListener('click',async(e)=>{
       startOtpCooldown(60);
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
-    else if(act==='logout'){if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
+    else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
     else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
@@ -2739,7 +2744,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=FREQ_CATS.length)QSTEP++;renderQuiz();}
     else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
     else if(act==='qgoal'){const inner=$('#qInner');if(inner)stepGoalCreate(inner);}
-    else if(act==='qcreategoal'){const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}const emo=QA._goalEmo||'🎯';const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};if(DEMO_MODE){DEMO_GOALS.unshift(g);}else{try{await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null});}catch(e){}}if(ME)ME.onboarded=true;toast('🎯 Goal created!');location.hash='#app/dashboard';render();}
+    else if(act==='qcreategoal'){const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}const emo=QA._goalEmo||'🎯';const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};if(DEMO_MODE){DEMO_GOALS.unshift(g);}else{try{await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null});}catch(e){}}if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');toast('🎯 Goal created!');location.hash='#app/dashboard';render();}
     else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
     else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
     else if(act==='approveSV'){await sb.rpc('approve_student',{p_id:a.getAttribute('data-id')});toast('Approved → Pro');render();}
@@ -2967,7 +2972,7 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   SESSION=session; ME=null;
   if(event==='PASSWORD_RECOVERY'){location.hash='#reset';return;}
   if(event==='SIGNED_IN'){ await loadProfile(); location.hash = ME && ME.onboarded ? '#app/dashboard' : '#quiz'; return; }
-  if(event==='SIGNED_OUT'){ render(); return; }
+  if(event==='SIGNED_OUT'){ localStorage.removeItem('goalify_onboarded'); render(); return; }
   render();
 });
 window.addEventListener('hashchange',render);
