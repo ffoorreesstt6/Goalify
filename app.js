@@ -376,6 +376,15 @@ const I18N_EXTRA5={
  fr:{'Blog':'Blog','About':'À propos','The #1 Savings & Goals App':'L\'app n°1 d\'épargne et d\'objectifs','Turn every euro':'Transformez chaque euro','into':'en','progress.':'progrès.','See how it works':'Voir comment ça marche','Free to start':'Gratuit au départ','No credit card':'Sans carte bancaire','256-bit encrypted':'Chiffré en 256 bits','Up to 3 goals (archive, no delete)':'Jusqu\'à 3 objectifs (archivage, sans suppression)','Students get':'Les étudiants obtiennent','Invite friends to earn free upgrades':'Invitez des amis pour gagner des mises à niveau gratuites','Spent':'Dépensé','Saved':'Épargné','Goals Active':'Objectifs actifs','Goal Chaser':'Chasseur d\'objectifs','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.':'Oui — le plan Free inclut le suivi des dépenses, votre profil financier, des insights de base et jusqu\'à 3 objectifs, pour toujours.','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.':'Soumettez votre université et votre e-mail étudiant dans Vérification étudiante. Une fois approuvé, votre offre passe automatiquement à Pro.','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.':'L\'authentification et les données reposent sur Supabase avec une sécurité au niveau des lignes : vous seul (et les admins) pouvez accéder à vos données.','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.':'XP, niveaux, succès, défis, classements, fonctions sociales, effets de profil premium et insights avancés.'}
 };
 Object.keys(I18N_EXTRA5).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA5[l],I18N[l]);});
+// ── sixth batch: 6-digit OTP email verification screen ──
+const I18N_EXTRA6={
+ sq:{'Verify your email':'Verifiko emailin','Enter the 6-digit code we sent to':'Shkruaj kodin 6-shifror që dërguam te','Verify & continue':'Verifiko & vazhdo','Resend code':'Ridërgo kodin','Enter the 6-digit code.':'Shkruaj kodin 6-shifror.','Invalid or expired code.':'Kod i pavlefshëm ose i skaduar.','✓ Verified! Signing you in…':'✓ U verifikua! Po të fusim…','New code sent — check your inbox 📨':'Kodi i ri u dërgua — kontrollo inbox-in 📨','We sent a 6-digit code to your email 📨':'Dërguam një kod 6-shifror në emailin tënd 📨','Session expired — please sign up again.':'Sesioni skadoi — regjistrohu sërish.','Verifying…':'Duke verifikuar…'},
+ de:{'Verify your email':'E-Mail verifizieren','Enter the 6-digit code we sent to':'Gib den 6-stelligen Code ein, den wir gesendet haben an','Verify & continue':'Verifizieren & fortfahren','Resend code':'Code erneut senden','Enter the 6-digit code.':'Gib den 6-stelligen Code ein.','Invalid or expired code.':'Ungültiger oder abgelaufener Code.','✓ Verified! Signing you in…':'✓ Verifiziert! Du wirst angemeldet…','New code sent — check your inbox 📨':'Neuer Code gesendet — prüfe dein Postfach 📨','We sent a 6-digit code to your email 📨':'Wir haben einen 6-stelligen Code an deine E-Mail gesendet 📨','Session expired — please sign up again.':'Sitzung abgelaufen — bitte erneut registrieren.','Verifying…':'Wird verifiziert…'},
+ es:{'Verify your email':'Verifica tu correo','Enter the 6-digit code we sent to':'Introduce el código de 6 dígitos que enviamos a','Verify & continue':'Verificar y continuar','Resend code':'Reenviar código','Enter the 6-digit code.':'Introduce el código de 6 dígitos.','Invalid or expired code.':'Código no válido o caducado.','✓ Verified! Signing you in…':'✓ ¡Verificado! Iniciando sesión…','New code sent — check your inbox 📨':'Nuevo código enviado — revisa tu bandeja 📨','We sent a 6-digit code to your email 📨':'Enviamos un código de 6 dígitos a tu correo 📨','Session expired — please sign up again.':'Sesión caducada — regístrate de nuevo.','Verifying…':'Verificando…'},
+ it:{'Verify your email':'Verifica la tua email','Enter the 6-digit code we sent to':'Inserisci il codice a 6 cifre inviato a','Verify & continue':'Verifica e continua','Resend code':'Reinvia codice','Enter the 6-digit code.':'Inserisci il codice a 6 cifre.','Invalid or expired code.':'Codice non valido o scaduto.','✓ Verified! Signing you in…':'✓ Verificato! Accesso in corso…','New code sent — check your inbox 📨':'Nuovo codice inviato — controlla la posta 📨','We sent a 6-digit code to your email 📨':'Abbiamo inviato un codice a 6 cifre alla tua email 📨','Session expired — please sign up again.':'Sessione scaduta — registrati di nuovo.','Verifying…':'Verifica in corso…'},
+ fr:{'Verify your email':'Vérifiez votre e-mail','Enter the 6-digit code we sent to':'Saisissez le code à 6 chiffres envoyé à','Verify & continue':'Vérifier et continuer','Resend code':'Renvoyer le code','Enter the 6-digit code.':'Saisissez le code à 6 chiffres.','Invalid or expired code.':'Code invalide ou expiré.','✓ Verified! Signing you in…':'✓ Vérifié ! Connexion en cours…','New code sent — check your inbox 📨':'Nouveau code envoyé — vérifiez votre boîte 📨','We sent a 6-digit code to your email 📨':'Nous avons envoyé un code à 6 chiffres à votre e-mail 📨','Session expired — please sign up again.':'Session expirée — inscrivez-vous à nouveau.','Verifying…':'Vérification…'}
+};
+Object.keys(I18N_EXTRA6).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA6[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();return `<select id="langSel" class="input !py-1.5 text-xs" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
@@ -930,18 +939,31 @@ function resetView(){
   return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Set a new password</h1>
     <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><div class="relative"><input id="rpw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="rpw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="rpw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="rpw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
 }
+// ── 6-digit email OTP verification (Supabase verifyOtp, no link clicking) ──
+let _otpCooldown=0,_otpTimer=null;
+function startOtpCooldown(s){
+  _otpCooldown=s;
+  const tick=()=>{
+    const b=document.getElementById('otpResend');
+    if(_otpCooldown<=0){if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}if(b){b.disabled=false;b.textContent='Resend code';b.style.opacity='';}return;}
+    if(b){b.disabled=true;b.textContent='Resend in '+_otpCooldown+'s';b.style.opacity='.6';}
+    _otpCooldown--;
+  };
+  if(_otpTimer)clearInterval(_otpTimer);
+  tick(); _otpTimer=setInterval(tick,1000);
+}
 function verifyView(email){
   return authWrap(`<div class="glass-strong rounded-2xl p-7 text-center">
-    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">📧</div>
-    <h1 class="text-2xl font-bold">Check your email</h1>
-    <p class="mt-3 text-sm text-slate-400">We sent a confirmation link to<br><b class="text-white">${esc(email||'your email')}</b></p>
-    <div class="mt-5 glass rounded-xl p-4 text-left text-sm text-slate-300 space-y-2.5">
-      <p class="flex items-center gap-2"><span class="text-accent-purple">1</span> Open the email from Goalify / Supabase</p>
-      <p class="flex items-center gap-2"><span class="text-accent-purple">2</span> Click <b>"Confirm your email address"</b></p>
-      <p class="flex items-center gap-2"><span class="text-accent-purple">3</span> You'll be redirected back automatically</p>
-    </div>
-    <p class="mt-5 text-sm text-slate-400">Didn't get it? <button type="button" class="text-accent-purple hover:underline" data-action="resendVerify" data-email="${esc(email||'')}">Resend email</button></p>
-    <a href="#login" class="btn btn-ghost mt-4 w-full text-sm">Back to login</a>
+    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">🔐</div>
+    <h1 class="text-2xl font-bold">Verify your email</h1>
+    <p class="mt-2 text-sm" style="color:var(--muted)">Enter the 6-digit code we sent to<br><b style="color:var(--text)">${esc(email||'your email')}</b></p>
+    <form id="otpForm" class="mt-6 space-y-3">
+      <input id="otpInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="input text-center" style="font-size:1.7rem;letter-spacing:.55em;font-weight:800;padding-left:.55em" placeholder="••••••" oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6){var b=document.getElementById('otpBtn');if(b)b.focus();}">
+      <p id="otpMsg" class="text-sm h-4" style="margin:0"></p>
+      <button id="otpBtn" class="btn btn-primary w-full">Verify & continue</button>
+    </form>
+    <p class="mt-4 text-sm" style="color:var(--muted)">Didn't get it? <button type="button" id="otpResend" data-action="resendCode" data-email="${esc(email||'')}" class="text-accent-purple hover:underline">Resend code</button></p>
+    <a href="#login" class="btn btn-ghost mt-3 w-full text-sm">Back to login</a>
   </div>`);
 }
 
@@ -2218,7 +2240,7 @@ async function render(){
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
-  if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));return;}
+  if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));startOtpCooldown(60);setTimeout(()=>{const i=document.getElementById('otpInput');if(i)i.focus();},50);return;}
   if(hash==='reset'){siteTheme();root.innerHTML=resetView();return;}
   // need session below
   if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
@@ -2629,7 +2651,15 @@ document.addEventListener('click',async(e)=>{
       if(error)toast(error.message,'err');
     }
     else if(act==='togglePw'){const inp=document.getElementById(a.getAttribute('data-target'));if(inp){const show=inp.type==='password';inp.type=show?'text':'password';a.innerHTML=show?EYE_OFF:EYE_ON;}}
-    else if(act==='resendVerify'){const em=a.getAttribute('data-email');if(em){const {error}=await sb.auth.resend({email:em,type:'signup'});if(error)toast(error.message,'err');else toast('Confirmation email resent — check your inbox!');}}
+    else if(act==='resendVerify'||act==='resendCode'){
+      if(_otpCooldown>0)return; // cooldown active
+      const em=a.getAttribute('data-email')||localStorage.getItem('goalify_pending_email')||'';
+      if(!em){toast('No email on file — sign up again','err');return;}
+      const {error}=await sb.auth.resend({email:em,type:'signup'});
+      if(error){toast(error.message||'Could not resend code','err');return;}
+      toast('New code sent — check your inbox 📨');
+      startOtpCooldown(60);
+    }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
     else if(act==='logout'){if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
@@ -2769,7 +2799,24 @@ document.addEventListener('submit',async(e)=>{
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
       if(data.session){location.hash='#quiz';}
-      else{localStorage.setItem('goalify_pending_email',email);location.hash='#verify';}
+      else{localStorage.setItem('goalify_pending_email',email);toast('We sent a 6-digit code to your email 📨');location.hash='#verify';}
+    }
+    else if(f.id==='otpForm'){
+      const email=localStorage.getItem('goalify_pending_email')||'';
+      const code=($('#otpInput')?.value||'').replace(/[^0-9]/g,'');
+      const msg=$('#otpMsg'),btn=$('#otpBtn');
+      const setMsg=(t,ok)=>{if(msg){msg.style.color=ok?'#34d399':'#f87171';msg.textContent=t;}};
+      if(!email){setMsg('Session expired — please sign up again.');return;}
+      if(code.length!==6){setMsg('Enter the 6-digit code.');return;}
+      if(btn){btn.disabled=true;btn.textContent='Verifying…';}
+      const {data,error}=await sb.auth.verifyOtp({email,token:code,type:'signup'});
+      if(error){setMsg(error.message||'Invalid or expired code.');if(btn){btn.disabled=false;btn.textContent='Verify & continue';}return;}
+      setMsg('✓ Verified! Signing you in…',true);
+      localStorage.removeItem('goalify_pending_email');
+      if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
+      // verifyOtp returns a session; load profile and route (onAuthStateChange may also fire — idempotent)
+      try{SESSION=(data&&data.session)||(await sb.auth.getSession()).data.session;if(SESSION)await loadProfile();}catch(e){}
+      location.hash = (ME && ME.onboarded) ? '#app/dashboard' : '#quiz';
     }
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
