@@ -523,6 +523,16 @@ const pct=(a,b)=>b?Math.min(100,Math.round(a/b*100)):0;
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const ini=(p)=>((p?.first_name||p?.email||'U')[0]+(p?.last_name?.[0]||'')).toUpperCase();
 function toast(msg,type='ok'){ const c=type==='err'?'background:rgba(239,68,68,.95)':'background:rgba(16,185,129,.95)'; const el=document.getElementById('toast'); el.innerHTML=`<div class="toast text-white anim" style="${c}">${esc(msg)}</div>`; setTimeout(()=>{el.innerHTML='';},3200); }
+// turn raw Supabase/network errors into friendly, actionable messages
+function friendlyErr(error,fallback){
+  const m=((error&&error.message)||'').toLowerCase();
+  if(!m)return fallback||'Something went wrong — please try again';
+  if(m.includes('schema cache')||m.includes('could not find the table')||m.includes('does not exist'))return 'Your account is still being set up — please refresh in a moment and try again.';
+  if(m.includes('duplicate')||m.includes('unique'))return 'That already exists.';
+  if(m.includes('row-level security')||m.includes('permission')||m.includes('not authorized'))return 'Permission error — please sign out and back in.';
+  if(m.includes('network')||m.includes('failed to fetch')||m.includes('load failed'))return 'Network issue — please check your connection and try again.';
+  return fallback||(error.message||'Something went wrong');
+}
 function levelFromXp(xp){return {level:Math.floor((xp||0)/100)+1,inLvl:(xp||0)%100};}
 // ── Profile progression: level milestones → frame, title, unlocked effects ──
 // Each tier kicks in at its level and stays until the next milestone. Frames are
@@ -1195,7 +1205,15 @@ async function finishQuiz(inner){
   const persona=computePersona2();
   const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
   if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
-  else{try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,personality:persona,onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}}
+  else{
+    // primary profile update uses only columns guaranteed to exist (after migration)
+    try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,spend_freq:QA.freq,personality:persona,onboarded:true,country:QA.country,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}
+    catch(e){try{await sb.from('profiles').update({onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}catch(_){}}
+    // store full onboarding answers (best-effort; won't block onboarding if the table is missing)
+    try{await sb.from('quiz_answers').upsert({user_id:SESSION.user.id,income,country:QA.country,freq:QA.freq,spend:QA.spend,subs:QA.subs,frustrate:QA.frustrate,reduce:QA.reduce,bankcheck:QA.bankcheck,challenge:QA.challenge,personality:persona},{onConflict:'user_id'});}catch(e){}
+    // seed spending entries from the quiz (best-effort)
+    try{const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){}
+  }
   await loadProfile();
   if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
   const p=PERSONAS[persona]||PERSONAS.goal_chaser;
@@ -2777,7 +2795,23 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=FREQ_CATS.length)QSTEP++;renderQuiz();}
     else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
     else if(act==='qgoal'){const inner=$('#qInner');if(inner)stepGoalCreate(inner);}
-    else if(act==='qcreategoal'){const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}const emo=QA._goalEmo||'🎯';const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};if(DEMO_MODE){DEMO_GOALS.unshift(g);}else{try{await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null});}catch(e){}}if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');toast('🎯 Goal created!');location.hash='#app/dashboard';render();}
+    else if(act==='qcreategoal'){
+      if(window._goalSubmitting)return; // guard against double-submit duplicates
+      const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');
+      if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}
+      // already have an active goal from this flow? don't create a duplicate — just finish onboarding
+      if(!DEMO_MODE&&Array.isArray(GOALS)&&GOALS.some(g=>!g.completed)){if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');location.hash='#app/dashboard';render();return;}
+      let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}
+      const emo=QA._goalEmo||'🎯';
+      window._goalSubmitting=true; if(err)err.textContent=''; if(a){a.textContent='Creating…';a.style.pointerEvents='none';}
+      if(DEMO_MODE){const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};DEMO_GOALS.unshift(g);}
+      else{
+        const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null,private:false});
+        if(error){window._goalSubmitting=false;if(a){a.textContent='Create goal & open dashboard →';a.style.pointerEvents='';}if(err)err.textContent=friendlyErr(error,"Couldn't save your goal — please try again.");return;}
+      }
+      if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');window._goalSubmitting=false;
+      toast('🎯 Goal created!');location.hash='#app/dashboard';render();
+    }
     else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
     else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
     else if(act==='approveSV'){await sb.rpc('approve_student',{p_id:a.getAttribute('data-id')});toast('Approved → Pro');render();}
@@ -3005,7 +3039,7 @@ function openGoalModal(){
     }
     if(file){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('goal-images').upload(path,file);if(!upErr){imgUrl=sb.storage.from('goal-images').getPublicUrl(path).data.publicUrl;}}
     const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:targetISO,image_url:imgUrl,private:priv});
-    if(error){$('#gmErr').textContent=error.message;$('#gmSave').disabled=false;$('#gmSave').textContent='Create goal';return;}
+    if(error){$('#gmErr').textContent=friendlyErr(error,"Couldn't save your goal — please try again.");$('#gmSave').disabled=false;$('#gmSave').textContent='Create goal';return;}
     close();toast('Goal created');render();
   });
 }
