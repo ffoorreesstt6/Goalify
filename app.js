@@ -2255,6 +2255,15 @@ async function render(){
       <p class="font-medium" style="color:var(--text)">Verifying your account…</p>
       <p class="text-sm" style="color:var(--muted)">You'll be redirected in a moment.</p>
     </div>`;
+    // Safety net: never hang here. If the session is ready, route; else fall back to login.
+    setTimeout(async()=>{
+      if(!location.hash.includes('access_token'))return; // already moved on
+      try{
+        const {data}=await sb.auth.getSession();
+        if(data&&data.session){SESSION=data.session;await loadProfile();location.hash=isOnboarded()?'#app/dashboard':'#quiz';return;}
+      }catch(e){console.error('[Goalify] verify-callback fallback error:',e);}
+      location.hash='#login';
+    },5000);
     return;
   }
   // Supabase error callback (e.g. expired link)
@@ -2878,17 +2887,32 @@ document.addEventListener('submit',async(e)=>{
       const code=($('#otpInput')?.value||'').replace(/[^0-9]/g,'');
       const msg=$('#otpMsg'),btn=$('#otpBtn');
       const setMsg=(t,ok)=>{if(msg){msg.style.color=ok?'#34d399':'#f87171';msg.textContent=t;}};
+      const reset=()=>{if(btn){btn.disabled=false;btn.textContent='Verify & continue';}};
       if(!email){setMsg('Session expired — please sign up again.');return;}
       if(code.length!==8){setMsg('Enter the 8-digit code.');return;}
       if(btn){btn.disabled=true;btn.textContent='Verifying…';}
-      const {data,error}=await sb.auth.verifyOtp({email,token:code,type:'signup'});
-      if(error){setMsg(error.message||'Invalid or expired code.');if(btn){btn.disabled=false;btn.textContent='Verify & continue';}return;}
-      setMsg('✓ Verified! Signing you in…',true);
-      localStorage.removeItem('goalify_pending_email');
-      if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
-      // verifyOtp returns a session; load profile and route (onAuthStateChange may also fire — idempotent)
-      try{SESSION=(data&&data.session)||(await sb.auth.getSession()).data.session;if(SESSION)await loadProfile();}catch(e){}
-      location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
+      try{
+        // verifyOtp guarded by a timeout so the spinner can never hang forever
+        const res=await Promise.race([
+          sb.auth.verifyOtp({email,token:code,type:'signup'}),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),12000))
+        ]);
+        if(res&&res.error){console.error('[Goalify] verifyOtp error:',res.error);setMsg(friendlyErr(res.error,'Invalid or expired code.'));reset();return;}
+        setMsg('✓ Verified! Signing you in…',true);
+        localStorage.removeItem('goalify_pending_email');
+        if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
+        // refresh session + load profile, each timeout-guarded — never block the redirect
+        try{
+          const sres=await Promise.race([sb.auth.getSession(),new Promise(r=>setTimeout(()=>r({data:{}}),6000))]);
+          SESSION=(res&&res.data&&res.data.session)||(sres&&sres.data&&sres.data.session)||SESSION||null;
+          if(SESSION)await Promise.race([loadProfile(),new Promise(r=>setTimeout(r,6000))]);
+        }catch(e2){console.error('[Goalify] post-verify session/profile error:',e2);}
+        location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
+      }catch(err){
+        console.error('[Goalify] verifyOtp exception:',err);
+        setMsg(err&&err.message==='__timeout__' ? 'Network is slow — please try again' : 'Could not verify the code — please try again');
+        reset();
+      }
     }
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
