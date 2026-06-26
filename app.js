@@ -879,7 +879,7 @@ function landing(){
           <div class="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm" style="background:var(--glass);border:1px solid var(--border);color:var(--muted)">✦ The #1 Savings & Goals App</div>
           <h1 class="text-5xl font-extrabold leading-[1.05] sm:text-6xl">Turn every euro<br>into <span class="gtext">progress.</span></h1>
           <p class="mt-6 max-w-md text-lg" style="color:var(--muted)">Track your spending, build better habits, and reach your goals faster with Goalify.</p>
-          <div class="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center"><a href="${cta}" class="btn btn-primary">Start for free →</a><a href="${cta}" class="inline-flex items-center gap-2 font-semibold text-accent-purple">▶ See how it works</a></div>
+          <div class="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center"><a href="${cta}" class="btn btn-primary">Start for free →</a></div>
           <div class="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)"><span>✅ Free to start</span><span>💳 No credit card</span><span>✅ Cancel anytime</span></div>
         </div>
         <div class="anim">${landingPreview()}</div>
