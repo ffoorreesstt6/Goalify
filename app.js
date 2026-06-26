@@ -2291,7 +2291,7 @@ async function render(){
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
-  if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));startOtpCooldown(60);setTimeout(()=>{const i=document.getElementById('otpInput');if(i)i.focus();},50);return;}
+  if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));_otpCooldown=0;setTimeout(()=>{const i=document.getElementById('otpInput');if(i)i.focus();},50);return;}
   if(hash==='reset'){siteTheme();root.innerHTML=resetView();return;}
   // need session below
   if(!DEMO_MODE && !SESSION){location.hash='#login';return;}
@@ -2704,13 +2704,31 @@ document.addEventListener('click',async(e)=>{
     }
     else if(act==='togglePw'){const inp=document.getElementById(a.getAttribute('data-target'));if(inp){const show=inp.type==='password';inp.type=show?'text':'password';a.innerHTML=show?EYE_OFF:EYE_ON;}}
     else if(act==='resendVerify'||act==='resendCode'){
-      if(_otpCooldown>0)return; // cooldown active
+      if(_otpCooldown>0){toast('Please wait '+_otpCooldown+'s before resending','err');return;}
       const em=a.getAttribute('data-email')||localStorage.getItem('goalify_pending_email')||'';
-      if(!em){toast('No email on file — sign up again','err');return;}
-      const {error}=await sb.auth.resend({email:em,type:'signup'});
-      if(error){toast(error.message||'Could not resend code','err');return;}
-      toast('New code sent — check your inbox 📨');
-      startOtpCooldown(60);
+      if(!em){toast('No email on file — please sign up again','err');return;}
+      const oldTxt=a.textContent; a.textContent='Sending…'; a.style.pointerEvents='none';
+      console.log('[Goalify] resend OTP →',{email:em,type:'signup'});
+      try{
+        const {error}=await Promise.race([
+          sb.auth.resend({type:'signup',email:em}),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),15000))
+        ]);
+        a.style.pointerEvents='';
+        if(error){
+          console.error('[Goalify] resend error:',{message:error.message,status:error.status,code:error.code,error});
+          a.textContent=oldTxt;
+          toast(error.message||'Could not resend code','err'); // REAL Supabase message (e.g. rate limit)
+          return;
+        }
+        console.log('[Goalify] resend success — new email requested');
+        toast('New code sent — check your inbox 📨');
+        startOtpCooldown(60); // disable + count down only AFTER a successful resend (respects the 60s rate limit)
+      }catch(err){
+        a.style.pointerEvents=''; a.textContent=oldTxt;
+        console.error('[Goalify] resend exception:',err);
+        toast(err&&err.message==='__timeout__' ? 'The request timed out — please try again' : 'Could not resend code','err');
+      }
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
