@@ -13,8 +13,12 @@ const storage = {
   setItem: (k, v) => { (localStorage.getItem(REMEMBER) === "1" ? localStorage : sessionStorage).setItem(k, v); },
   removeItem: (k) => { localStorage.removeItem(k); sessionStorage.removeItem(k); },
 };
+// No-op lock: the default Navigator LockManager serializes all auth calls and can
+// deadlock (a slow getSession blocks verifyOtp forever → "Verifying…" hangs). Running
+// each call directly removes that mutex and fixes the OTP verification hang.
+const noopLock = async (_name, _acquireTimeout, fn) => await fn();
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage },
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage, flowType: 'implicit', lock: noopLock },
 });
 
 // ============================================================
@@ -2883,20 +2887,28 @@ document.addEventListener('submit',async(e)=>{
       else{localStorage.setItem('goalify_pending_email',email);toast('We sent an 8-digit code to your email 📨');location.hash='#verify';}
     }
     else if(f.id==='otpForm'){
+      if(window._verifying)return;                 // prevent duplicate verification requests
       const email=localStorage.getItem('goalify_pending_email')||'';
       const code=($('#otpInput')?.value||'').replace(/[^0-9]/g,'');
       const msg=$('#otpMsg'),btn=$('#otpBtn');
       const setMsg=(t,ok)=>{if(msg){msg.style.color=ok?'#34d399':'#f87171';msg.textContent=t;}};
-      const reset=()=>{if(btn){btn.disabled=false;btn.textContent='Verify & continue';}};
+      const reset=()=>{window._verifying=false;if(btn){btn.disabled=false;btn.textContent='Verify & continue';}};
       if(!email){setMsg('Session expired — please sign up again.');return;}
       if(code.length!==8){setMsg('Enter the 8-digit code.');return;}
-      if(btn){btn.disabled=true;btn.textContent='Verifying…';}
+      window._verifying=true;if(btn){btn.disabled=true;btn.textContent='Verifying…';}
+      // each verifyOtp call is timeout-guarded so the spinner can never hang forever
+      const tryVerify=(type)=>Promise.race([
+        sb.auth.verifyOtp({email,token:code,type}),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),15000))
+      ]);
       try{
-        // verifyOtp guarded by a timeout so the spinner can never hang forever
-        const res=await Promise.race([
-          sb.auth.verifyOtp({email,token:code,type:'signup'}),
-          new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),12000))
-        ]);
+        // 'signup' is the confirm-email OTP; fall back to 'email' so either Supabase config verifies
+        let res;
+        try{res=await tryVerify('signup');}catch(e){if(e&&e.message==='__timeout__')throw e;res={error:e};}
+        if(res&&res.error){
+          console.error('[Goalify] verifyOtp(signup) failed, retrying as email:',res.error);
+          try{res=await tryVerify('email');}catch(e){if(e&&e.message==='__timeout__')throw e;res={error:e};}
+        }
         if(res&&res.error){console.error('[Goalify] verifyOtp error:',res.error);setMsg(friendlyErr(res.error,'Invalid or expired code.'));reset();return;}
         setMsg('✓ Verified! Signing you in…',true);
         localStorage.removeItem('goalify_pending_email');
@@ -2907,6 +2919,7 @@ document.addEventListener('submit',async(e)=>{
           SESSION=(res&&res.data&&res.data.session)||(sres&&sres.data&&sres.data.session)||SESSION||null;
           if(SESSION)await Promise.race([loadProfile(),new Promise(r=>setTimeout(r,6000))]);
         }catch(e2){console.error('[Goalify] post-verify session/profile error:',e2);}
+        window._verifying=false;
         location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
       }catch(err){
         console.error('[Goalify] verifyOtp exception:',err);
