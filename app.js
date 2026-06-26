@@ -2887,43 +2887,42 @@ document.addEventListener('submit',async(e)=>{
       else{localStorage.setItem('goalify_pending_email',email);toast('We sent an 8-digit code to your email 📨');location.hash='#verify';}
     }
     else if(f.id==='otpForm'){
-      if(window._verifying)return;                 // prevent duplicate verification requests
+      if(window._verifying)return;                 // single request — no duplicate submits
       const email=localStorage.getItem('goalify_pending_email')||'';
       const code=($('#otpInput')?.value||'').replace(/[^0-9]/g,'');
       const msg=$('#otpMsg'),btn=$('#otpBtn');
       const setMsg=(t,ok)=>{if(msg){msg.style.color=ok?'#34d399':'#f87171';msg.textContent=t;}};
       const reset=()=>{window._verifying=false;if(btn){btn.disabled=false;btn.textContent='Verify & continue';}};
       if(!email){setMsg('Session expired — please sign up again.');return;}
-      if(code.length!==8){setMsg('Enter the 8-digit code.');return;}
+      if(!/^\d{8}$/.test(code)){setMsg('Enter the 8-digit code.');return;}
       window._verifying=true;if(btn){btn.disabled=true;btn.textContent='Verifying…';}
-      // each verifyOtp call is timeout-guarded so the spinner can never hang forever
-      const tryVerify=(type)=>Promise.race([
-        sb.auth.verifyOtp({email,token:code,type}),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),15000))
-      ]);
+      const TIMEOUT=20000; // real network-timeout guard only (lock is disabled so this rarely fires)
+      const race=(p)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),TIMEOUT))]);
+      console.log('[Goalify] verifyOtp →',{email,tokenLength:code.length,type:'signup'});
       try{
-        // 'signup' is the confirm-email OTP; fall back to 'email' so either Supabase config verifies
-        let res;
-        try{res=await tryVerify('signup');}catch(e){if(e&&e.message==='__timeout__')throw e;res={error:e};}
-        if(res&&res.error){
-          console.error('[Goalify] verifyOtp(signup) failed, retrying as email:',res.error);
-          try{res=await tryVerify('email');}catch(e){if(e&&e.message==='__timeout__')throw e;res={error:e};}
+        // signUp() confirmation OTP is type 'signup'. Supabase returns the SAME "invalid/expired"
+        // message for a wrong type, so if 'signup' fails we try the generic 'email' type once.
+        let {data,error}=await race(sb.auth.verifyOtp({email,token:code,type:'signup'}));
+        if(error){
+          console.error('[Goalify] verifyOtp(type:signup) error:',{message:error.message,status:error.status,name:error.name,code:error.code,error});
+          const r2=await race(sb.auth.verifyOtp({email,token:code,type:'email'}));
+          data=r2.data;error=r2.error;
+          if(error)console.error('[Goalify] verifyOtp(type:email) error:',{message:error.message,status:error.status,name:error.name,code:error.code,error});
         }
-        if(res&&res.error){console.error('[Goalify] verifyOtp error:',res.error);setMsg(friendlyErr(res.error,'Invalid or expired code.'));reset();return;}
+        if(error){ setMsg(error.message||'Verification failed'); reset(); return; } // REAL Supabase message
+        console.log('[Goalify] verifyOtp success — session present:',!!(data&&data.session));
         setMsg('✓ Verified! Signing you in…',true);
         localStorage.removeItem('goalify_pending_email');
         if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
-        // refresh session + load profile, each timeout-guarded — never block the redirect
-        try{
-          const sres=await Promise.race([sb.auth.getSession(),new Promise(r=>setTimeout(()=>r({data:{}}),6000))]);
-          SESSION=(res&&res.data&&res.data.session)||(sres&&sres.data&&sres.data.session)||SESSION||null;
-          if(SESSION)await Promise.race([loadProfile(),new Promise(r=>setTimeout(r,6000))]);
-        }catch(e2){console.error('[Goalify] post-verify session/profile error:',e2);}
+        // session is created by verifyOtp; confirm/refresh it before redirecting
+        SESSION=(data&&data.session)||null;
+        if(!SESSION){try{const {data:s}=await race(sb.auth.getSession());SESSION=(s&&s.session)||null;}catch(e){console.error('[Goalify] getSession after verify:',e);}}
+        if(SESSION){try{await loadProfile();}catch(e){console.error('[Goalify] loadProfile after verify:',e);}}
         window._verifying=false;
         location.hash = isOnboarded() ? '#app/dashboard' : '#quiz';
       }catch(err){
-        console.error('[Goalify] verifyOtp exception:',err);
-        setMsg(err&&err.message==='__timeout__' ? 'Network is slow — please try again' : 'Could not verify the code — please try again');
+        if(err&&err.message==='__timeout__'){console.error('[Goalify] verifyOtp timed out after',TIMEOUT,'ms');setMsg('The request timed out — check your connection and try again.');}
+        else{console.error('[Goalify] verifyOtp exception:',err);setMsg((err&&err.message)||'Verification failed — please try again');}
         reset();
       }
     }
