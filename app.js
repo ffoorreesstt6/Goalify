@@ -399,7 +399,7 @@ const I18N_EXTRA7={
 };
 Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
-function langSelect(){const cur=curLang();return `<select id="langSel" class="input !py-1.5 text-xs" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
+function langSelect(){const cur=curLang();return `<select id="langSel" class="lp-lang" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
 function t(s){const lang=curLang();if(lang==='en')return s;const dict=I18N[lang];if(!dict)return s;const key=(s==null?'':String(s)).trim();return (key&&dict[key]!=null)?String(s).replace(key,dict[key]):s;}
 function translateDOM(root){
@@ -879,11 +879,11 @@ function landing(){
     ['📊','Track & build habits','Log spending, follow your plan, keep your streak alive.'],
     ['🏆','Reach it','Hit milestones, level up, and start the next goal.']
   ];
-  const navItem=(t,to)=>`<a href="#home" data-scroll="${to}">${t}</a>`;
+  const navItem=(t,to)=>`<a href="#home" data-scroll="${to}" class="lp-nav-link">${t}</a>`;
   const trust=[['✓','Free forever plan'],['✓','No credit card'],['✓','Cancel anytime'],['🔒','Bank-level security']];
-  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4">
+  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-3">
     <div class="mx-auto max-w-7xl">
-      <div class="lg flex items-center justify-between rounded-2xl px-5 py-3">
+      <div class="lg lp-navbar flex items-center justify-between rounded-2xl px-5 py-2.5">
         ${brand()}
         <nav class="lp-nav hidden gap-8 md:flex text-sm" style="color:var(--muted)">${navItem('Features','feat')}${navItem('How it works','how')}${navItem('Pricing','pricing')}${navItem('FAQ','faq')}</nav>
         <div class="flex items-center gap-3">${langSelect()}${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`}</div>
@@ -893,7 +893,7 @@ function landing(){
   <main>
     <section class="lp-hero px-4">
       <div class="lp-aurora"></div><div class="lp-haze"></div>
-      <div class="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+      <div class="relative mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-2">
         <div class="reveal">
           <span class="lp-eyebrow"><span class="dot"></span> Your money, finally on your side</span>
           <h1 class="lp-h1 mt-6">Turn every euro<br>into <span class="gtext">progress.</span></h1>
@@ -903,6 +903,7 @@ function landing(){
             <a href="#home" data-scroll="how" class="btn btn-ghost lp-btn-lg">See how it works</a>
           </div>
           <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--accent2)">${t[0]}</span>${t[1]}</span>`).join('')}</div>
+          <div class="lp-hero-trust"><span class="lp-hero-avs"><span>★</span><span>G</span><span>+</span></span><span class="text-sm" style="color:var(--muted)">Trusted by thousands saving toward their goals</span></div>
         </div>
         <div class="reveal" style="transition-delay:.08s">
           <div class="lp-frame lp-float">
@@ -1012,13 +1013,14 @@ function authWrap(inner){
       <div class="auth-aside-in">
         <div>${brand('#home',{size:34})}</div>
         <div>
-          <h2 class="auth-aside-h">Turn every euro into progress.</h2>
-          <p class="auth-aside-p">Track your spending, build better habits, and reach every savings goal faster.</p>
+          <h2 class="auth-aside-h">Reach your financial goals faster.</h2>
+          <p class="auth-aside-p">Track spending, build better habits, and watch every goal get closer.</p>
           <ul class="auth-aside-list">
-            <li>✓ Free forever plan — no card required</li>
-            <li>✓ Bank-level security &amp; privacy</li>
-            <li>✓ Goals, streaks, insights &amp; rewards</li>
+            <li class="auth-bullet"><span class="auth-bi">🎯</span> Set goals and reach them with a clear plan</li>
+            <li class="auth-bullet"><span class="auth-bi">📊</span> See where your money goes in seconds</li>
+            <li class="auth-bullet"><span class="auth-bi">🔒</span> Private &amp; secure — only you can see it</li>
           </ul>
+          <div class="auth-preview">${landingPreview()}</div>
         </div>
         <p class="auth-aside-foot">© ${new Date().getFullYear()} Goalify</p>
       </div>
