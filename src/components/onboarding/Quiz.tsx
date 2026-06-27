@@ -43,7 +43,14 @@ export function Quiz() {
   }
 
   return (
-    <div className="quiz-nature-bg relative flex min-h-screen items-center justify-center px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
+      {/* Background image with CSS gradient fallback */}
+      <div
+        className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat quiz-nature-bg"
+        style={{ backgroundImage: "url('/quiz-bg.jpg')" }}
+      />
+      {/* Light overlay for readability over image */}
+      <div className="absolute inset-0 -z-10 bg-white/50" />
       <div className="w-full max-w-2xl">
         {/* Progress */}
         <div className="mb-8">

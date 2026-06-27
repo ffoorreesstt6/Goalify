@@ -27,7 +27,7 @@ export function Navbar() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "navbar-scrolled py-3" : "navbar-transparent py-5"
+        scrolled ? "navbar-scrolled py-2.5" : "navbar-transparent py-3"
       )}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

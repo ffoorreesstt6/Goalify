@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, TrendingUp, Target, Wallet } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 lg:pt-36 lg:pb-24">
+    <section className="relative overflow-hidden pt-20 pb-16 lg:pt-24 lg:pb-20">
       {/* Subtle animated background shapes */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div
