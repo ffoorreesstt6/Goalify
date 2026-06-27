@@ -865,53 +865,111 @@ function landingPreview(){
 }
 function landing(){
   const cta='#signup';
-  const loginHref='#login';
-  const feats=[['🎯','Set Any Goal','Create goals for anything and stay motivated.','rgba(139,92,246,.15)'],['📊','Track & Analyze','Understand your money and habits.','rgba(34,197,94,.15)'],['🏆','Earn & Level Up','Complete missions and unlock achievements.','rgba(245,158,11,.15)'],['👥','Stay Accountable','Build streaks and beat your best.','rgba(59,130,246,.15)'],['🔒','Bank-Level Security','Your data is encrypted and always protected.','rgba(239,68,68,.15)']];
-  const steps=[['👤','Sign up in seconds','Create your account and tell us a bit about you.'],['🎯','Set your goals','Choose what you\'re saving for and target amount.'],['📊','Track & save','Log transactions, build habits, and watch your progress.'],['🏆','Reach your goals','Level up, unlock rewards, and celebrate wins.']];
-  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4"><div class="mx-auto max-w-7xl"><div class="glass-strong flex items-center justify-between rounded-2xl px-5 py-3">${brand()}
-    <nav class="hidden gap-7 md:flex text-sm" style="color:var(--muted)"><a href="#home" data-scroll="feat" class="hover:text-accent-purple">Features</a><a href="#home" data-scroll="how" class="hover:text-accent-purple">How it works</a><a href="#home" data-scroll="pricing" class="hover:text-accent-purple">Pricing</a><a href="#home" data-scroll="faq" class="hover:text-accent-purple">Blog</a><a href="#home" data-scroll="faq" class="hover:text-accent-purple">About</a></nav>
-    <div class="flex items-center gap-3">${langSelect()}${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`}</div>
-  </div></div></header>
+  const feats=[
+    ['🎯','Set any goal','Name what you are saving for, set a target, and watch a clear, doable plan appear.','rgba(139,92,246,.16)'],
+    ['📊','See where money goes','Log spending in seconds and get a clean breakdown of the habits worth changing.','rgba(34,197,94,.16)'],
+    ['⚡','Reach goals faster','Goalify turns small daily savings into a real timeline — then helps you beat it.','rgba(245,158,11,.16)'],
+    ['🏆','Stay motivated','Streaks, levels and milestones make saving feel like progress, not punishment.','rgba(59,130,246,.16)'],
+    ['🔒','Private by design','Your data is protected with row-level security — only you can see it.','rgba(236,72,153,.16)'],
+    ['🌍','Built for everyone','Six languages and a mindset for students, workers and families alike.','rgba(99,102,241,.16)']
+  ];
+  const steps=[
+    ['👤','Create your account','Sign up free in seconds — no card required.'],
+    ['🎯','Set your first goal','Tell Goalify what you are saving for and by when.'],
+    ['📊','Track & build habits','Log spending, follow your plan, keep your streak alive.'],
+    ['🏆','Reach it','Hit milestones, level up, and start the next goal.']
+  ];
+  const navItem=(t,to)=>`<a href="#home" data-scroll="${to}">${t}</a>`;
+  const trust=[['✓','Free forever plan'],['✓','No credit card'],['✓','Cancel anytime'],['🔒','Bank-level security']];
+  return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4">
+    <div class="mx-auto max-w-7xl">
+      <div class="glass-strong flex items-center justify-between rounded-2xl px-5 py-3" style="-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)">
+        ${brand()}
+        <nav class="lp-nav hidden gap-8 md:flex text-sm" style="color:var(--muted)">${navItem('Features','feat')}${navItem('How it works','how')}${navItem('Pricing','pricing')}${navItem('FAQ','faq')}</nav>
+        <div class="flex items-center gap-3">${langSelect()}${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`}</div>
+      </div>
+    </div>
+  </header>
   <main>
-    <section class="relative overflow-hidden pt-32 pb-16 sm:pt-36">
-      <div class="relative mx-auto grid max-w-7xl items-center gap-10 px-4 lg:grid-cols-2">
-        <div>
-          <div class="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm" style="background:var(--glass);border:1px solid var(--border);color:var(--muted)">✦ The #1 Savings & Goals App</div>
-          <h1 class="text-5xl font-extrabold leading-[1.05] sm:text-6xl">Turn every euro<br>into <span class="gtext">progress.</span></h1>
-          <p class="mt-6 max-w-md text-lg" style="color:var(--muted)">Track your spending, build better habits, and reach your goals faster with Goalify.</p>
-          <div class="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center"><a href="${cta}" class="btn btn-primary">Start for free →</a></div>
-          <div class="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)"><span>✅ Free to start</span><span>💳 No credit card</span><span>✅ Cancel anytime</span></div>
+    <section class="relative overflow-hidden px-4 pt-32 pb-20 sm:pt-40">
+      <div class="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div class="reveal">
+          <span class="lp-eyebrow"><span class="dot"></span> The #1 Savings & Goals App</span>
+          <h1 class="lp-h1 mt-6">Turn every euro<br>into <span class="gtext">progress.</span></h1>
+          <p class="lp-lead mt-6 max-w-md">Track your spending, build better habits, and reach every savings goal faster — with a money app that actually feels good to open.</p>
+          <div class="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <a href="${cta}" class="btn btn-primary lp-btn-lg">Start for free →</a>
+            <a href="#home" data-scroll="pricing" class="btn btn-ghost lp-btn-lg">See pricing</a>
+          </div>
+          <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--accent2)">${t[0]}</span>${t[1]}</span>`).join('')}</div>
         </div>
-        <div class="anim">${landingPreview()}</div>
+        <div class="reveal lp-frame" style="transition-delay:.08s">
+          <div class="lp-frame-bar"><i></i><i></i><i></i></div>
+          ${landingPreview()}
+        </div>
       </div>
     </section>
-    <section id="sec-feat" class="mx-auto max-w-7xl px-4 pb-8">
-      <div class="glass rounded-3xl p-5 sm:p-7"><div class="grid gap-6 sm:grid-cols-3 lg:grid-cols-5">
-      ${feats.map(f=>`<div class="flex flex-col gap-2"><span class="flex h-11 w-11 items-center justify-center rounded-xl text-xl" style="background:${f[3]}">${f[0]}</span><h3 class="text-sm font-bold">${f[1]}</h3><p class="text-xs" style="color:var(--muted)">${f[2]}</p></div>`).join('')}
-      </div></div>
-    </section>
-    <section id="sec-how" class="mx-auto max-w-7xl px-4 py-20">
-      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Simple. Powerful. Effective.</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">How Goalify works</h2><p class="mt-3 text-sm" style="color:var(--muted)">Get started in minutes and take control of your money.</p></div>
-      <div class="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">${steps.map((s,i)=>`<div class="relative text-center"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl glass-strong">${s[0]}</div><span class="mx-auto mt-3 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${i+1}</span><h3 class="mt-3 font-bold">${s[1]}</h3><p class="mt-1 text-sm" style="color:var(--muted)">${s[2]}</p></div>`).join('')}</div>
-    </section>
-    <section class="mx-auto max-w-5xl px-4 pb-12">
-      <div class="glass rounded-3xl p-6 flex flex-col items-center justify-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
-        <div><p class="text-xs" style="color:var(--muted)">Trusted by thousands of savers worldwide</p><div class="mt-1 flex items-center gap-2"><div class="flex -space-x-2">${['#4f46e5','#8b5cf6','#22c55e','#f59e0b','#ec4899'].map(c=>`<span class="h-7 w-7 rounded-full" style="background:${c};border:2px solid var(--bg)"></span>`).join('')}</div><span class="text-sm font-semibold">⭐ 4.9/5 <span style="color:var(--muted)">from 2,500+ reviews</span></span></div></div>
-        <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl" style="background:color-mix(in srgb,var(--accent1) 18%,transparent)">🛡️</span><div><p class="text-sm font-semibold">Secure & Private</p><p class="text-xs" style="color:var(--muted)">256-bit encrypted</p></div></div>
-        <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl" style="background:color-mix(in srgb,var(--accent2) 18%,transparent)">💜</span><div><p class="text-sm font-semibold">Made for Everyone</p><p class="text-xs" style="color:var(--muted)">Students, workers, families</p></div></div>
+
+    <section id="sec-feat" class="lp-sec mx-auto max-w-7xl px-4">
+      <div class="mx-auto max-w-2xl text-center reveal">
+        <p class="lp-kicker gtext">Everything you need</p>
+        <h2 class="lp-h2 mt-3">Everything you need to <span class="gtext">win with money</span></h2>
+        <p class="lp-lead mt-4">Powerful where it counts, simple everywhere else.</p>
+      </div>
+      <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        ${feats.map((f,i)=>`<div class="lp-card reveal" style="transition-delay:${(i%3)*0.06}s"><span class="lp-ico" style="background:${f[3]}">${f[0]}</span><h3 class="mt-4 text-lg font-bold">${f[1]}</h3><p class="mt-1.5 text-sm leading-relaxed" style="color:var(--muted)">${f[2]}</p></div>`).join('')}
       </div>
     </section>
-    <section id="sec-pricing" class="py-16 mx-auto max-w-7xl px-4">
-      <div class="mx-auto max-w-2xl text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">Pricing</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Simple, honest pricing</h2><p class="mt-3 text-sm" style="color:var(--muted)">Start free. Upgrade when you're ready. Cancel anytime.</p></div>
-      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map(id=>{const p=PLANS[id],pr=PRICING[id];return `<div class="relative flex flex-col rounded-2xl p-6 ${p.highlight?'glass-strong':'glass'}" ${p.highlight?'style="box-shadow:0 0 40px -10px color-mix(in srgb,var(--accent2) 60%,transparent)"':''}>${p.highlight?'<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>':''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-extrabold">€${p.price}</span><span class="text-sm" style="color:var(--muted)">${id==='free'?'/forever':'/mo'}</span></div>${pr?`<p class="mt-1 text-xs" style="color:var(--muted)">or €${pr.yr}/year</p>`:'<p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>'}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-5 space-y-2 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span class="text-accent-purple">✓</span>${f}</li>`).join('')}</ul></div>`;}).join('')}</div>
-      <p class="mt-6 text-center text-sm" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
+
+    <section id="sec-how" class="lp-sec mx-auto max-w-7xl px-4">
+      <div class="mx-auto max-w-2xl text-center reveal">
+        <p class="lp-kicker gtext">Simple. Powerful. Effective.</p>
+        <h2 class="lp-h2 mt-3">How Goalify works</h2>
+        <p class="lp-lead mt-4">Get started in minutes and take control of your money.</p>
+      </div>
+      <div class="lp-steps mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        ${steps.map((s,i)=>`<div class="relative text-center reveal" style="transition-delay:${i*0.07}s"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl glass-strong" style="position:relative;z-index:1">${s[0]}</div><div class="mx-auto mt-4 lp-stepnum">${i+1}</div><h3 class="mt-4 font-bold">${s[1]}</h3><p class="mt-1.5 text-sm" style="color:var(--muted)">${s[2]}</p></div>`).join('')}
+      </div>
     </section>
-    <section id="sec-faq" class="py-16 mx-auto max-w-3xl px-4">
-      <div class="text-center"><p class="text-sm font-semibold uppercase tracking-widest gtext">FAQ</p><h2 class="mt-3 text-4xl font-bold sm:text-5xl">Questions, answered</h2></div>
-      <div class="mt-10 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="glass rounded-2xl overflow-hidden"><button class="flex w-full items-center justify-between px-6 py-5 text-left font-medium" data-action="faq" data-i="${i}">${f[0]}<span id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
+
+    <section class="mx-auto max-w-5xl px-4" style="padding-bottom:clamp(4rem,9vw,7rem)">
+      <div class="glass rounded-3xl p-7 sm:p-9 grid gap-6 sm:grid-cols-3 reveal">
+        ${[['🛡️','Secure & private','Row-level security means only you can see your data.','var(--accent1)'],['💜','Made for everyone','Students, workers and families across six languages.','var(--accent2)'],['🪙','Your money, your call','No selling data, no hidden fees, cancel anytime.','var(--accent3)']].map(t=>`<div class="flex items-start gap-3"><span class="lp-ico shrink-0" style="background:color-mix(in srgb,${t[3]} 18%,transparent)">${t[0]}</span><div><p class="font-semibold">${t[1]}</p><p class="mt-1 text-sm" style="color:var(--muted)">${t[2]}</p></div></div>`).join('')}
+      </div>
     </section>
-    <section class="py-16 mx-auto max-w-5xl px-4"><div class="rounded-3xl p-12 sm:p-16 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent3))"><h2 class="text-4xl font-bold sm:text-5xl text-white">Turn every euro into progress</h2><a href="${cta}" class="btn mt-8 bg-white text-indigo-700 hover:scale-105">Start for free →</a></div></section>
-    <footer class="py-12 mx-auto max-w-7xl px-4 text-center text-sm" style="border-top:1px solid var(--border);color:var(--muted)"><div class="mb-3 flex justify-center">${brand('#home',{size:30})}</div>© ${new Date().getFullYear()} Goalify. All rights reserved.</footer>
+
+    <section id="sec-pricing" class="lp-sec mx-auto max-w-7xl px-4">
+      <div class="mx-auto max-w-2xl text-center reveal">
+        <p class="lp-kicker gtext">Pricing</p>
+        <h2 class="lp-h2 mt-3">Simple, honest pricing</h2>
+        <p class="lp-lead mt-4">Start free. Upgrade when you are ready. Cancel anytime.</p>
+      </div>
+      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€${p.price}</span><span class="text-sm" style="color:var(--muted)">${id==='free'?'/forever':'/mo'}</span></div>${pr?`<p class="mt-1 text-xs" style="color:var(--muted)">or €${pr.yr}/year${save>0?` · <span style="color:var(--accent2);font-weight:600">save ${save}%</span>`:''}</p>`:`<p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
+      <p class="mt-8 text-center text-sm reveal" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
+    </section>
+
+    <section id="sec-faq" class="lp-sec mx-auto max-w-3xl px-4">
+      <div class="text-center reveal"><p class="lp-kicker gtext">FAQ</p><h2 class="lp-h2 mt-3">Questions, answered</h2></div>
+      <div class="mt-12 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="lp-faq reveal"><button data-action="faq" data-i="${i}"><span>${f[0]}</span><span class="chev" id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm leading-relaxed" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4" style="padding-bottom:clamp(4rem,9vw,7rem)">
+      <div class="lp-cta-panel reveal">
+        <h2 class="relative z-10 text-white" style="font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.02em">Turn every euro into progress</h2>
+        <p class="relative z-10 mx-auto mt-3 max-w-md" style="color:rgba(255,255,255,.85)">Join Goalify and start reaching your goals — for free.</p>
+        <a href="${cta}" class="btn relative z-10 mt-8 bg-white text-indigo-700 lp-btn-lg" style="font-weight:700">Start for free →</a>
+      </div>
+    </section>
+
+    <footer class="mx-auto max-w-7xl px-4 py-12" style="border-top:1px solid var(--border)">
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div><div class="mb-3">${brand('#home',{size:30})}</div><p class="text-sm max-w-xs" style="color:var(--muted)">Turn every euro into progress. Track spending, build habits, reach your goals.</p></div>
+        <div><p class="mb-3 text-sm font-semibold">Product</p><div class="flex flex-col gap-2 text-sm"><a class="lp-foot-link" href="#home" data-scroll="feat">Features</a><a class="lp-foot-link" href="#home" data-scroll="pricing">Pricing</a><a class="lp-foot-link" href="#home" data-scroll="faq">FAQ</a></div></div>
+        <div><p class="mb-3 text-sm font-semibold">Account</p><div class="flex flex-col gap-2 text-sm"><a class="lp-foot-link" href="#signup">Create account</a><a class="lp-foot-link" href="#login">Log in</a></div></div>
+        <div><p class="mb-3 text-sm font-semibold">Get started</p><a href="${cta}" class="btn btn-primary text-sm !py-2 !px-4">Start for free →</a></div>
+      </div>
+      <div class="mt-10 flex flex-col items-center justify-between gap-3 pt-6 text-center text-sm sm:flex-row sm:text-left" style="border-top:1px solid var(--border);color:var(--muted)"><span>© ${new Date().getFullYear()} Goalify. All rights reserved.</span><span>Made with 💜 for savers everywhere</span></div>
+    </footer>
   </main>`;
 }
 

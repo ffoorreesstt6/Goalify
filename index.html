@@ -309,12 +309,81 @@
     .pf-hero-btn{display:inline-flex;align-items:center;gap:.35rem;border-radius:.6rem;padding:.4rem .65rem;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);transition:background .15s;cursor:pointer;line-height:1}
     .pf-hero-btn:hover{background:rgba(0,0,0,.6)}
     @media(max-width:480px){.pf-hero-btn-t{display:none}.pf-hero-btn{padding:.45rem .55rem;font-size:13px}}
+    /* ============================================================
+       SCROLL REVEAL — shared across all rebuilt pages
+       ============================================================ */
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+    .reveal.in{opacity:1;transform:none}
+    @media (prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none}}
+    /* ============================================================
+       LANDING V2 — premium marketing surface
+       ============================================================ */
+    .lp-sec{padding-top:clamp(4rem,9vw,7rem);padding-bottom:clamp(4rem,9vw,7rem)}
+    .lp-eyebrow{display:inline-flex;align-items:center;gap:.5rem;border-radius:9999px;padding:.4rem .9rem;font-size:.8rem;font-weight:600;color:var(--muted);background:var(--glass);border:1px solid var(--border)}
+    .lp-eyebrow .dot{width:7px;height:7px;border-radius:9999px;background:var(--accent2);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent2) 22%,transparent)}
+    .lp-h1{font-size:clamp(2.6rem,6vw,4.25rem);line-height:1.04;letter-spacing:-.03em;font-weight:800}
+    .lp-h2{font-size:clamp(2rem,4vw,3rem);line-height:1.08;letter-spacing:-.02em;font-weight:800}
+    .lp-lead{font-size:clamp(1.05rem,1.5vw,1.18rem);line-height:1.6;color:var(--muted)}
+    .lp-kicker{font-size:.78rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+    .lp-btn-lg{padding:.9rem 1.6rem;font-size:1rem}
+    .lp-nav a{transition:color .15s}.lp-nav a:hover{color:var(--text)}
+    .lp-frame{position:relative;border-radius:1.25rem;border:1px solid var(--border);background:var(--glass-strong);padding:.55rem;box-shadow:0 50px 120px -45px color-mix(in srgb,var(--accent1) 60%,transparent),0 22px 50px -30px rgba(0,0,0,.45)}
+    .lp-frame-bar{display:flex;gap:6px;padding:.3rem .5rem .55rem}
+    .lp-frame-bar i{width:10px;height:10px;border-radius:9999px;background:var(--border)}
+    .lp-card{background:var(--glass);border:1px solid var(--border);border-radius:1.1rem;padding:1.4rem;transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s,box-shadow .25s}
+    .lp-card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent2) 45%,var(--border));box-shadow:0 24px 50px -32px color-mix(in srgb,var(--accent1) 65%,transparent)}
+    .lp-ico{display:inline-flex;align-items:center;justify-content:center;width:3rem;height:3rem;border-radius:.9rem;font-size:1.4rem}
+    .lp-steps{position:relative}
+    @media(min-width:1024px){.lp-steps::before{content:"";position:absolute;top:2rem;left:13%;right:13%;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent2) 55%,transparent),transparent)}}
+    .lp-stepnum{display:flex;align-items:center;justify-content:center;width:2.3rem;height:2.3rem;border-radius:9999px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 8px 20px -8px color-mix(in srgb,var(--accent1) 70%,transparent)}
+    .lp-price{position:relative;display:flex;flex-direction:column;border-radius:1.25rem;padding:1.6rem;background:var(--glass);border:1px solid var(--border);transition:transform .25s,border-color .25s,box-shadow .25s}
+    .lp-price:hover{transform:translateY(-4px)}
+    .lp-price.pop{border-color:color-mix(in srgb,var(--accent2) 60%,var(--border));box-shadow:0 0 0 1px color-mix(in srgb,var(--accent2) 30%,transparent),0 30px 60px -32px color-mix(in srgb,var(--accent1) 60%,transparent)}
+    .lp-faq{border:1px solid var(--border);background:var(--glass);border-radius:1rem;overflow:hidden;transition:border-color .2s}
+    .lp-faq:hover{border-color:color-mix(in srgb,var(--accent2) 40%,var(--border))}
+    .lp-faq>button{display:flex;width:100%;align-items:center;justify-content:space-between;gap:1rem;padding:1.15rem 1.35rem;text-align:left;font-weight:600;color:var(--text);background:none;border:none;cursor:pointer;font-size:1rem}
+    .lp-faq .chev{color:var(--muted);flex-shrink:0;font-size:1.1rem}
+    .lp-cta-panel{position:relative;overflow:hidden;border-radius:1.75rem;padding:clamp(2.5rem,5vw,4.5rem);text-align:center;background:linear-gradient(135deg,var(--accent1),var(--accent2) 55%,var(--accent3))}
+    .lp-cta-panel::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 120% at 50% 0%,rgba(255,255,255,.22),transparent 70%);pointer-events:none}
+    .lp-foot-link{color:var(--muted);text-decoration:none;transition:color .15s}.lp-foot-link:hover{color:var(--text)}
+    a:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;border-radius:.4rem}
   </style>
 </head>
 <body>
   <div id="root" class="min-h-screen"><div class="flex min-h-screen items-center justify-center text-slate-500">Loading…</div></div>
   <div id="modal"></div>
   <div id="toast"></div>
-  <script type="module" src="./app.js?v=70"></script>
+  <script>
+    /* Shared scroll-reveal: reveals .reveal elements as they enter the viewport.
+       SPA-aware (watches #root for re-renders); respects reduced motion. */
+    (function(){
+      var io=null;
+      function obs(){
+        if(io) return io;
+        if(!('IntersectionObserver' in window)) return null;
+        io=new IntersectionObserver(function(entries){
+          entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+        },{rootMargin:'0px 0px -8% 0px',threshold:.08});
+        return io;
+      }
+      function scan(){
+        var o=obs();
+        var nodes=document.querySelectorAll('.reveal:not(.in)');
+        if(!o){ nodes.forEach(function(el){ el.classList.add('in'); }); return; }
+        var vh=window.innerHeight||document.documentElement.clientHeight;
+        nodes.forEach(function(el){
+          if(el.getBoundingClientRect().top < vh*0.95){ el.classList.add('in'); }
+          else { o.observe(el); }
+        });
+      }
+      var root=document.getElementById('root');
+      if(root && 'MutationObserver' in window){
+        new MutationObserver(function(){ requestAnimationFrame(scan); }).observe(root,{childList:true,subtree:true});
+      }
+      document.addEventListener('DOMContentLoaded',scan);
+      window.addEventListener('load',scan);
+    })();
+  </script>
+  <script type="module" src="./app.js?v=71"></script>
 </body>
 </html>
