@@ -891,33 +891,48 @@ function landing(){
     </div>
   </header>
   <main>
-    <section class="relative overflow-hidden px-4 pt-32 pb-20 sm:pt-40">
+    <section class="lp-hero px-4">
+      <div class="lp-aurora"></div><div class="lp-haze"></div>
       <div class="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
         <div class="reveal">
-          <span class="lp-eyebrow"><span class="dot"></span> The #1 Savings & Goals App</span>
+          <span class="lp-eyebrow"><span class="dot"></span> Your money, finally on your side</span>
           <h1 class="lp-h1 mt-6">Turn every euro<br>into <span class="gtext">progress.</span></h1>
-          <p class="lp-lead mt-6 max-w-md">Track your spending, build better habits, and reach every savings goal faster — with a money app that actually feels good to open.</p>
+          <p class="lp-lead mt-6 max-w-md">Goalify makes saving something you look forward to — track spending in seconds, build streaks that stick, and reach every goal faster.</p>
           <div class="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
             <a href="${cta}" class="btn btn-primary lp-btn-lg">Start for free →</a>
-            <a href="#home" data-scroll="pricing" class="btn btn-ghost lp-btn-lg">See pricing</a>
+            <a href="#home" data-scroll="how" class="btn btn-ghost lp-btn-lg">See how it works</a>
           </div>
           <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--accent2)">${t[0]}</span>${t[1]}</span>`).join('')}</div>
         </div>
-        <div class="reveal lp-frame" style="transition-delay:.08s">
-          <div class="lp-frame-bar"><i></i><i></i><i></i></div>
-          ${landingPreview()}
+        <div class="reveal" style="transition-delay:.08s">
+          <div class="lp-frame lp-float">
+            <div class="lp-frame-bar"><i></i><i></i><i></i></div>
+            ${landingPreview()}
+          </div>
         </div>
+      </div>
+    </section>
+
+    <section class="px-4 pt-4" aria-label="Languages Goalify speaks">
+      <div class="mx-auto max-w-6xl lp-marquee py-3">
+        <div class="lp-marquee-row">${[...LANGS,...LANGS].map(l=>`<span class="lp-chip">${flagSVG(l[0])} ${l[1]}</span>`).join('')}</div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-4 pt-12">
+      <div class="grid grid-cols-2 gap-6 sm:grid-cols-4 reveal">
+        ${[['€0','to start — no card'],['6','languages, more soon'],['100%','private by design'],['4','plans, incl. Business OS']].map(s=>`<div class="lp-stat text-center sm:text-left"><div class="n gtext">${s[0]}</div><div class="l">${s[1]}</div></div>`).join('')}
       </div>
     </section>
 
     <section id="sec-feat" class="lp-sec mx-auto max-w-7xl px-4">
       <div class="mx-auto max-w-2xl text-center reveal">
         <p class="lp-kicker gtext">Everything you need</p>
-        <h2 class="lp-h2 mt-3">Everything you need to <span class="gtext">win with money</span></h2>
-        <p class="lp-lead mt-4">Powerful where it counts, simple everywhere else.</p>
+        <h2 class="lp-h2 mt-3">A money app that <span class="gtext">works the way you do</span></h2>
+        <p class="lp-lead mt-4">Powerful where it counts, calm everywhere else.</p>
       </div>
-      <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        ${feats.map((f,i)=>`<div class="lp-card reveal" style="transition-delay:${(i%3)*0.06}s"><span class="lp-ico" style="background:${f[3]}">${f[0]}</span><h3 class="mt-4 text-lg font-bold">${f[1]}</h3><p class="mt-1.5 text-sm leading-relaxed" style="color:var(--muted)">${f[2]}</p></div>`).join('')}
+      <div class="lp-bento mt-14">
+        ${feats.map((f,i)=>{const span=['col-3','col-3','col-2','col-2','col-2','col-6'][i]||'col-2';const vis=i===0?`<div class="mt-4"><div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)"><span>Emergency Fund</span><span>62%</span></div><div style="margin-top:.4rem;height:8px;border-radius:9999px;background:color-mix(in srgb,var(--text) 8%,transparent);overflow:hidden"><div style="width:62%;height:100%;border-radius:9999px;background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3))"></div></div></div>`:i===1?`<div class="mt-4" style="display:flex;align-items:flex-end;gap:6px;height:46px" aria-hidden="true">${[40,68,52,84,60,92,74].map(h=>`<span style="flex:1;height:${h}%;border-radius:4px;background:linear-gradient(180deg,var(--accent3),var(--accent1))"></span>`).join('')}</div>`:'';return `<article class="cell ${span} reveal" style="transition-delay:${(i%3)*0.05}s"><span class="sheen"></span><span class="lp-ico" style="background:${f[3]}">${f[0]}</span><h3 class="mt-4 text-lg font-bold">${f[1]}</h3><p class="mt-1.5 text-sm leading-relaxed" style="color:var(--muted)">${f[2]}</p>${vis}</article>`;}).join('')}
       </div>
     </section>
 
@@ -932,6 +947,17 @@ function landing(){
       </div>
     </section>
 
+    <section class="lp-sec mx-auto max-w-7xl px-4">
+      <div class="mx-auto max-w-2xl text-center reveal">
+        <p class="lp-kicker gtext">Loved by savers</p>
+        <h2 class="lp-h2 mt-3">Real momentum, real results</h2>
+        <p class="lp-lead mt-4">People reach their goals faster when saving finally feels good.</p>
+      </div>
+      <div class="mt-14 grid gap-6 lg:grid-cols-3">
+        ${[['Goalify is the first money app I actually open for fun. Watching the streak grow is weirdly motivating.','Maya R.','Saving for a flat','M'],['I cleared my emergency fund in seven months. The weekly check-ins kept me honest.','Daniel K.','Freelance designer','D'],['Finally a budgeting app that feels calm instead of stressful — and the insights are genuinely useful.','Lena P.','Student','L']].map((q,i)=>`<figure class="lp-quote reveal" style="transition-delay:${i*0.06}s"><div class="lp-stars" aria-label="Rated 5 out of 5">★★★★★</div><blockquote><p>“${q[0]}”</p></blockquote><figcaption class="flex items-center gap-3"><span class="lp-av">${q[3]}</span><span><span class="block text-sm font-semibold">${q[1]}</span><span class="block text-xs" style="color:var(--muted)">${q[2]}</span></span></figcaption></figure>`).join('')}
+      </div>
+    </section>
+
     <section class="mx-auto max-w-5xl px-4" style="padding-bottom:clamp(4rem,9vw,7rem)">
       <div class="glass rounded-3xl p-7 sm:p-9 grid gap-6 sm:grid-cols-3 reveal">
         ${[['🛡️','Secure & private','Row-level security means only you can see your data.','var(--accent1)'],['💜','Made for everyone','Students, workers and families across six languages.','var(--accent2)'],['🪙','Your money, your call','No selling data, no hidden fees, cancel anytime.','var(--accent3)']].map(t=>`<div class="flex items-start gap-3"><span class="lp-ico shrink-0" style="background:color-mix(in srgb,${t[3]} 18%,transparent)">${t[0]}</span><div><p class="font-semibold">${t[1]}</p><p class="mt-1 text-sm" style="color:var(--muted)">${t[2]}</p></div></div>`).join('')}
@@ -942,9 +968,13 @@ function landing(){
       <div class="mx-auto max-w-2xl text-center reveal">
         <p class="lp-kicker gtext">Pricing</p>
         <h2 class="lp-h2 mt-3">Simple, honest pricing</h2>
-        <p class="lp-lead mt-4">Start free. Upgrade when you are ready. Cancel anytime.</p>
+        <p class="lp-lead mt-4">Start free. Upgrade when you're ready. Cancel anytime.</p>
       </div>
-      <div class="mt-14 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3><div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€${p.price}</span><span class="text-sm" style="color:var(--muted)">${id==='free'?'/forever':'/mo'}</span></div>${pr?`<p class="mt-1 text-xs" style="color:var(--muted)">or €${pr.yr}/year${save>0?` · <span style="color:var(--accent2);font-weight:600">save ${save}%</span>`:''}</p>`:`<p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
+      <input type="checkbox" id="billYr" aria-label="Show yearly pricing" />
+      <div class="mt-7 flex justify-center reveal">
+        <label for="billYr" class="lp-billing"><span>Monthly</span><span class="lp-switch" aria-hidden="true"></span><span>Yearly <span style="color:var(--accent2);font-weight:600">· save up to 30%</span></span></label>
+      </div>
+      <div class="lp-pricing mt-10 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3>${id==='free'?`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€0</span><span class="text-sm" style="color:var(--muted)">/forever</span></div><p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`:`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€<span class="price-mo">${p.price}</span><span class="price-yr">${pr.yr}</span></span><span class="text-sm" style="color:var(--muted)"><span class="price-mo">/mo</span><span class="price-yr">/yr</span></span></div><p class="mt-1 text-xs" style="color:var(--muted)"><span class="price-mo">or €${pr.yr}/year</span><span class="lp-save" style="color:var(--accent2);font-weight:600">save ${save}% vs monthly</span></p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
       <p class="mt-8 text-center text-sm reveal" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
     </section>
 
