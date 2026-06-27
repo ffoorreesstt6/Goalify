@@ -977,17 +977,38 @@ function landing(){
 // VIEWS — AUTH
 // ============================================================
 function authWrap(inner){
-  return `<div class="relative flex min-h-screen items-center justify-center px-4 py-12">
-    <div class="absolute left-6 top-6">${brand()}</div>
-    <div class="w-full max-w-md anim">${inner}</div></div>`;
+  return `<div class="auth-shell">
+    <aside class="auth-aside">
+      <div class="auth-aside-in">
+        <div>${brand('#home',{size:34})}</div>
+        <div>
+          <h2 class="auth-aside-h">Turn every euro into progress.</h2>
+          <p class="auth-aside-p">Track your spending, build better habits, and reach every savings goal faster.</p>
+          <ul class="auth-aside-list">
+            <li>✓ Free forever plan — no card required</li>
+            <li>✓ Bank-level security &amp; privacy</li>
+            <li>✓ Goals, streaks, insights &amp; rewards</li>
+          </ul>
+        </div>
+        <p class="auth-aside-foot">© ${new Date().getFullYear()} Goalify</p>
+      </div>
+      <span class="auth-aside-orb"></span><span class="auth-aside-orb2"></span>
+    </aside>
+    <main class="auth-main">
+      <a href="#home" class="auth-back">← Back to home</a>
+      <div class="auth-card-wrap anim">
+        <div class="auth-mobrand">${brand('#home')}</div>
+        ${inner}
+      </div>
+    </main>
+  </div>`;
 }
 const authDivider=`<div class="my-5 flex items-center gap-3 text-xs" style="color:var(--muted)"><div class="h-px flex-1" style="background:var(--border)"></div>or<div class="h-px flex-1" style="background:var(--border)"></div></div>`;
 const googleBtn=`<button type="button" data-action="oauth" data-provider="google" class="btn btn-ghost w-full">${GOOGLE_SVG} Continue with Google</button>`;
 function loginView(){
-  return authWrap(`<div class="glass-strong rounded-3xl p-7 sm:p-8">
-    <div class="mb-5 flex justify-center">${BRAND_ICON(46)}</div>
-    <h1 class="text-2xl font-bold text-center">Welcome back</h1>
-    <p class="mt-1 text-sm text-center" style="color:var(--muted)">Log in to your Goalify account.</p>
+  return authWrap(`<div class="auth-card">
+    <h1 class="auth-h">Welcome back</h1>
+    <p class="auth-sub">Log in to your Goalify account.</p>
     <div class="mt-6">${googleBtn}</div>${authDivider}
     <form id="loginForm" class="space-y-4">
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
@@ -998,10 +1019,9 @@ function loginView(){
     <p class="mt-6 text-center text-sm" style="color:var(--muted)">No account? <a href="#signup" class="text-accent-purple font-semibold hover:underline">Sign up free</a></p></div>`);
 }
 function signupView(){
-  return authWrap(`<div class="glass-strong rounded-3xl p-7 sm:p-8">
-    <div class="mb-5 flex justify-center">${BRAND_ICON(46)}</div>
-    <h1 class="text-2xl font-bold text-center">Create your account</h1>
-    <p class="mt-1 text-sm text-center" style="color:var(--muted)">Start free. No credit card required.</p>
+  return authWrap(`<div class="auth-card">
+    <h1 class="auth-h">Create your account</h1>
+    <p class="auth-sub">Start free. No credit card required.</p>
     <div class="mt-6">${googleBtn}</div>${authDivider}
     <form id="signupForm" class="space-y-4">
       <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input"></div></div>
@@ -1017,13 +1037,13 @@ function signupView(){
     <p class="mt-4 text-center text-sm" style="color:var(--muted)">Have an account? <a href="#login" class="text-accent-purple font-semibold hover:underline">Log in</a></p></div>`);
 }
 function forgotView(){
-  return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Reset your password</h1><p class="mt-1 text-sm text-slate-400">We'll email you a reset link.</p>
+  return authWrap(`<div class="auth-card"><h1 class="auth-h">Reset your password</h1><p class="auth-sub">We'll email you a secure reset link.</p>
     <form id="forgotForm" class="mt-6 space-y-4"><div><label class="label">Email</label><input name="email" type="email" class="input" required></div><button class="btn btn-primary w-full">Send reset link</button></form>
-    <p class="mt-6 text-center text-sm text-slate-400"><a href="#login" class="text-accent-purple hover:underline">Back to login</a></p></div>`);
+    <p class="mt-6 text-center text-sm" style="color:var(--muted)"><a href="#login" class="text-accent-purple hover:underline">Back to login</a></p></div>`);
 }
 function resetView(){
-  return authWrap(`<div class="glass-strong rounded-2xl p-7"><h1 class="text-2xl font-bold">Set a new password</h1>
-    <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><div class="relative"><input id="rpw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="rpw" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] text-slate-500 h-3"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="rpw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="rpw2" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" tabindex="-1">${EYE_ON}</button></div></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
+  return authWrap(`<div class="auth-card"><h1 class="auth-h">Set a new password</h1><p class="auth-sub">Choose a strong password for your account.</p>
+    <form id="resetForm" class="mt-6 space-y-4"><div><label class="label">New password</label><div class="relative"><input id="rpw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="rpw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)"></p></div><div><label class="label">Confirm</label><div class="relative"><input id="rpw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="rpw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div><button class="btn btn-primary w-full">Update password</button></form></div>`);
 }
 // ── 8-digit email OTP verification (Supabase verifyOtp, no link clicking) ──
 let _otpCooldown=0,_otpTimer=null;
@@ -1039,8 +1059,8 @@ function startOtpCooldown(s){
   tick(); _otpTimer=setInterval(tick,1000);
 }
 function verifyView(email){
-  return authWrap(`<div class="glass-strong rounded-2xl p-7 text-center">
-    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl" style="background:linear-gradient(135deg,rgba(79,70,229,.3),rgba(139,92,246,.3))">🔐</div>
+  return authWrap(`<div class="auth-card text-center">
+    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 30%,transparent),color-mix(in srgb,var(--accent2) 30%,transparent))">🔐</div>
     <h1 class="text-2xl font-bold">Verify your email</h1>
     <p class="mt-2 text-sm" style="color:var(--muted)">Enter the 8-digit code we sent to<br><b style="color:var(--text)">${esc(email||'your email')}</b></p>
     <form id="otpForm" class="mt-6 space-y-3">
@@ -1156,13 +1176,13 @@ function spendInsight(idx){
 function quizView(){
   QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
   QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
-  return `<div class="relative flex min-h-screen flex-col items-center justify-center px-4 py-10"><div class="mb-6">${brand('#home',{size:32})}</div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
+  return `<div class="ob-shell"><div class="ob-shell-top">${brand('#home',{size:32})}</div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
 }
 function qFrame(key,body,nav,sub){
   const idx=QPROG.indexOf(key),total=QPROG.length,stepNum=idx+1,prog=Math.round(stepNum/total*100);
-  const bar=`<div class="mb-6"><div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}${sub?` · ${sub}`:''}</span><span>${prog}%</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${prog}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div>`;
+  const bar=`<div class="mb-6"><div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}${sub?` · ${sub}`:''}</span><span>${prog}%</span></div><div class="ob-prog"><div style="width:${prog}%"></div></div></div>`;
   const back=`<button class="text-sm font-medium" style="color:var(--muted)" data-action="qback">← Back</button>`;
-  return `${bar}<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">${body}<div class="mt-7 flex items-center justify-between gap-3">${back}${nav||'<span></span>'}</div></div>`;
+  return `${bar}<div class="ob-frame anim">${body}<div class="mt-7 flex items-center justify-between gap-3">${back}${nav||'<span></span>'}</div></div>`;
 }
 function qScrollTop(){try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){try{window.scrollTo(0,0);}catch(_){}}}
 function renderQuiz(){
@@ -1651,7 +1671,7 @@ function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),h=healthScore(s),c=caps(plan);
   const persona=ME.personality?PERSONAS[ME.personality]:null;
   const active=GOALS.filter(x=>!x.completed).slice(0,3);
-  const header=`<div class="dash-head flex items-center justify-between gap-3"><div class="min-w-0"><h1 class="dash-h1 text-2xl font-bold sm:text-3xl truncate">Welcome back${ME.first_name?', '+esc(ME.first_name):''} 👋</h1><p class="dash-sub mt-0.5 text-sm truncate" style="color:var(--muted)">${PLANS[plan].name}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary dash-newgoal shrink-0">+ New goal</a></div>`;
+  const header=`<div class="dash-head flex items-center justify-between gap-3"><div class="min-w-0"><h1 class="dash-h1 text-2xl font-bold sm:text-3xl truncate">Welcome back${ME.first_name?', <span class="gtext">'+esc(ME.first_name)+'</span>':''} 👋</h1><p class="dash-sub mt-0.5 text-sm truncate" style="color:var(--muted)">${PLANS[plan].name}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary dash-newgoal shrink-0">+ New goal</a></div>`;
   let analytics='';
   if(c.analytics){
     analytics=`<div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending trend</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
