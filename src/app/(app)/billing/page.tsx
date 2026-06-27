@@ -48,8 +48,8 @@ export default async function BillingPage() {
                 <span
                   className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                     s.status === "active"
-                      ? "bg-emerald-500/15 text-emerald-300"
-                      : "bg-white/10 text-muted-foreground"
+                      ? "bg-emerald-500/15 text-emerald-500"
+                      : "bg-gray-100 text-muted-foreground"
                   }`}
                 >
                   {s.status}

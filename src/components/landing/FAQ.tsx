@@ -35,25 +35,26 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative py-28">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+    <section id="faq" className="relative py-24 lg:py-32">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest gradient-text">FAQ</p>
-          <h2 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            Questions, answered
-          </h2>
+          <p className="section-label">FAQ</p>
+          <h2 className="section-title">Questions, answered</h2>
         </div>
 
-        <div className="mt-12 space-y-3">
+        <div className="mt-14 space-y-3">
           {faqs.map((f, i) => (
-            <div key={i} className="glass overflow-hidden rounded-2xl">
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-soft-xs transition-shadow hover:shadow-soft"
+            >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
                 className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
               >
-                <span className="font-medium">{f.q}</span>
+                <span className="font-medium text-gray-900">{f.q}</span>
                 <ChevronDown
-                  className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${
+                  className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${
                     open === i ? "rotate-180" : ""
                   }`}
                 />
@@ -66,7 +67,7 @@ export function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    <p className="px-6 pb-5 text-sm leading-relaxed text-gray-500">
                       {f.a}
                     </p>
                   </motion.div>

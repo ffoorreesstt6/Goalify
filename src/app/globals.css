@@ -2,13 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════
+   GOALIFY — Premium Light Design System
+   ═══════════════════════════════════════════ */
+
 :root {
-  --background: 222 47% 5%;
-  --foreground: 210 40% 98%;
-  --card: 222 40% 8%;
-  --border: 222 30% 18%;
-  --muted: 222 30% 14%;
-  --muted-foreground: 215 20% 65%;
+  /* ─── Light Theme Tokens ─── */
+  --background: 0 0% 100%;
+  --foreground: 220 14% 10%;
+  --card: 0 0% 100%;
+  --border: 220 13% 91%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
 }
 
 * {
@@ -24,46 +29,53 @@ body {
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Custom scrollbar */
+/* ─── Custom Scrollbar (light, minimal) ─── */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #4f46e5, #8b5cf6);
+  background: #d1d5db;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #6366f1, #a855f7);
+  background: #9ca3af;
 }
 
+/* ═══════════════════════════════════════════
+   COMPONENT LAYER
+   ═══════════════════════════════════════════ */
+
 @layer components {
-  /* Glassmorphism card */
+  /* ─── Glass card (light theme) ─── */
   .glass {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.5);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.7);
   }
 
+  /* ─── Gradient text ─── */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #c084fc 100%);
+    background-image: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%);
   }
 
+  /* ─── Gradient border ─── */
   .gradient-border {
     position: relative;
     background: hsl(var(--card));
@@ -75,27 +87,89 @@ body {
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(168, 85, 247, 0.5));
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(139, 92, 246, 0.3));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
   }
 
+  /* ─── Primary button ─── */
   .btn-primary {
     @apply relative inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all duration-300;
-    background-image: linear-gradient(135deg, #4f46e5, #8b5cf6);
-    box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.6);
+    background-image: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    box-shadow: 0 4px 14px -3px rgba(124, 58, 237, 0.4);
   }
   .btn-primary:hover {
-    box-shadow: 0 12px 32px -8px rgba(139, 92, 246, 0.8);
+    box-shadow: 0 8px 22px -4px rgba(124, 58, 237, 0.5);
     transform: translateY(-1px);
   }
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px -2px rgba(124, 58, 237, 0.4);
+  }
 
+  /* ─── Ghost button (light theme) ─── */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white transition-all duration-300 hover:bg-white/10;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-50 hover:border-gray-300;
+  }
+  .btn-ghost:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.06);
+  }
+
+  /* ─── Secondary button ─── */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-6 py-3 font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100;
+  }
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px -2px rgb(124 58 237 / 0.12);
+  }
+
+  /* ─── Premium card ─── */
+  .card-premium {
+    @apply rounded-2xl border border-gray-100 bg-white p-6;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+  .card-premium:hover {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06), 0 2px 6px -2px rgb(0 0 0 / 0.04);
+  }
+
+  /* ─── Stat card ─── */
+  .card-stat {
+    @apply rounded-2xl border border-gray-100 bg-white p-5 transition-all duration-300;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04);
+  }
+  .card-stat:hover {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06);
+    transform: translateY(-2px);
+  }
+
+  /* ─── Input ─── */
+  .input-premium {
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition-all duration-200;
+  }
+  .input-premium:focus {
+    @apply border-brand-400 outline-none;
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 0.1);
+  }
+
+  /* ─── Section heading ─── */
+  .section-label {
+    @apply text-sm font-semibold uppercase tracking-wider text-brand-600;
+  }
+  .section-title {
+    @apply text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl;
+  }
+  .section-description {
+    @apply mt-4 text-lg text-gray-500;
   }
 }
+
+/* ═══════════════════════════════════════════
+   UTILITY LAYER
+   ═══════════════════════════════════════════ */
 
 @layer utilities {
   .text-balance {
@@ -107,11 +181,132 @@ body {
   }
 }
 
-/* Floating gradient orbs background */
+/* ═══════════════════════════════════════════
+   ANIMATION HELPERS
+   ═══════════════════════════════════════════ */
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+
+/* ═══════════════════════════════════════════
+   LANDING PAGE — TRANSPARENT NAVBAR
+   ═══════════════════════════════════════════ */
+
+.navbar-transparent {
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbar-scrolled {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04);
+}
+
+/* ═══════════════════════════════════════════
+   LANDING PAGE — ANIMATED BG SHAPES
+   ═══════════════════════════════════════════ */
+
+.hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  opacity: 0.15;
+}
+
+/* ═══════════════════════════════════════════
+   QUIZ PAGE — NATURE BACKGROUND
+   ═══════════════════════════════════════════ */
+
+.quiz-nature-bg {
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(6, 182, 212, 0.03) 100%),
+    linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 30%, #f0fdfa 60%, #f8fafc 100%);
+}
+
+.quiz-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px -4px rgb(0 0 0 / 0.06);
+}
+
+/* ═══════════════════════════════════════════
+   AUTH PAGE — PURPLE GRADIENT
+   ═══════════════════════════════════════════ */
+
+.auth-gradient-left {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 25%, #6d28d9 50%, #7c3aed 75%, #8b5cf6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-gradient-left::before {
+  content: "";
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: rgba(167, 139, 250, 0.15);
+  top: -100px;
+  right: -100px;
+  filter: blur(60px);
+}
+
+.auth-gradient-left::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.2);
+  bottom: -80px;
+  left: -60px;
+  filter: blur(50px);
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD — PREMIUM WHITE
+   ═══════════════════════════════════════════ */
+
+.dashboard-bg {
+  background: #fafafa;
+}
+
+.sidebar-item {
+  @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200;
+}
+
+.sidebar-item:hover {
+  @apply bg-gray-100 text-gray-900;
+}
+
+.sidebar-item-active {
+  @apply bg-brand-50 text-brand-700 font-semibold;
+  box-shadow: 0 0 0 1px rgb(124 58 237 / 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   FLOATING ORB (kept for auth/quiz bg, lighter)
+   ═══════════════════════════════════════════ */
+
 .orb {
   position: absolute;
   border-radius: 9999px;
   filter: blur(80px);
-  opacity: 0.5;
+  opacity: 0.3;
   pointer-events: none;
 }

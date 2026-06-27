@@ -16,7 +16,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <GlassCard strong>
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700">
               <ShieldCheck className="h-6 w-6 text-white" />
             </div>
             <div>

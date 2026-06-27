@@ -27,7 +27,7 @@ export function ChallengesView({
       <GlassCard strong>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 font-display text-xl font-bold text-white">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-xl font-bold text-white">
               {level}
             </div>
             <div>
@@ -40,9 +40,9 @@ export function ChallengesView({
               <span>{xpInLevel} XP</span>
               <span>{xpForNext} XP</span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
                 style={{ width: `${(xpInLevel / xpForNext) * 100}%` }}
               />
             </div>
@@ -62,7 +62,7 @@ export function ChallengesView({
                     <h3 className="font-semibold">{c.title}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>
                   </div>
-                  <span className="rounded-full bg-accent-purple/20 px-2.5 py-1 text-xs font-medium text-accent-violet">
+                  <span className="rounded-full bg-brand-500/20 px-2.5 py-1 text-xs font-medium text-brand-600">
                     +{c.target_xp} XP
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export function ChallengesView({
                 <h3 className="mt-3 font-semibold">{t.title}</h3>
                 <p className="mt-1 flex-1 text-sm text-muted-foreground">{t.description}</p>
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-accent-violet">+{t.xp} XP</span>
+                  <span className="text-xs text-brand-600">+{t.xp} XP</span>
                   <span className="text-xs text-muted-foreground">{t.durationDays} days</span>
                 </div>
                 <button
@@ -108,7 +108,7 @@ export function ChallengesView({
                     })
                   }
                   disabled={pending || joined}
-                  className="mt-3 w-full rounded-lg border border-white/10 bg-white/5 py-2 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50"
+                  className="mt-3 w-full rounded-lg border border-gray-200 bg-gray-50 py-2 text-sm font-medium transition-colors hover:bg-gray-100 disabled:opacity-50"
                 >
                   {joined ? "In progress" : "Start"}
                 </button>
@@ -121,7 +121,7 @@ export function ChallengesView({
       {/* Badges */}
       <div>
         <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold">
-          <Trophy className="h-5 w-5 text-yellow-400" /> Badges
+          <Trophy className="h-5 w-5 text-amber-400" /> Badges
         </h2>
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {BADGES.map((b) => (

@@ -48,7 +48,7 @@ const SECTIONS = [
 function Saved({ show }: { show: boolean }) {
   if (!show) return null;
   return (
-    <span className="inline-flex items-center gap-1 text-sm text-emerald-400">
+    <span className="inline-flex items-center gap-1 text-sm text-emerald-500">
       <Check className="h-4 w-4" /> Saved
     </span>
   );
@@ -66,8 +66,8 @@ export function SettingsView({ profile }: { profile: Profile }) {
             onClick={() => setSection(s.id)}
             className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all ${
               section === s.id
-                ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-foreground ring-1 ring-white/10"
-                : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                ? "bg-brand-50 text-foreground ring-0"
+                : "text-muted-foreground hover:bg-gray-50 hover:text-foreground"
             }`}
           >
             <s.icon className="h-4 w-4 shrink-0" />
@@ -101,7 +101,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement> & { label: str
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
       <input
         {...rest}
-        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
       />
     </label>
   );
@@ -134,7 +134,7 @@ function ProfileSection({ profile }: { profile: Profile }) {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
             >
               {["EUR", "USD", "GBP"].map((c) => (
                 <option key={c} value={c} className="bg-card">
@@ -144,7 +144,7 @@ function ProfileSection({ profile }: { profile: Profile }) {
             </select>
           </label>
         </div>
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && <p className="text-sm text-red-500">{error}</p>}
         <div className="flex items-center gap-3">
           <button
             onClick={() =>
@@ -188,8 +188,8 @@ function SecuritySection() {
       <div className="mt-5 space-y-4">
         <Input label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <Input label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-        {msg?.error && <p className="text-sm text-red-300">{msg.error}</p>}
-        {msg?.ok && <p className="text-sm text-emerald-400">Password updated.</p>}
+        {msg?.error && <p className="text-sm text-red-500">{msg.error}</p>}
+        {msg?.ok && <p className="text-sm text-emerald-500">Password updated.</p>}
         <button
           onClick={() =>
             start(async () => {
@@ -236,12 +236,12 @@ function NotificationsSection({ profile }: { profile: Profile }) {
       <h2 className="font-display text-xl font-bold">Notifications</h2>
       <div className="mt-5 space-y-3">
         {items.map((it) => (
-          <label key={it.key} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+          <label key={it.key} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
             <span className="text-sm">{it.label}</span>
             <button
               onClick={() => setPrefs((p) => ({ ...p, [it.key]: !p[it.key] }))}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                prefs[it.key] ? "bg-gradient-to-r from-blue-500 to-purple-600" : "bg-white/15"
+                prefs[it.key] ? "bg-gradient-to-r from-brand-500 to-brand-700" : "bg-white/15"
               }`}
             >
               <span
@@ -284,7 +284,7 @@ function StudentSection({ profile }: { profile: Profile }) {
     return (
       <GlassCard>
         <h2 className="font-display text-xl font-bold">Student Verification</h2>
-        <p className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-400">
+        <p className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-500">
           <Check className="h-4 w-4" /> Verified — you have Pro for free!
         </p>
       </GlassCard>
@@ -305,7 +305,7 @@ function StudentSection({ profile }: { profile: Profile }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        {msg && <p className="text-sm text-emerald-400">{msg}</p>}
+        {msg && <p className="text-sm text-emerald-500">{msg}</p>}
         <button
           onClick={() =>
             start(async () => {
@@ -348,11 +348,11 @@ function ThemeSection() {
       <h2 className="font-display text-xl font-bold">Theme</h2>
       <p className="mt-1 text-sm text-muted-foreground">Goalify uses a premium dark theme by default.</p>
       <div className="mt-5 flex gap-3">
-        <div className="flex-1 rounded-xl border border-accent-purple/60 bg-white/5 p-4 text-center ring-1 ring-accent-purple/40">
+        <div className="flex-1 rounded-xl border border-accent-purple/60 bg-gray-50 p-4 text-center ring-1 ring-accent-purple/40">
           <div className="mx-auto mb-2 h-12 w-full rounded-lg bg-gradient-to-br from-blue-600 to-purple-700" />
           <span className="text-sm font-medium">Dark (default)</span>
         </div>
-        <div className="flex-1 rounded-xl border border-white/10 bg-white/5 p-4 text-center opacity-50">
+        <div className="flex-1 rounded-xl border border-gray-200 bg-gray-50 p-4 text-center opacity-50">
           <div className="mx-auto mb-2 h-12 w-full rounded-lg bg-gradient-to-br from-slate-200 to-slate-400" />
           <span className="text-sm font-medium">Light (soon)</span>
         </div>
@@ -369,7 +369,7 @@ function LanguageSection() {
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value)}
-        className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+        className="mt-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
       >
         {[
           ["en", "English"],
@@ -396,9 +396,9 @@ function ConnectedSection() {
       </p>
       <div className="mt-5 space-y-3">
         {["Google", "Apple", "Bank (Open Banking)"].map((p) => (
-          <div key={p} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+          <div key={p} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
             <span className="text-sm">{p}</span>
-            <button className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted-foreground">
+            <button className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-muted-foreground">
               Connect
             </button>
           </div>
@@ -421,7 +421,7 @@ function PrivacySection() {
           <Link
             key={h}
             href={h}
-            className="block rounded-xl bg-white/5 px-4 py-3 text-sm transition-colors hover:bg-white/10"
+            className="block rounded-xl bg-gray-50 px-4 py-3 text-sm transition-colors hover:bg-gray-100"
           >
             {l} →
           </Link>
@@ -470,10 +470,10 @@ function SupportSection() {
         Need help? We&apos;re here for you.
       </p>
       <div className="mt-5 space-y-3 text-sm">
-        <a href="mailto:support@goalify.app" className="block rounded-xl bg-white/5 px-4 py-3 hover:bg-white/10">
+        <a href="mailto:support@goalify.app" className="block rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100">
           📧 Email support@goalify.app
         </a>
-        <Link href="/#faq" className="block rounded-xl bg-white/5 px-4 py-3 hover:bg-white/10">
+        <Link href="/#faq" className="block rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100">
           ❓ Browse the FAQ
         </Link>
       </div>
@@ -488,7 +488,7 @@ function DangerSection() {
 
   return (
     <GlassCard className="border border-red-500/30">
-      <h2 className="font-display text-xl font-bold text-red-300">Delete Account</h2>
+      <h2 className="font-display text-xl font-bold text-red-500">Delete Account</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         This permanently deletes your account and all data. This cannot be undone. Type{" "}
         <span className="font-mono font-semibold text-foreground">DELETE</span> to confirm.

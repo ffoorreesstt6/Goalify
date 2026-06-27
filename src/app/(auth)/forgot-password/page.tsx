@@ -4,15 +4,14 @@ import Link from "next/link";
 import { useFormState } from "react-dom";
 import { forgotPasswordAction } from "../actions";
 import { Field, SubmitButton, FormMessage } from "@/components/auth/Field";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function ForgotPasswordPage() {
   const [state, action] = useFormState(forgotPasswordAction, null);
 
   return (
-    <GlassCard strong>
-      <h1 className="font-display text-2xl font-bold">Reset your password</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-soft-md">
+      <h1 className="font-display text-2xl font-bold text-gray-900">Reset your password</h1>
+      <p className="mt-1 text-sm text-gray-500">
         Enter your email and we&apos;ll send you a reset link.
       </p>
 
@@ -22,12 +21,12 @@ export default function ForgotPasswordPage() {
         <SubmitButton>Send reset link</SubmitButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-sm text-gray-500">
         Remembered it?{" "}
-        <Link href="/login" className="font-medium text-accent-purple hover:underline">
+        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
           Back to login
         </Link>
       </p>
-    </GlassCard>
+    </div>
   );
 }

@@ -1,13 +1,12 @@
-import { GlassCard } from "@/components/ui/GlassCard";
-import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
 
 export function StatCard({
   icon: Icon,
   label,
   value,
   hint,
-  accent = "text-accent-purple",
+  accent = "text-brand-500",
 }: {
   icon: LucideIcon;
   label: string;
@@ -16,13 +15,15 @@ export function StatCard({
   accent?: string;
 }) {
   return (
-    <GlassCard className="!p-5">
+    <div className="card-stat">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <Icon className={cn("h-5 w-5", accent)} />
+        <span className="text-sm font-medium text-gray-500">{label}</span>
+        <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50", accent)}>
+          <Icon className={cn("h-4 w-4", accent)} />
+        </div>
       </div>
-      <p className="mt-3 font-display text-2xl font-bold">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-    </GlassCard>
+      <p className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{value}</p>
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+    </div>
   );
 }

@@ -43,20 +43,20 @@ export function AIInsights({
   return (
     <GlassCard strong className="flex flex-col">
       <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-accent-purple" />
-        <h3 className="font-semibold">AI Insights</h3>
+        <Sparkles className="h-5 w-5 text-brand-500" />
+        <h3 className="font-semibold text-gray-900">AI Insights</h3>
       </div>
       <ul className="flex-1 space-y-3">
         {insights.map((t, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-purple" />
+          <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
             {t}
           </li>
         ))}
       </ul>
       <Link
         href="/ai"
-        className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-accent-purple hover:underline"
+        className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline"
       >
         {plan === "free" ? "Unlock the AI Coach" : "Open AI Coach"}
         <ArrowRight className="h-4 w-4" />

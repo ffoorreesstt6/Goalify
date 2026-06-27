@@ -6,8 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Check, Sparkles, Loader2 } from "lucide-react";
 import { QUIZ, PERSONALITIES, computePersonality, type PersonalityId } from "@/lib/quiz";
 import { saveQuizAction } from "@/app/onboarding/actions";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { FloatingOrbs } from "@/components/ui/FloatingOrbs";
 
 export function Quiz() {
   const router = useRouter();
@@ -45,20 +43,19 @@ export function Quiz() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      <FloatingOrbs />
+    <div className="quiz-nature-bg relative flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl">
         {/* Progress */}
         <div className="mb-8">
-          <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
+          <div className="mb-2 flex items-center justify-between text-sm font-medium text-gray-600">
             <span>{result ? "Complete" : `Question ${step + 1} of ${total}`}</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-2.5 overflow-hidden rounded-full bg-gray-200/60">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
+              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400"
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
         </div>
@@ -70,12 +67,12 @@ export function Quiz() {
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              <GlassCard strong>
-                <h2 className="font-display text-2xl font-bold">{q.question}</h2>
+              <div className="quiz-glass-card p-8">
+                <h2 className="font-display text-2xl font-bold text-gray-900">{q.question}</h2>
                 {q.subtitle && (
-                  <p className="mt-1 text-sm text-muted-foreground">{q.subtitle}</p>
+                  <p className="mt-1 text-sm text-gray-500">{q.subtitle}</p>
                 )}
                 <div className="mt-6 space-y-3">
                   {q.options.map((opt) => {
@@ -85,36 +82,36 @@ export function Quiz() {
                         key={opt.value}
                         onClick={() => select(opt.value)}
                         disabled={saving}
-                        className={`flex w-full items-center justify-between rounded-xl border px-5 py-4 text-left text-sm transition-all ${
+                        className={`flex w-full items-center justify-between rounded-xl border px-5 py-4 text-left text-sm font-medium transition-all duration-200 ${
                           selected
-                            ? "border-accent-purple/60 bg-accent-purple/10"
-                            : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                            ? "border-brand-300 bg-brand-50 text-brand-700 shadow-soft-xs"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-brand-200 hover:bg-brand-50/30 hover:shadow-soft-xs"
                         }`}
                       >
                         <span>{opt.label}</span>
-                        {selected && <Check className="h-4 w-4 text-accent-purple" />}
+                        {selected && <Check className="h-4 w-4 text-brand-500" />}
                       </button>
                     );
                   })}
                 </div>
 
-                {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
+                {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
 
                 <div className="mt-6 flex items-center justify-between">
                   <button
                     onClick={() => setStep(Math.max(0, step - 1))}
                     disabled={step === 0 || saving}
-                    className="inline-flex items-center gap-1 text-sm text-muted-foreground disabled:opacity-30"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-30"
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
                   {saving && (
-                    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-2 text-sm text-gray-500">
                       <Loader2 className="h-4 w-4 animate-spin" /> Analyzing…
                     </span>
                   )}
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
           ) : (
             <ResultCard personality={result} onContinue={() => router.push("/dashboard")} />
@@ -138,28 +135,26 @@ function ResultCard({
       key="result"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <GlassCard strong className="text-center">
+      <div className="quiz-glass-card p-8 text-center">
         <div className="mx-auto mb-4 text-6xl">{p.emoji}</div>
-        <p className="text-sm font-semibold uppercase tracking-widest gradient-text">
-          Your money personality
-        </p>
-        <h2 className="mt-2 font-display text-3xl font-bold">{p.name}</h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">{p.description}</p>
+        <p className="section-label">Your money personality</p>
+        <h2 className="mt-2 font-display text-3xl font-bold text-gray-900">{p.name}</h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-500">{p.description}</p>
 
         <div className="mt-6 grid gap-4 text-left sm:grid-cols-2">
-          <div className="glass rounded-xl p-4">
-            <h3 className="mb-2 text-sm font-semibold text-emerald-300">Strengths</h3>
-            <ul className="space-y-1 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-emerald-200/60 bg-emerald-50/50 p-4">
+            <h3 className="mb-2 text-sm font-semibold text-emerald-600">Strengths</h3>
+            <ul className="space-y-1 text-sm text-gray-600">
               {p.strengths.map((s) => (
                 <li key={s}>· {s}</li>
               ))}
             </ul>
           </div>
-          <div className="glass rounded-xl p-4">
-            <h3 className="mb-2 text-sm font-semibold text-orange-300">Watch-outs</h3>
-            <ul className="space-y-1 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4">
+            <h3 className="mb-2 text-sm font-semibold text-amber-600">Watch-outs</h3>
+            <ul className="space-y-1 text-sm text-gray-600">
               {p.watchouts.map((s) => (
                 <li key={s}>· {s}</li>
               ))}
@@ -167,14 +162,14 @@ function ResultCard({
           </div>
         </div>
 
-        <div className="mt-4 glass rounded-xl p-4 text-left">
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="h-4 w-4 text-accent-purple" /> Personalized recommendations
+        <div className="mt-4 rounded-xl border border-brand-200/60 bg-brand-50/30 p-4 text-left">
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-700">
+            <Sparkles className="h-4 w-4 text-brand-500" /> Personalized recommendations
           </h3>
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
+          <ul className="space-y-1.5 text-sm text-gray-600">
             {p.recommendations.map((r) => (
               <li key={r} className="flex items-start gap-2">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-purple" /> {r}
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" /> {r}
               </li>
             ))}
           </ul>
@@ -183,7 +178,7 @@ function ResultCard({
         <button onClick={onContinue} className="btn-primary mt-6 w-full">
           Go to dashboard <ArrowRight className="h-4 w-4" />
         </button>
-      </GlassCard>
+      </div>
     </motion.div>
   );
 }

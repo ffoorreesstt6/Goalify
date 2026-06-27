@@ -24,7 +24,7 @@ export function RoastCard() {
   return (
     <GlassCard strong className="flex flex-col">
       <div className="mb-3 flex items-center gap-2">
-        <Flame className="h-5 w-5 text-orange-400" />
+        <Flame className="h-5 w-5 text-orange-500" />
         <h3 className="font-semibold">AI Roast Mode</h3>
       </div>
       <p className="flex-1 text-lg leading-relaxed">{roast}</p>

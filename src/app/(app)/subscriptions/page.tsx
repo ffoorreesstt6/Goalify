@@ -63,9 +63,9 @@ export default async function SubscriptionsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Repeat} label="Active subscriptions" value={String(all.length)} accent="text-accent-blue" />
-        <StatCard icon={Repeat} label="Monthly cost" value={formatCurrency(monthlyTotal)} accent="text-orange-400" />
-        <StatCard icon={Repeat} label="Yearly cost" value={formatCurrency(yearlyTotal)} accent="text-accent-purple" />
+        <StatCard icon={Repeat} label="Active subscriptions" value={String(all.length)} accent="text-blue-500" />
+        <StatCard icon={Repeat} label="Monthly cost" value={formatCurrency(monthlyTotal)} accent="text-orange-500" />
+        <StatCard icon={Repeat} label="Yearly cost" value={formatCurrency(yearlyTotal)} accent="text-brand-500" />
       </div>
 
       <GlassCard>
@@ -83,7 +83,7 @@ export default async function SubscriptionsPage() {
             {all.map((d) => (
               <div key={d.name} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-lg">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-50 text-lg">
                     🔁
                   </span>
                   <div>

@@ -12,9 +12,9 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       <div
         ref={ref}
         className={cn(
-          strong ? "glass-strong" : "glass",
-          "rounded-2xl p-6 shadow-glass",
-          hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-glow",
+          "rounded-2xl border bg-white p-6",
+          strong ? "border-gray-100 shadow-soft" : "border-gray-100/60 shadow-soft-xs",
+          hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-md hover:border-gray-200",
           className
         )}
         {...props}

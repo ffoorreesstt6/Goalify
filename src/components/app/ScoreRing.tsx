@@ -21,15 +21,15 @@ export function ScoreRing({
         <svg width={size} height={size} className="-rotate-90">
           <defs>
             <linearGradient id={`grad-${label}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#a855f7" />
+              <stop offset="0%" stopColor="#7c3aed" />
+              <stop offset="100%" stopColor="#a78bfa" />
             </linearGradient>
           </defs>
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="rgba(255,255,255,0.08)"
+            stroke="#f3f4f6"
             strokeWidth="8"
             fill="none"
           />
@@ -47,11 +47,11 @@ export function ScoreRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-display text-3xl font-bold">{score}</span>
-          {sublabel && <span className="text-xs text-muted-foreground">{sublabel}</span>}
+          <span className="font-display text-3xl font-bold text-gray-900">{score}</span>
+          {sublabel && <span className="text-xs text-gray-500">{sublabel}</span>}
         </div>
       </div>
-      <p className="mt-2 text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="mt-2 text-sm font-medium text-gray-500">{label}</p>
     </div>
   );
 }

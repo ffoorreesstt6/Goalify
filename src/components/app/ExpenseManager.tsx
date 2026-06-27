@@ -57,7 +57,7 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="12.50"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
             />
           </label>
           <label className="block">
@@ -65,7 +65,7 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c} className="bg-card">
@@ -80,7 +80,7 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
               placeholder="e.g. Tesco"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
             />
           </label>
           <label className="block">
@@ -89,10 +89,10 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
             />
           </label>
-          {error && <p className="text-sm text-red-300">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           <button onClick={add} disabled={pending || !amount} className="btn-primary w-full disabled:opacity-50">
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Add expense
@@ -113,7 +113,7 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
               const isIncome = e.category === "income";
               return (
                 <div key={e.id} className="flex items-center gap-3 py-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-lg">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-50 text-lg">
                     {meta.emoji}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -124,13 +124,13 @@ export function ExpenseManager({ expenses }: { expenses: Expense[] }) {
                       {meta.label} · {formatDate(e.spent_at)}
                     </p>
                   </div>
-                  <span className={`text-sm font-semibold ${isIncome ? "text-emerald-400" : ""}`}>
+                  <span className={`text-sm font-semibold ${isIncome ? "text-emerald-500" : ""}`}>
                     {isIncome ? "+" : "-"}
                     {formatCurrency(e.amount)}
                   </span>
                   <button
                     onClick={() => remove(e.id)}
-                    className="text-muted-foreground hover:text-red-400"
+                    className="text-muted-foreground hover:text-red-500"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-4 w-4" />

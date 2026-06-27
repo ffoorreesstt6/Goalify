@@ -73,7 +73,7 @@ export function Billing({
     <div className="space-y-6">
       <GlassCard strong className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Crown className="h-6 w-6 text-yellow-400" />
+          <Crown className="h-6 w-6 text-amber-400" />
           <div>
             <p className="text-sm text-muted-foreground">Current plan</p>
             <p className="font-display text-xl font-bold">{PLANS[currentPlan].name}</p>
@@ -88,7 +88,7 @@ export function Billing({
       </GlassCard>
 
       {notice && (
-        <div className="rounded-xl border border-accent-purple/30 bg-accent-purple/10 px-4 py-3 text-sm text-accent-violet">
+        <div className="rounded-xl border border-accent-purple/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-600">
           {notice}
         </div>
       )}
@@ -106,7 +106,7 @@ export function Billing({
               )}
             >
               {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-1 text-xs font-semibold text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand-500 to-brand-700 px-3 py-1 text-xs font-semibold text-white">
                   Most popular
                 </span>
               )}
@@ -122,10 +122,10 @@ export function Billing({
                 className={cn(
                   "mt-5 w-full rounded-xl py-2.5 text-sm font-semibold transition-all",
                   isCurrent
-                    ? "cursor-default border border-white/10 bg-white/5 text-muted-foreground"
+                    ? "cursor-default border border-gray-200 bg-gray-50 text-muted-foreground"
                     : plan.highlight
                       ? "btn-primary"
-                      : "border border-white/10 bg-white/5 hover:bg-white/10"
+                      : "border border-gray-200 bg-gray-50 hover:bg-gray-100"
                 )}
               >
                 {busyPlan === id ? (
@@ -142,7 +142,7 @@ export function Billing({
               <ul className="mt-5 space-y-2.5">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-purple" />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
                     <span className="text-muted-foreground">{f}</span>
                   </li>
                 ))}

@@ -7,7 +7,6 @@ import { useSearchParams } from "next/navigation";
 import { MailCheck } from "lucide-react";
 import { resendVerificationAction } from "../actions";
 import { SubmitButton, FormMessage } from "@/components/auth/Field";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 function VerifyInner() {
   const params = useSearchParams();
@@ -15,14 +14,14 @@ function VerifyInner() {
   const [state, action] = useFormState(resendVerificationAction, null);
 
   return (
-    <GlassCard strong className="text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 ring-1 ring-white/10">
-        <MailCheck className="h-7 w-7 text-accent-purple" />
+    <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-soft-md text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-100 bg-brand-50">
+        <MailCheck className="h-7 w-7 text-brand-500" />
       </div>
-      <h1 className="font-display text-2xl font-bold">Check your email</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <h1 className="font-display text-2xl font-bold text-gray-900">Check your email</h1>
+      <p className="mt-2 text-sm text-gray-500">
         We sent a verification link to{" "}
-        <span className="font-medium text-foreground">{email || "your email"}</span>. Click it
+        <span className="font-medium text-gray-900">{email || "your email"}</span>. Click it
         to activate your account and start onboarding.
       </p>
 
@@ -32,12 +31,12 @@ function VerifyInner() {
         <SubmitButton>Resend verification email</SubmitButton>
       </form>
 
-      <p className="mt-6 text-sm text-muted-foreground">
-        <Link href="/login" className="font-medium text-accent-purple hover:underline">
+      <p className="mt-6 text-sm text-gray-500">
+        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
           Back to login
         </Link>
       </p>
-    </GlassCard>
+    </div>
   );
 }
 

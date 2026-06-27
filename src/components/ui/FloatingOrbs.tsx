@@ -8,7 +8,7 @@ export function FloatingOrbs() {
           left: "5%",
           width: "480px",
           height: "480px",
-          background: "radial-gradient(circle, rgba(59,130,246,0.45), transparent 70%)",
+          background: "radial-gradient(circle, rgba(124,58,237,0.15), transparent 70%)",
         }}
       />
       <div
@@ -18,7 +18,7 @@ export function FloatingOrbs() {
           right: "-5%",
           width: "520px",
           height: "520px",
-          background: "radial-gradient(circle, rgba(168,85,247,0.4), transparent 70%)",
+          background: "radial-gradient(circle, rgba(139,92,246,0.12), transparent 70%)",
           animationDelay: "2s",
         }}
       />
@@ -29,7 +29,7 @@ export function FloatingOrbs() {
           left: "30%",
           width: "600px",
           height: "600px",
-          background: "radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%)",
+          background: "radial-gradient(circle, rgba(168,85,247,0.08), transparent 70%)",
         }}
       />
     </div>

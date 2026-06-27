@@ -23,7 +23,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-foreground/90">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-gray-700">{label}</span>
       <input
         name={name}
         type={type}
@@ -31,7 +31,7 @@ export function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         defaultValue={defaultValue}
-        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-accent-purple/60 focus:bg-white/[0.07]"
+        className="input-premium text-sm"
       />
     </label>
   );
@@ -51,13 +51,13 @@ export function FormMessage({ state }: { state: { error?: string; success?: stri
   if (!state) return null;
   if (state.error)
     return (
-      <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
         {state.error}
       </p>
     );
   if (state.success)
     return (
-      <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-300">
+      <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-600">
         {state.success}
       </p>
     );

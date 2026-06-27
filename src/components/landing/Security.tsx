@@ -12,19 +12,15 @@ const items = [
 
 export function Security() {
   return (
-    <section id="security" className="relative py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="glass-strong relative overflow-hidden rounded-3xl p-10 sm:p-14">
-          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-purple-600/20 blur-3xl" />
+    <section id="security" className="relative py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-10 shadow-soft-md sm:p-14">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-100/40 blur-3xl" />
           <div className="relative grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest gradient-text">
-                Security
-              </p>
-              <h2 className="mt-3 font-display text-4xl font-bold tracking-tight">
-                Built to protect your money data
-              </h2>
-              <p className="mt-4 text-muted-foreground">
+              <p className="section-label">Security</p>
+              <h2 className="section-title">Built to protect your money data</h2>
+              <p className="section-description">
                 Security isn&apos;t an afterthought. From encrypted storage to row-level
                 database policies, Goalify is engineered so your financial data stays
                 private and protected.
@@ -37,12 +33,12 @@ export function Security() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="glass rounded-2xl p-5"
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 shadow-soft-xs"
                 >
-                  <it.icon className="h-6 w-6 text-accent-purple" />
-                  <h3 className="mt-3 font-semibold">{it.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{it.desc}</p>
+                  <it.icon className="h-6 w-6 text-brand-600" />
+                  <h3 className="mt-3 font-semibold text-gray-900">{it.title}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{it.desc}</p>
                 </motion.div>
               ))}
             </div>

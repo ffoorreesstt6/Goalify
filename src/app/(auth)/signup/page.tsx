@@ -4,15 +4,14 @@ import Link from "next/link";
 import { useFormState } from "react-dom";
 import { signupAction } from "../actions";
 import { Field, SubmitButton, FormMessage, Honeypot } from "@/components/auth/Field";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function SignupPage() {
   const [state, action] = useFormState(signupAction, null);
 
   return (
-    <GlassCard strong>
-      <h1 className="font-display text-2xl font-bold">Create your account</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-soft-md">
+      <h1 className="font-display text-2xl font-bold text-gray-900">Create your account</h1>
+      <p className="mt-1 text-sm text-gray-500">
         Start free. No credit card required.
       </p>
 
@@ -27,19 +26,19 @@ export default function SignupPage() {
           autoComplete="new-password"
           placeholder="At least 8 characters"
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-400">
           Use 8+ characters with uppercase, lowercase and a number.
         </p>
         <FormMessage state={state} />
         <SubmitButton>Create account</SubmitButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-sm text-gray-500">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-accent-purple hover:underline">
+        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
           Log in
         </Link>
       </p>
-    </GlassCard>
+    </div>
   );
 }

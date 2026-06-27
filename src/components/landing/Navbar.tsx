@@ -27,16 +27,11 @@ export function Navbar() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "py-3" : "py-5"
+        scrolled ? "navbar-scrolled py-3" : "navbar-transparent py-5"
       )}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div
-          className={cn(
-            "flex items-center justify-between rounded-2xl px-4 py-3 transition-all duration-300",
-            scrolled && "glass-strong shadow-glass"
-          )}
-        >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
           <Logo />
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -44,27 +39,30 @@ export function Navbar() {
               <a
                 key={l.href}
                 href={l.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
               >
                 {l.label}
               </a>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-4 md:flex">
             <Link
               href="/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
             >
               Log in
             </Link>
-            <Link href="/signup" className="btn-primary !px-5 !py-2.5 text-sm">
+            <Link
+              href="/signup"
+              className="btn-primary !px-5 !py-2.5 text-sm"
+            >
               Get started
             </Link>
           </div>
 
           <button
-            className="md:hidden text-foreground"
+            className="text-gray-700 md:hidden"
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
@@ -73,23 +71,31 @@ export function Navbar() {
         </div>
 
         {open && (
-          <div className="glass-strong mt-2 rounded-2xl p-4 md:hidden">
-            <nav className="flex flex-col gap-3">
+          <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-soft-lg md:hidden">
+            <nav className="flex flex-col gap-1">
               {links.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
                 >
                   {l.label}
                 </a>
               ))}
-              <hr className="border-white/10" />
-              <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-medium">
+              <hr className="my-2 border-gray-100" />
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
                 Log in
               </Link>
-              <Link href="/signup" className="btn-primary text-sm">
+              <Link
+                href="/signup"
+                onClick={() => setOpen(false)}
+                className="btn-primary mt-1 text-sm"
+              >
                 Get started
               </Link>
             </nav>

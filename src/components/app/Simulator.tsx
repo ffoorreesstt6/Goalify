@@ -74,7 +74,7 @@ export function Simulator({ defaultIncome = 2000 }: { defaultIncome?: number }) 
         <div className="grid gap-4 sm:grid-cols-3">
           <GlassCard className="!p-5">
             <p className="text-sm text-muted-foreground">Monthly savings</p>
-            <p className="mt-2 font-display text-2xl font-bold text-emerald-400">
+            <p className="mt-2 font-display text-2xl font-bold text-emerald-500">
               {formatCurrency(monthlySaving)}
             </p>
           </GlassCard>
@@ -94,25 +94,25 @@ export function Simulator({ defaultIncome = 2000 }: { defaultIncome?: number }) 
 
         <GlassCard>
           <div className="mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-accent-purple" />
+            <TrendingUp className="h-5 w-5 text-brand-500" />
             <h3 className="font-semibold">5-year savings projection</h3>
           </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} interval={11} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={50} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} interval={11} />
+                <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={50} />
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(15,18,30,0.95)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.95)",
+                    border: "1px solid #e5e7eb",
                     borderRadius: 12,
                     fontSize: 12,
                   }}
                   formatter={(v: number) => [formatCurrency(v), "Savings"]}
                 />
-                <Line type="monotone" dataKey="savings" stroke="#a855f7" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="savings" stroke="#7c3aed" strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

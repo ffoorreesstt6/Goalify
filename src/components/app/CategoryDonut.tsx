@@ -10,9 +10,9 @@ export function CategoryDonut({ data }: { data: CategorySlice[] }) {
 
   return (
     <GlassCard>
-      <h3 className="mb-4 font-semibold">Spending by category</h3>
+      <h3 className="mb-4 font-semibold text-gray-900">Spending by category</h3>
       {data.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
+        <p className="py-12 text-center text-sm text-gray-500">
           No spending this month yet. Add an expense to see your breakdown.
         </p>
       ) : (
@@ -34,18 +34,19 @@ export function CategoryDonut({ data }: { data: CategorySlice[] }) {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(15,18,30,0.95)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.95)",
+                    border: "1px solid #e5e7eb",
                     borderRadius: 12,
                     fontSize: 12,
+                    boxShadow: "0 4px 12px -2px rgb(0 0 0 / 0.08)",
                   }}
                   formatter={(v: number) => formatCurrency(v)}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xs text-muted-foreground">Total</span>
-              <span className="font-display text-lg font-bold">{formatCurrency(total)}</span>
+              <span className="text-xs text-gray-500">Total</span>
+              <span className="font-display text-lg font-bold text-gray-900">{formatCurrency(total)}</span>
             </div>
           </div>
           <div className="flex-1 space-y-2">
@@ -53,9 +54,9 @@ export function CategoryDonut({ data }: { data: CategorySlice[] }) {
               <div key={d.category} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full" style={{ background: d.color }} />
-                  <span className="text-muted-foreground">{d.label}</span>
+                  <span className="text-gray-500">{d.label}</span>
                 </div>
-                <span className="font-medium">{formatCurrency(d.value)}</span>
+                <span className="font-medium text-gray-900">{formatCurrency(d.value)}</span>
               </div>
             ))}
           </div>

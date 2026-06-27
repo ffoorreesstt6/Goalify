@@ -43,7 +43,7 @@ export function GoalsManager({ goals, plan }: { goals: Goal[]; plan: PlanId }) {
       {atLimit && (
         <GlassCard className="flex items-center justify-between gap-4 border border-accent-purple/30">
           <div className="flex items-center gap-3">
-            <Lock className="h-5 w-5 text-accent-purple" />
+            <Lock className="h-5 w-5 text-brand-500" />
             <p className="text-sm text-muted-foreground">
               You&apos;ve hit the Free plan limit of {limit} goals. Upgrade for unlimited goals.
             </p>
@@ -120,7 +120,7 @@ function GoalCard({ goal, onChange }: { goal: Goal; onChange: () => void }) {
           <div>
             <h3 className="font-semibold">{goal.name}</h3>
             {goal.completed ? (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
                 <Check className="h-3 w-3" /> Completed
               </span>
             ) : (
@@ -133,7 +133,7 @@ function GoalCard({ goal, onChange }: { goal: Goal; onChange: () => void }) {
         <button
           onClick={remove}
           disabled={pending}
-          className="text-muted-foreground transition-colors hover:text-red-400"
+          className="text-muted-foreground transition-colors hover:text-red-500"
           aria-label="Delete goal"
         >
           <Trash2 className="h-4 w-4" />
@@ -145,9 +145,9 @@ function GoalCard({ goal, onChange }: { goal: Goal; onChange: () => void }) {
           <span className="font-medium">{formatCurrency(goal.saved_amount)}</span>
           <span className="text-muted-foreground">of {formatCurrency(goal.target_amount)}</span>
         </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+        <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700 transition-all"
             style={{ width: `${p}%` }}
           />
         </div>
@@ -161,7 +161,7 @@ function GoalCard({ goal, onChange }: { goal: Goal; onChange: () => void }) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-accent-purple/60"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-accent-purple/60"
           />
           <button
             onClick={() => contribute(Number(amount || 0))}
@@ -172,7 +172,7 @@ function GoalCard({ goal, onChange }: { goal: Goal; onChange: () => void }) {
           </button>
         </div>
       )}
-      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
     </GlassCard>
   );
 }
@@ -227,7 +227,7 @@ function CreateGoalModal({
                     key={e}
                     onClick={() => setEmoji(e)}
                     className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-all ${
-                      emoji === e ? "bg-accent-purple/20 ring-1 ring-accent-purple/60" : "bg-white/5 hover:bg-white/10"
+                      emoji === e ? "bg-brand-500/20 ring-1 ring-accent-purple/60" : "bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     {e}
@@ -242,7 +242,7 @@ function CreateGoalModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. New MacBook"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
               />
             </label>
 
@@ -254,7 +254,7 @@ function CreateGoalModal({
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
                   placeholder="1200"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
                 />
               </label>
               <label className="block">
@@ -264,7 +264,7 @@ function CreateGoalModal({
                   value={monthly}
                   onChange={(e) => setMonthly(e.target.value)}
                   placeholder="150"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
                 />
               </label>
             </div>
@@ -275,11 +275,11 @@ function CreateGoalModal({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
               />
             </label>
 
-            {error && <p className="text-sm text-red-300">{error}</p>}
+            {error && <p className="text-sm text-red-500">{error}</p>}
 
             <button onClick={submit} disabled={pending} className="btn-primary w-full">
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create goal"}

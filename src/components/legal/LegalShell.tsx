@@ -12,17 +12,17 @@ export function LegalShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="relative min-h-screen">
+    <main className="relative min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <div className="mb-10 flex items-center justify-between">
           <Logo />
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
             ← Back home
           </Link>
         </div>
-        <h1 className="font-display text-4xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
-        <div className="prose-invert mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-foreground">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-gray-900">{title}</h1>
+        <p className="mt-2 text-sm text-gray-500">Last updated: {updated}</p>
+        <div className="mt-8 space-y-6 text-sm leading-relaxed text-gray-600 [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-gray-900">
           {children}
         </div>
       </div>

@@ -56,10 +56,8 @@ export function Sidebar({
         href={href}
         onClick={() => setOpen(false)}
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-          active
-            ? "bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-foreground ring-1 ring-white/10"
-            : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+          "sidebar-item",
+          active && "sidebar-item-active"
         )}
       >
         <Icon className="h-5 w-5" />
@@ -71,16 +69,16 @@ export function Sidebar({
   return (
     <>
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3 lg:hidden">
         <Logo />
-        <button onClick={() => setOpen(!open)} aria-label="Menu">
+        <button onClick={() => setOpen(!open)} aria-label="Menu" className="text-gray-600">
           {open ? <X /> : <Menu />}
         </button>
       </div>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-card/60 backdrop-blur-xl transition-transform lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-100 bg-white transition-transform lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -92,16 +90,16 @@ export function Sidebar({
           {nav.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
-          <div className="my-3 border-t border-white/10" />
+          <div className="my-3 border-t border-gray-100" />
           {bottomNav.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
         </nav>
 
         {plan === "free" && (
-          <div className="mx-3 mb-3 rounded-xl bg-gradient-to-br from-blue-600/20 to-purple-700/20 p-4 ring-1 ring-white/10">
-            <p className="text-sm font-semibold">Upgrade to Pro</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+          <div className="mx-3 mb-3 rounded-xl border border-brand-200 bg-brand-50 p-4">
+            <p className="text-sm font-semibold text-brand-800">Upgrade to Pro</p>
+            <p className="mt-1 text-xs text-brand-600">
               Unlimited goals + AI assistant from €3/mo.
             </p>
             <Link href="/billing" className="btn-primary mt-3 w-full !py-2 text-xs">
@@ -110,18 +108,18 @@ export function Sidebar({
           </div>
         )}
 
-        <div className="border-t border-white/10 p-3">
+        <div className="border-t border-gray-100 p-3">
           <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white">
               {initials(name, email)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{name || "Your account"}</p>
-              <p className="truncate text-xs text-muted-foreground">{planInfo.name} plan</p>
+              <p className="truncate text-sm font-medium text-gray-900">{name || "Your account"}</p>
+              <p className="truncate text-xs text-gray-500">{planInfo.name} plan</p>
             </div>
           </div>
           <form action={signOutAction}>
-            <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
+            <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700">
               Sign out
             </button>
           </form>
@@ -130,7 +128,7 @@ export function Sidebar({
 
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
