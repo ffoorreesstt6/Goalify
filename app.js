@@ -883,7 +883,7 @@ function landing(){
   const trust=[['✓','Free forever plan'],['✓','No credit card'],['✓','Cancel anytime'],['🔒','Bank-level security']];
   return `<header class="fixed inset-x-0 top-0 z-40 px-4 py-4">
     <div class="mx-auto max-w-7xl">
-      <div class="glass-strong flex items-center justify-between rounded-2xl px-5 py-3" style="-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)">
+      <div class="lg flex items-center justify-between rounded-2xl px-5 py-3">
         ${brand()}
         <nav class="lp-nav hidden gap-8 md:flex text-sm" style="color:var(--muted)">${navItem('Features','feat')}${navItem('How it works','how')}${navItem('Pricing','pricing')}${navItem('FAQ','faq')}</nav>
         <div class="flex items-center gap-3">${langSelect()}${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm">Start for free</a>`}</div>
