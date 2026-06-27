@@ -22,8 +22,8 @@ export function AIDemo() {
   const [roastIndex, setRoastIndex] = useState(0);
 
   return (
-    <section id="ai-demo" className="relative py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="ai-demo" className="relative py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="section-label">AI in action</p>
           <h2 className="section-title">Your money, explained by AI</h2>

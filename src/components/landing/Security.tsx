@@ -12,8 +12,8 @@ const items = [
 
 export function Security() {
   return (
-    <section id="security" className="relative py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="security" className="relative py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-10 shadow-soft-md sm:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-100/40 blur-3xl" />
           <div className="relative grid gap-10 lg:grid-cols-2 lg:items-center">

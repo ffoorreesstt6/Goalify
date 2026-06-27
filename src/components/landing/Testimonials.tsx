@@ -38,8 +38,8 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="relative py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="section-label">Loved by savers</p>
           <h2 className="section-title">People are reaching their goals</h2>

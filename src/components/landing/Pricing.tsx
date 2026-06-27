@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 
 export function Pricing() {
   return (
-    <section id="pricing" className="relative py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="relative py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="section-label">Pricing</p>
           <h2 className="section-title">Simple, honest pricing</h2>
