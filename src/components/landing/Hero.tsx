@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, TrendingUp, Target, Wallet } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pb-12 pt-10 sm:pb-16 lg:pt-14 lg:pb-20">
+    <section className="relative overflow-hidden pt-20 pb-10 sm:pt-24 sm:pb-16 lg:pt-24 lg:pb-20">
       {/* Subtle animated background shapes */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div
@@ -47,9 +47,9 @@ export function Hero() {
       <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
+            transition={{ duration: 0.4 }}
             className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700 sm:text-sm"
           >
             <Sparkles className="h-3.5 w-3.5 text-brand-500 sm:h-4 sm:w-4" />
@@ -57,9 +57,9 @@ export function Hero() {
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.08 }}
+            transition={{ duration: 0.4, delay: 0.06 }}
             className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl text-balance"
           >
             Turn Every Euro <br />
@@ -67,9 +67,9 @@ export function Hero() {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.16 }}
+            transition={{ duration: 0.4, delay: 0.12 }}
             className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-500 sm:text-lg text-balance"
           >
             Track spending, reach goals faster, and receive AI-powered financial
@@ -77,9 +77,9 @@ export function Hero() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.24 }}
+            transition={{ duration: 0.4, delay: 0.18 }}
             className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
           >
             <Link href="/signup" className="btn-primary group w-full sm:w-auto">
@@ -92,9 +92,9 @@ export function Hero() {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.45, delay: 0.32 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.24 }}
             className="mt-4 text-xs text-gray-400 sm:text-sm"
           >
             No credit card required · Free forever plan · Students get Pro free
@@ -103,15 +103,15 @@ export function Hero() {
 
         {/* Dashboard preview mock */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.36 }}
-          className="relative mx-auto mt-12 max-w-5xl sm:mt-16 lg:mt-20"
+          transition={{ duration: 0.5, delay: 0.28 }}
+          className="relative mx-auto mt-8 max-w-5xl sm:mt-12 lg:mt-16"
         >
           {/* Subtle glow behind the card */}
           <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-2xl" />
           <div className="relative rounded-2xl border border-gray-200 bg-white p-1.5 shadow-soft-xl sm:p-2">
-            <div className="rounded-xl bg-gray-50/80 p-3 sm:p-6">
+            <div className="rounded-xl bg-gray-50/80 p-3 sm:p-5 lg:p-6">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                 {[
                   { icon: Wallet, label: "Income", value: "€2,400", color: "text-blue-500" },

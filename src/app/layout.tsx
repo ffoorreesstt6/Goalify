@@ -32,7 +32,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable}`}>
-      <body className="min-h-screen bg-white font-sans antialiased">{children}</body>
+      <body className="bg-white font-sans antialiased">{children}</body>
     </html>
   );
 }

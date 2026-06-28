@@ -30,17 +30,17 @@ export function Navbar() {
         scrolled ? "navbar-scrolled" : "navbar-transparent"
       )}
     >
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-8">
-        {/* Logo — slightly smaller on mobile */}
-        <Logo className="shrink-0 [&_svg]:h-4.5 [&_svg]:w-4.5 sm:[&_svg]:h-5 sm:[&_svg]:w-5" />
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-3 sm:px-5 lg:px-8">
+        {/* Logo */}
+        <Logo className="shrink-0" />
 
         {/* Desktop nav links */}
-        <nav className="hidden items-center gap-7 md:flex">
+        <nav className="hidden items-center gap-7 lg:flex">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+              className="text-[15px] font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
             >
               {l.label}
             </a>
@@ -48,10 +48,10 @@ export function Navbar() {
         </nav>
 
         {/* Desktop right side */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
-            className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+            className="text-[15px] font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
           >
             Log in
           </Link>
@@ -61,13 +61,13 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Mobile: small CTA + hamburger */}
-        <div className="flex items-center gap-2.5 md:hidden">
-          <Link href="/signup" className="btn-navbar-cta">
+        {/* Mobile: CTA + hamburger */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link href="/signup" className="btn-navbar-cta h-9 px-3 text-[11px] sm:h-10 sm:px-4 sm:text-sm">
             Get started
           </Link>
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200 sm:h-10 sm:w-10"
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
@@ -79,12 +79,11 @@ export function Navbar() {
       {/* Mobile dropdown */}
       {open && (
         <>
-          {/* Backdrop */}
           <div
-            className="fixed inset-0 top-16 z-40 bg-black/10 md:hidden"
+            className="fixed inset-0 top-16 z-40 bg-black/10 lg:hidden"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-gray-100 bg-white/95 p-2 shadow-soft-lg backdrop-blur-xl md:hidden">
+          <div className="absolute left-2 right-2 top-[calc(100%+6px)] z-50 rounded-2xl border border-gray-100 bg-white/95 p-2 shadow-soft-lg backdrop-blur-xl lg:hidden">
             <nav className="flex flex-col">
               {links.map((l) => (
                 <a
