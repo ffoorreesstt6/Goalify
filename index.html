@@ -431,8 +431,16 @@
     .lp-lang{appearance:none;-webkit-appearance:none;cursor:pointer;border-radius:9999px;border:1px solid var(--glass-bd);background-color:var(--glass-bg);-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);color:var(--text);font-size:.78rem;font-weight:600;padding:.4rem 1.7rem .4rem .8rem;line-height:1;transition:border-color .15s var(--ease-out),transform .15s var(--ease-out);background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 14px) center,calc(100% - 9px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
     .lp-lang:hover{border-color:color-mix(in srgb,var(--accent2) 45%,var(--glass-bd));transform:translateY(-1px)}
     .lp-lang:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+    .lp-navbar{flex-wrap:wrap;gap:.85rem}
+    .lp-navbar > *{min-width:0}
+    .lp-lang{min-width:0;max-width:100%}
+    @media (max-width:640px){
+      .lp-navbar{padding:.75rem 1rem}
+      .lp-navbar .btn{padding:.65rem 1rem;font-size:.85rem}
+      .lp-lang{padding:.35rem 1rem .35rem .75rem;font-size:.78rem}
+    }
     /* hero: tighter top + small trust */
-    .lp-hero{padding-top:clamp(5.5rem,9vh,7.5rem)!important;padding-bottom:clamp(3rem,6vw,5rem)!important}
+    .lp-hero{padding-top:clamp(4rem,8.5vh,6.25rem)!important;padding-bottom:clamp(2.75rem,5vw,4.5rem)!important}
     .lp-hero-trust{display:flex;align-items:center;gap:.85rem;margin-top:1.6rem}
     .lp-hero-avs{display:flex}
     .lp-hero-avs span{width:30px;height:30px;border-radius:9999px;border:2px solid var(--bg);margin-left:-9px;background:linear-gradient(135deg,var(--accent1),var(--accent3));display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff}
@@ -467,7 +475,7 @@
        Later in the cascade so it elevates the LANDING V2 base above.
        ============================================================ */
     /* hero shell + ambient backdrop */
-    .lp-hero{position:relative;overflow:hidden;padding-top:clamp(7rem,15vh,11rem);padding-bottom:clamp(3.5rem,8vw,6.5rem)}
+    .lp-hero{position:relative;overflow:hidden;padding-top:clamp(4.25rem,8.5vh,6.25rem);padding-bottom:clamp(2.75rem,5vw,4.5rem)}
     .lp-aurora{position:absolute;inset:-22% -10% auto -10%;height:780px;z-index:0;pointer-events:none;filter:blur(48px);opacity:.55;background:
       radial-gradient(38% 50% at 18% 22%,color-mix(in srgb,var(--accent1) 72%,transparent),transparent 70%),
       radial-gradient(40% 52% at 82% 14%,color-mix(in srgb,var(--accent2) 66%,transparent),transparent 72%),
