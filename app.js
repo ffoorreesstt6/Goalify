@@ -399,7 +399,9 @@ const I18N_EXTRA7={
 };
 Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
-function langSelect(){const cur=curLang();return `<select id="langSel" class="lp-lang" title="Language">${LANGS.map(l=>`<option value="${l[0]}" ${cur===l[0]?'selected':''}>${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select>`;}
+function langSelect(){const cur=curLang();const L=LANGS.find(l=>l[0]===cur)||LANGS[0];
+  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="listbox" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-cur">${esc(L[1])}</span><svg class="lang-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div class="lang-menu hidden" role="listbox" aria-label="Language">${LANGS.map(l=>`<button type="button" role="option" aria-selected="${cur===l[0]}" class="lang-opt ${cur===l[0]?'on':''}" data-action="langPick" data-lang="${l[0]}"><span class="lang-flag">${l[2]||'🌐'}</span><span>${esc(l[1])}</span>${cur===l[0]?'<span class="lang-check">✓</span>':''}</button>`).join('')}</div></div>`;}
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
 function t(s){const lang=curLang();if(lang==='en')return s;const dict=I18N[lang];if(!dict)return s;const key=(s==null?'':String(s)).trim();return (key&&dict[key]!=null)?String(s).replace(key,dict[key]):s;}
 function translateDOM(root){
@@ -2097,6 +2099,9 @@ function applyImgEditor(){
 }
 async function saveAvatarImg(url){ME.avatar_url=url;if(DEMO_MODE){localStorage.setItem('goalify_avatar_'+uid(),url);}else{try{await sb.from('profiles').update({avatar_url:url}).eq('id',SESSION.user.id);}catch(err){}}toast('Profile photo updated');render();}
 async function saveBannerImg(url){ME.banner_url=url;localStorage.setItem('goalify_banner_'+uid(),url);if(!DEMO_MODE){try{await sb.from('profiles').update({banner_url:url}).eq('id',SESSION.user.id);}catch(err){}}toast('Cover updated');render();}
+// close language dropdowns on outside click / Escape
+document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('[data-lang-dd]')){document.querySelectorAll('.lang-menu').forEach(m=>m.classList.add('hidden'));document.querySelectorAll('[data-lang-dd].open').forEach(d=>d.classList.remove('open'));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.lang-menu').forEach(m=>m.classList.add('hidden'));document.querySelectorAll('[data-lang-dd].open').forEach(d=>d.classList.remove('open'));}});
 // close mobile landing menu after choosing a section
 document.addEventListener('click',e=>{const s=e.target.closest&&e.target.closest('[data-scroll]');if(s&&s.closest('#mnavPanel')){const p=document.getElementById('mnavPanel');if(p)p.classList.add('hidden');}});
 
@@ -3062,6 +3067,8 @@ document.addEventListener('click',async(e)=>{
     else if(act==='inboxReadAll'){inboxItems().forEach(n=>markInboxRead(n.id));toast('All caught up ✓');render();}
     else if(act==='imgCancel'){closeImgEditor();}
     else if(act==='imgApply'){applyImgEditor();}
+    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd)x.classList.remove('open');});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');m.classList.toggle('up',willOpen&&a.getBoundingClientRect().bottom+260>window.innerHeight);}}
+    else if(act==='langPick'){setLang(a.getAttribute('data-lang'));}
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
