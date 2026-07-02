@@ -400,7 +400,7 @@ const I18N_EXTRA7={
 Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();const L=LANGS.find(l=>l[0]===cur)||LANGS[0];
-  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="dialog" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-code">${esc((L[0]||'en').slice(0,2).toUpperCase())}</span><span aria-hidden="true" style="font-size:.68rem;color:var(--muted);line-height:1">⌄</span></button>
+  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="dialog" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-code">${esc((L[0]||'en').slice(0,2).toUpperCase())}</span></button>
   <div class="lang-menu hidden" role="dialog" aria-label="Choose language">
     <div class="lang-menu-head"><span class="lang-menu-title">Language</span><span class="lang-menu-count" data-lang-count>${LANGS.length}</span></div>
     <div class="lang-search-wrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="text" id="langSearch" class="lang-search" placeholder="Search language…" autocomplete="off" spellcheck="false"></div>
@@ -415,21 +415,6 @@ function filterLangTiles(dd,q){
     t.classList.toggle('hidden',!hit); if(hit)shown++;
   });
   const empty=dd.querySelector('[data-lang-empty]'); if(empty)empty.classList.toggle('hidden',shown!==0);
-}
-function positionLangMenu(dd){
-  if(!dd)return;
-  const btn=dd.querySelector('.lang-btn'),m=dd.querySelector('.lang-menu');
-  if(!btn||!m)return;
-  m.classList.remove('up');
-  m.style.left='';
-  m.style.right='0';
-  const br=btn.getBoundingClientRect(), w=Math.min(300,window.innerWidth-16);
-  const spaceBelow=window.innerHeight-br.bottom, spaceAbove=br.top;
-  if(spaceBelow<330&&spaceAbove>spaceBelow)m.classList.add('up');
-  if(br.right-w<8){
-    m.style.right='auto';
-    m.style.left=`${Math.max(8-br.left,0)}px`;
-  }
 }
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
 function t(s){const lang=curLang();if(lang==='en')return s;const dict=I18N[lang];if(!dict)return s;const key=(s==null?'':String(s)).trim();return (key&&dict[key]!=null)?String(s).replace(key,dict[key]):s;}
@@ -3094,8 +3079,8 @@ document.addEventListener('click',async(e)=>{
     else if(act==='inboxReadAll'){inboxItems().forEach(n=>markInboxRead(n.id));toast('All caught up ✓');render();}
     else if(act==='imgCancel'){closeImgEditor();}
     else if(act==='imgApply'){applyImgEditor();}
-    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd){x.classList.remove('open');const b=x.querySelector('.lang-btn');if(b)b.setAttribute('aria-expanded','false');}});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');if(willOpen){positionLangMenu(dd);const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}}
-    else if(act==='langPick'){const dd=a.closest('[data-lang-dd]');if(dd){const m=dd.querySelector('.lang-menu'),b=dd.querySelector('.lang-btn');if(m)m.classList.add('hidden');dd.classList.remove('open');if(b)b.setAttribute('aria-expanded','false');}setLang(a.getAttribute('data-lang'));}
+    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd)x.classList.remove('open');});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');m.classList.toggle('up',willOpen&&a.getBoundingClientRect().bottom+320>window.innerHeight);if(willOpen){const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}}
+    else if(act==='langPick'){setLang(a.getAttribute('data-lang'));}
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
