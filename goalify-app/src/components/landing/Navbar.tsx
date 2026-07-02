@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { LanguageSelector } from "@/components/LanguageSelector"
 
 const links = [
   { href: "#features", label: "Features" },
@@ -61,7 +63,9 @@ export function Navbar() {
             <Link href="/signup" className="btn-primary !px-5 !py-2.5 text-sm">
               Get started
             </Link>
-          </div>
+          
+          <LanguageSelector className="ml-3" />
+            <LanguageSelector /></div>
 
           <button
             className="md:hidden text-foreground"
@@ -85,6 +89,8 @@ export function Navbar() {
                   {l.label}
                 </a>
               ))}
+          <LanguageSelector className="mt-3 w-full" />
+
               <hr className="border-white/10" />
               <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-medium">
                 Log in
@@ -92,6 +98,7 @@ export function Navbar() {
               <Link href="/signup" className="btn-primary text-sm">
                 Get started
               </Link>
+       <LanguageSelector />
             </nav>
           </div>
         )}

@@ -1,4 +1,6 @@
 "use client";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
+
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -120,6 +122,9 @@ export function Sidebar({
               <p className="truncate text-xs text-muted-foreground">{planInfo.name} plan</p>
             </div>
           </div>
+        <div className="mt-6 pt-4 border-t border-white/10">
+          <LanguageSelector />
+        </div>
           <form action={signOutAction}>
             <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
               Sign out

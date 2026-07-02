@@ -1,4 +1,6 @@
 "use client";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
+
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -362,27 +364,10 @@ function ThemeSection() {
 }
 
 function LanguageSection() {
-  const [lang, setLang] = useState("en");
   return (
     <GlassCard>
       <h2 className="font-display text-xl font-bold">Language</h2>
-      <select
-        value={lang}
-        onChange={(e) => setLang(e.target.value)}
-        className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none focus:border-accent-purple/60"
-      >
-        {[
-          ["en", "English"],
-          ["de", "Deutsch"],
-          ["es", "Español"],
-          ["fr", "Français"],
-          ["sq", "Shqip"],
-        ].map(([v, l]) => (
-          <option key={v} value={v} className="bg-card">
-            {l}
-          </option>
-        ))}
-      </select>
+      <LanguageSelector />
     </GlassCard>
   );
 }

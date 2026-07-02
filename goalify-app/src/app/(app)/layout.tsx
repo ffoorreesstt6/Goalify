@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getProfile } from "@/lib/data";
 import { Sidebar } from "@/components/app/Sidebar";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
+  const langCookie = cookies().get("lang")?.value ?? "en";
 
   // Force onboarding before using the app.
   if (!profile.onboarded) redirect("/onboarding");
