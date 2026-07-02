@@ -784,6 +784,89 @@
       .page-sub{font-size:.78rem}
       .lp-navbar{padding-left:.85rem!important;padding-right:.85rem!important}
     }
+    /* ============================================================
+       LANDING V4 — WARM PORCELAIN FINTECH SURFACE
+       Ink text · ivory surfaces · plum as accent only · dark
+       dashboard framing · hero above the fold at 1280x720.
+       ============================================================ */
+    /* warm light tokens (landing forces light + default accent) */
+    html.light[data-accent="blue"]{
+      --bg:#F6F2EA; --text:#14171C; --muted:#5C6470;
+      --card:#FFFFFF; --card-2:#FBF9F4; --sidebar:#FFFFFF;
+      --glass:#F1EEE7; --glass-strong:#FFFFFF;
+      --border:#DDD6CA; --hair:rgba(29,33,41,.08);
+      --accent1:#4B2E83; --accent2:#5A3EA6; --accent3:#7658C4;
+      --jade:#2F8F72; --jade2:#45B083; --gold:#C6A15B; --gold2:#B98F3E;
+      --steel:#426C82; --steel2:#6E91A3; --coral:#C96F4A; --danger:#B8503E;
+      --shadow-sm:0 1px 2px rgba(70,58,32,.08),0 1px 1px rgba(70,58,32,.05);
+      --shadow-md:0 10px 28px -14px rgba(70,58,32,.20),0 3px 8px -3px rgba(70,58,32,.10);
+      --shadow-lg:0 32px 64px -28px rgba(52,44,26,.28),0 10px 24px -14px rgba(70,58,32,.14);
+      --shadow-glass:0 18px 44px -18px rgba(70,58,32,.20),inset 0 1px 0 #fff;
+    }
+    /* hero: no purple blobs, warm wash, tight above-the-fold rhythm */
+    html.light .lp-aurora{display:none}
+    html.light .lp-haze{opacity:.5}
+    .lp-hero{padding-top:calc(58px + clamp(2rem,4.5vh,3rem))!important;padding-bottom:clamp(1.75rem,3.5vw,2.75rem)!important}
+    html.light .lp-hero{background:linear-gradient(180deg,#F8F5EF 0%,var(--bg) 68%)}
+    .lp-h1{font-size:clamp(2.35rem,4.9vw,3.85rem)}
+    .lp-lead{font-size:clamp(1rem,1.3vw,1.12rem)}
+    /* navbar: warm glass, crisper */
+    html.light .lp-navbar{background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);border:1px solid var(--border);box-shadow:0 10px 26px -18px rgba(70,58,32,.35)}
+    /* CTA hierarchy */
+    html.light .btn-primary{background:linear-gradient(180deg,#5A3EA6,#4B2E83);box-shadow:0 10px 22px -10px rgba(75,46,131,.5),inset 0 1px 0 rgba(255,255,255,.18)}
+    html.light .btn-primary:hover{filter:brightness(1.07)}
+    html.light .btn-primary:active{transform:translateY(1px)}
+    html.light .lp-btn-lg.btn-ghost,html.light .lp-navbar .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text);box-shadow:var(--shadow-sm)}
+    html.light .lp-btn-lg.btn-ghost:hover{border-color:#B9AE9C;box-shadow:var(--shadow-md)}
+    /* eyebrow + chips: ivory, ink */
+    html.light .lp-eyebrow{background:#fff;border-color:var(--border);color:#3A3F47;box-shadow:var(--shadow-sm)}
+    html.light .lp-eyebrow .dot{background:var(--jade);box-shadow:0 0 0 4px rgba(47,143,114,.16)}
+    /* dashboard preview: dark product inside warm page (premium framing) */
+    html.light .lp-frame{
+      --bg:#101218; --card:#161922; --card-2:#1A1E28; --sidebar:#12151C;
+      --glass:#1E222C; --glass-strong:#1A1E28; --border:#2A2F3A; --hair:rgba(255,255,255,.06);
+      --text:#F2F3F5; --muted:#98A0AC;
+      background:#101218;border:1px solid #2A2F3A;border-radius:1.1rem;padding:.55rem;
+      box-shadow:0 48px 96px -42px rgba(24,20,10,.5),0 18px 40px -22px rgba(24,20,10,.3),0 0 0 6px rgba(255,255,255,.55);
+      -webkit-backdrop-filter:none;backdrop-filter:none}
+    html.light .lp-frame *{color:var(--text)}
+    html.light .lp-frame .lp-frame-bar i{background:#3A4150}
+    /* stats row: ink numerals, jade tick of life */
+    html.light .lp-stat .n{background:none;-webkit-text-fill-color:currentColor;color:var(--text)}
+    html.light .lp-stat .n::after{content:"";display:inline-block;width:.45em;height:.14em;margin-left:.18em;border-radius:2px;background:var(--jade2);vertical-align:.18em}
+    /* cards / faq / pricing inherit warm tokens; sharpen borders */
+    html.light .lp-card,html.light .lp-persona,html.light .lp-price,html.light .lp-faq,html.light .lp-sec-tile,html.light .lp-bento .cell{border-color:var(--border)}
+    html.light .lp-price.pop{border-color:rgba(198,161,91,.65);box-shadow:0 0 0 1px rgba(198,161,91,.35),0 30px 60px -30px rgba(70,58,32,.30)}
+    html.light .lp-price.pop .btn-primary{background:linear-gradient(180deg,#D8B36A,#C6A15B);color:#2A2109;box-shadow:0 10px 22px -10px rgba(198,161,91,.55)}
+    /* section rhythm: tighter, alternating warm bands */
+    .lp-sec{padding-top:clamp(3rem,6.5vw,5rem)!important;padding-bottom:clamp(3rem,6.5vw,5rem)!important}
+    html.light #sec-how,html.light #sec-faq{position:relative}
+    html.light #sec-how::before,html.light #sec-faq::before{content:"";position:absolute;inset:0;background:#F1EEE7;box-shadow:0 0 0 100vmax #F1EEE7;clip-path:inset(0 -100vmax);z-index:-1}
+    html.light .lp-cta-panel{background:linear-gradient(135deg,#4B2E83,#5A3EA6 60%,#6E91A3)}
+    /* footer */
+    html.light footer{background:#F1EEE7;border-top:1px solid var(--border)!important}
+    /* kicker accents by meaning */
+    html.light .lp-kicker.gtext{background:none;-webkit-text-fill-color:currentColor;color:var(--accent2)}
+    /* TABLET: keep 2 cols, scale down, tighter padding */
+    @media(min-width:768px) and (max-width:1023px){
+      .lp-h1{font-size:clamp(2.1rem,4.4vw,2.7rem)}
+      .lp-hero{padding-top:calc(58px + 2rem)!important;padding-bottom:1.75rem!important}
+      .lp-frame{transform:scale(.94);transform-origin:top right}
+      .lp-sec{padding-top:2.75rem!important;padding-bottom:2.75rem!important}
+    }
+    /* MOBILE: stack tight, hero right under navbar, clean buttons */
+    @media(max-width:640px){
+      .lp-hero{padding-top:calc(56px + 1.1rem)!important;padding-bottom:1.25rem!important}
+      .lp-hero .lp-eyebrow{margin-top:0}
+      .lp-h1{font-size:clamp(1.9rem,8.4vw,2.3rem);margin-top:.8rem!important}
+      .lp-lead{margin-top:.7rem!important}
+      .lp-hero .mt-7{margin-top:1.1rem!important}
+      .lp-hero .mt-6{margin-top:1rem!important}
+      .lp-hero .btn{width:100%;justify-content:center;text-align:center}
+      .lp-frame{margin-top:.25rem}
+      .lp-sec{padding-top:2.25rem!important;padding-bottom:2.25rem!important}
+      section.mx-auto.max-w-6xl.px-4.pt-10{padding-top:1.5rem!important}
+    }
   </style>
 </head>
 <body>
@@ -821,6 +904,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=80"></script>
+  <script type="module" src="./app.js?v=81"></script>
 </body>
 </html>

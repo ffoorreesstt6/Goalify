@@ -898,7 +898,7 @@ function landing(){
   <main>
     <section class="lp-hero px-4">
       <div class="lp-aurora"></div><div class="lp-haze"></div>
-      <div class="relative mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-2">
+      <div class="relative mx-auto grid max-w-7xl items-start gap-8 md:grid-cols-2 lg:gap-12">
         <div class="reveal">
           <span class="lp-eyebrow"><span class="dot"></span> Your money, finally on your side</span>
           <h1 class="lp-h1 mt-5"><span>Turn every euro</span> <span>into</span> <span class="gtext">progress.</span></h1>
