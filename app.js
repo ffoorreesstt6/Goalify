@@ -400,8 +400,22 @@ const I18N_EXTRA7={
 Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();const L=LANGS.find(l=>l[0]===cur)||LANGS[0];
-  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="listbox" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-cur">${esc(L[1])}</span><svg class="lang-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="lang-menu hidden" role="listbox" aria-label="Language">${LANGS.map(l=>`<button type="button" role="option" aria-selected="${cur===l[0]}" class="lang-opt ${cur===l[0]?'on':''}" data-action="langPick" data-lang="${l[0]}"><span class="lang-flag">${l[2]||'🌐'}</span><span>${esc(l[1])}</span>${cur===l[0]?'<span class="lang-check">✓</span>':''}</button>`).join('')}</div></div>`;}
+  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="dialog" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-code">${esc((L[0]||'en').slice(0,2).toUpperCase())}</span></button>
+  <div class="lang-menu hidden" role="dialog" aria-label="Choose language">
+    <div class="lang-menu-head"><span class="lang-menu-title">Language</span><span class="lang-menu-count" data-lang-count>${LANGS.length}</span></div>
+    <div class="lang-search-wrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="text" id="langSearch" class="lang-search" placeholder="Search language…" autocomplete="off" spellcheck="false"></div>
+    <div class="lang-grid" data-lang-grid>${LANGS.map(l=>`<button type="button" role="option" aria-selected="${cur===l[0]}" class="lang-tile ${cur===l[0]?'on':''}" data-action="langPick" data-lang="${l[0]}" data-lang-name="${esc(l[1]).toLowerCase()}"><span class="lang-tile-flag">${l[2]||'🌐'}</span><span class="lang-tile-name">${esc(l[1])}</span>${cur===l[0]?'<span class="lang-tile-check">✓</span>':''}</button>`).join('')}</div>
+    <p class="lang-empty hidden" data-lang-empty>No languages match your search.</p>
+  </div></div>`;}
+function filterLangTiles(dd,q){
+  if(!dd)return; const grid=dd.querySelector('[data-lang-grid]'); if(!grid)return;
+  const term=(q||'').trim().toLowerCase(); let shown=0;
+  grid.querySelectorAll('.lang-tile').forEach(t=>{
+    const hit=!term||((t.getAttribute('data-lang-name')||'').includes(term))||((t.getAttribute('data-lang')||'').includes(term));
+    t.classList.toggle('hidden',!hit); if(hit)shown++;
+  });
+  const empty=dd.querySelector('[data-lang-empty]'); if(empty)empty.classList.toggle('hidden',shown!==0);
+}
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
 function t(s){const lang=curLang();if(lang==='en')return s;const dict=I18N[lang];if(!dict)return s;const key=(s==null?'':String(s)).trim();return (key&&dict[key]!=null)?String(s).replace(key,dict[key]):s;}
 function translateDOM(root){
@@ -1063,7 +1077,7 @@ function loginView(){
     <p class="auth-sub">Log in to your Goalify account.</p>
     <div class="mt-6">${googleBtn}</div>${authDivider}
     <form id="loginForm" class="space-y-4">
-      <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Email</label><input name="email" type="email" class="input" required></div><div><label class="label">Language</label><select name="language" class="input">${LANGS.map(l=>`<option value="${l[0]}">${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select></div></div>
       <div><label class="label">Password</label><div class="relative"><input id="lpw" name="password" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="lpw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div>
       <div class="flex items-center justify-between text-sm"><label class="flex items-center gap-2" style="color:var(--muted)"><input type="checkbox" name="remember" checked> Remember me</label><a href="#forgot" class="text-accent-purple hover:underline">Forgot password?</a></div>
       <button class="btn btn-primary w-full" id="loginBtn">Log in</button>
@@ -1071,26 +1085,24 @@ function loginView(){
     <p class="mt-6 text-center text-sm" style="color:var(--muted)">No account? <a href="#signup" class="text-accent-purple font-semibold hover:underline">Sign up free</a></p></div>`);
 }
 function signupView(){
-  return authWrap(`<div class="auth-card">
+  return authWrap(`<div class="auth-card auth-compact">
     <h1 class="auth-h">Create your account</h1>
     <p class="auth-sub">Start free. No credit card required.</p>
-    <div class="mt-6">${googleBtn}</div>${authDivider}
+    <div class="mt-3.5">${googleBtn}</div>${authDivider}
     <form id="signupForm" class="space-y-4">
       <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input"></div></div>
       <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
-      <div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)"></p></div>
-      <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div>
-      <div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" required></div>
-      <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div>
-      <div><label class="label">Language</label><select name="language" class="input">${LANGS.map(l=>`<option value="${l[0]}">${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select></div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)"></p></div>
+      <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div></div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" required></div>
+      <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
       <div><label class="label">Are you a student?</label><div class="grid grid-cols-2 gap-2">
         <label class="su-stud"><input type="radio" name="is_student" value="yes" class="sr-only">🎓 Yes<span>Pro free for 2 years — verify after signup</span></label>
         <label class="su-stud"><input type="radio" name="is_student" value="no" class="sr-only" checked>💼 No<span>Continue with the standard setup</span></label>
       </div><p id="studHint" class="mt-1.5 hidden text-[11px]" style="color:var(--jade2)">Nice — after signup we'll point you straight to student verification.</p></div>
       <button class="btn btn-primary w-full" id="signupBtn">Create account</button>
     </form>
-    <p class="mt-3 text-center text-[11px]" style="color:var(--muted)">By continuing you agree to our <a href="#home" class="hover:underline">Terms</a> & <a href="#home" class="hover:underline">Privacy Policy</a>.</p>
-    <p class="mt-4 text-center text-sm" style="color:var(--muted)">Have an account? <a href="#login" class="text-accent-purple font-semibold hover:underline">Log in</a></p></div>`);
+    <p class="mt-2.5 text-center text-[11px]" style="color:var(--muted)">By continuing you agree to our <a href="#home" class="hover:underline">Terms</a> & <a href="#home" class="hover:underline">Privacy Policy</a>. · Have an account? <a href="#login" class="text-accent-purple font-semibold hover:underline">Log in</a></p></div>`);
 }
 function forgotView(){
   return authWrap(`<div class="auth-card"><h1 class="auth-h">Reset your password</h1><p class="auth-sub">We'll email you a secure reset link.</p>
@@ -3067,7 +3079,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='inboxReadAll'){inboxItems().forEach(n=>markInboxRead(n.id));toast('All caught up ✓');render();}
     else if(act==='imgCancel'){closeImgEditor();}
     else if(act==='imgApply'){applyImgEditor();}
-    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd)x.classList.remove('open');});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');m.classList.toggle('up',willOpen&&a.getBoundingClientRect().bottom+260>window.innerHeight);}}
+    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd)x.classList.remove('open');});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');m.classList.toggle('up',willOpen&&a.getBoundingClientRect().bottom+320>window.innerHeight);if(willOpen){const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}}
     else if(act==='langPick'){setLang(a.getAttribute('data-lang'));}
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
@@ -3216,6 +3228,7 @@ document.addEventListener('input',e=>{
   if(e.target.getAttribute('data-action')==='pwStr')updatePwStr(e.target.value);
   if(e.target.id==='imgZoom'&&IMGED){IMGED.zoom=+e.target.value||1;updImgEd();}
   if(e.target.id==='soSearch'){soSearchInput(e.target.value);}
+  if(e.target.id==='langSearch'){filterLangTiles(e.target.closest('[data-lang-dd]'),e.target.value);}
 });
 
 document.addEventListener('submit',async(e)=>{

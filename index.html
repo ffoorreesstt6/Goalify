@@ -146,7 +146,7 @@
     .orb{position:absolute;border-radius:9999px;filter:blur(80px);opacity:.5;pointer-events:none}
 
     /* ---- inputs ---- */
-    .input{width:100%;border-radius:var(--r-md);border:1px solid var(--border);background:color-mix(in srgb,var(--text) 3%,transparent);padding:.7rem 1rem;font-size:.9rem;outline:none;color:var(--text);transition:border-color .18s,box-shadow .18s,background .18s}
+    .input{width:100%;box-sizing:border-box;border-radius:var(--r-md);border:1px solid var(--border);background:color-mix(in srgb,var(--text) 3%,transparent);padding:.7rem 1rem;font-size:.9rem;outline:none;color:var(--text);transition:border-color .18s,box-shadow .18s,background .18s}
     html.light .input{background:#fff}
     .input::placeholder{color:color-mix(in srgb,var(--muted) 85%,transparent)}
     .input:hover{border-color:color-mix(in srgb,var(--accent2) 30%,var(--border))}
@@ -585,7 +585,7 @@
     .auth-card-wrap{width:100%;max-width:29rem}
     .auth-mobrand{margin-bottom:1.5rem;display:flex;justify-content:center}
     @media(min-width:1024px){.auth-mobrand{display:none}}
-    .auth-card{width:100%;background:var(--glass-strong);border:1px solid var(--border);border-radius:1.5rem;padding:clamp(1.5rem,4vw,2.25rem);box-shadow:0 30px 70px -42px rgba(0,0,0,.55)}
+    .auth-card{width:100%;box-sizing:border-box;background:var(--glass-strong);border:1px solid var(--border);border-radius:1.5rem;padding:clamp(1.5rem,4vw,2.25rem);box-shadow:0 30px 70px -42px rgba(0,0,0,.55)}
     html.light .auth-card{box-shadow:0 22px 50px -30px rgba(17,24,39,.16)}
     .auth-card .input{padding:.72rem 1rem;border-radius:.8rem;transition:border-color .15s,box-shadow .15s}
     .auth-card .input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent2) 22%,transparent)}
@@ -868,31 +868,54 @@
       section.mx-auto.max-w-6xl.px-4.pt-10{padding-top:1.5rem!important}
     }
     /* ============================================================
-       LANGUAGE DROPDOWN + QUIZ SURFACE — warm premium polish
+       LANGUAGE SWITCHER — compact flag+code trigger, opens a
+       search-and-grid card (distinct from a plain list dropdown)
        ============================================================ */
     .lang-dd{position:relative;flex-shrink:0}
-    .lang-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:9999px;padding:.44rem .8rem;font-size:.78rem;font-weight:600;color:var(--text);background:var(--glass);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:border-color .15s,box-shadow .15s,transform .15s}
+    .lang-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:.7rem;padding:.4rem .6rem;font-size:.74rem;font-weight:800;letter-spacing:.02em;color:var(--text);background:var(--glass);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:border-color .15s,box-shadow .15s,transform .15s}
     html.light .lang-btn{background:#FFFDF9;border-color:#DDD6CA;box-shadow:0 1px 2px rgba(70,58,32,.08)}
     .lang-btn:hover{border-color:color-mix(in srgb,var(--accent2) 42%,var(--border));transform:translateY(-1px)}
     .lang-btn:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
-    .lang-chev{color:var(--muted);transition:transform .18s var(--ease-out)}
-    .lang-dd.open .lang-chev{transform:rotate(180deg)}
-    .lang-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:70;min-width:176px;max-width:calc(100vw - 2rem);padding:.35rem;border-radius:.9rem;border:1px solid var(--border);background:var(--glass-strong);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);box-shadow:var(--shadow-lg);animation:fadeUp .18s var(--ease-out)}
-    html.light .lang-menu{background:#FFFDF9;border-color:#DDD6CA;box-shadow:0 24px 48px -22px rgba(70,58,32,.30),0 4px 12px -6px rgba(70,58,32,.12)}
-    .lang-menu.up{top:auto;bottom:calc(100% + 8px)}
-    .lang-opt{display:flex;width:100%;align-items:center;gap:.6rem;border-radius:.55rem;padding:.55rem .7rem;font-size:.83rem;font-weight:600;color:var(--text);background:transparent;border:none;cursor:pointer;text-align:left;transition:background .12s,color .12s}
-    .lang-opt:hover{background:color-mix(in srgb,var(--accent2) 10%,transparent)}
-    html.light .lang-opt:hover{background:#F1EEE7}
-    .lang-opt:active{transform:translateY(1px)}
-    .lang-opt.on{background:color-mix(in srgb,var(--accent1) 12%,transparent)}
-    html.light .lang-opt.on{background:#F4EFE5}
-    .lang-check{margin-left:auto;color:var(--jade,#2F8F72);font-weight:800}
-    .lang-btn .lang-flag,.lang-opt .lang-flag{font-size:1rem;line-height:1}
-    @media(max-width:640px){.lang-cur{display:none}.lang-btn{padding:.44rem .62rem}}
-    /* ---- quiz: layered porcelain surface, finance depth, calm ---- */
+    .lang-dd.open .lang-btn{border-color:var(--jade,#2F8F72)}
+    .lang-flag{font-size:1rem;line-height:1}
+    .lang-code{color:var(--muted);font-size:.68rem}
+    .lang-dd.open .lang-code{color:var(--jade,#2F8F72)}
+    .lang-menu{position:absolute;right:0;top:calc(100% + 10px);z-index:70;width:272px;max-width:calc(100vw - 1.5rem);padding:.7rem;border-radius:1.1rem;border:1px solid var(--border);background:var(--glass-strong);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);box-shadow:var(--shadow-lg);animation:fadeUp .18s var(--ease-out)}
+    html.light .lang-menu{background:#FFFDF9;border-color:#DDD6CA;box-shadow:0 28px 56px -22px rgba(70,58,32,.32),0 6px 16px -8px rgba(70,58,32,.14)}
+    .lang-menu.up{top:auto;bottom:calc(100% + 10px)}
+    .lang-menu-head{display:flex;align-items:baseline;justify-content:space-between;padding:0 .15rem .55rem;margin-bottom:.5rem;border-bottom:1px solid var(--border)}
+    html.light .lang-menu-head{border-color:#EAE3D5}
+    .lang-menu-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+    .lang-menu-count{font-size:.68rem;font-weight:700;color:var(--muted);background:color-mix(in srgb,var(--accent2) 12%,transparent);border-radius:9999px;padding:.05rem .45rem}
+    html.light .lang-menu-count{background:#F1EEE7}
+    .lang-search-wrap{position:relative;margin-bottom:.55rem}
+    .lang-search-wrap svg{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    .lang-search{width:100%;padding:.5rem .6rem .5rem 1.85rem;font-size:.8rem;font-weight:600;border-radius:.65rem;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+    html.light .lang-search{background:#FBF9F4;border-color:#E4DED1}
+    .lang-search:focus{border-color:var(--jade,#2F8F72);box-shadow:0 0 0 3px color-mix(in srgb,var(--jade,#2F8F72) 18%,transparent)}
+    .lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem;max-height:15.5rem;overflow-y:auto;padding-right:.1rem}
+    .lang-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.6rem .4rem;border-radius:.75rem;border:1px solid var(--border);background:var(--card-2);color:var(--text);cursor:pointer;text-align:center;transition:transform .12s,border-color .12s,background .12s,box-shadow .12s}
+    html.light .lang-tile{background:#FBF9F4;border-color:#DDD6CA}
+    .lang-tile:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent2) 40%,var(--border));box-shadow:0 8px 16px -10px rgba(70,58,32,.24)}
+    .lang-tile:active{transform:translateY(0) scale(.97)}
+    .lang-tile.hidden{display:none}
+    .lang-tile.on{border-color:var(--jade,#2F8F72);background:color-mix(in srgb,var(--jade,#2F8F72) 11%,transparent)}
+    html.light .lang-tile.on{background:#E9F3EE}
+    .lang-tile-flag{font-size:1.35rem;line-height:1}
+    .lang-tile-name{font-size:.7rem;font-weight:700;line-height:1.15}
+    .lang-tile-check{position:absolute;top:.3rem;right:.4rem;font-size:.62rem;font-weight:900;color:var(--jade,#2F8F72)}
+    .lang-empty{margin:.4rem 0 0;padding:.6rem;text-align:center;font-size:.74rem;font-weight:600;color:var(--muted)}
+    .lang-empty.hidden{display:none}
+    @media(max-width:640px){.lang-menu{right:-.5rem;width:250px}.lang-grid{grid-template-columns:repeat(2,1fr)}}
+    /* ---- quiz: layered porcelain surface + soft finance-illustration backdrop ---- */
     html.light .ob-shell{background:
       radial-gradient(85% 55% at 50% -6%,#FFFDF8 0%,rgba(255,253,248,0) 62%),
-      linear-gradient(180deg,#F8F5EF 0%,#F6F2EA 52%,#EFE8DC 100%)}
+      linear-gradient(180deg,rgba(248,245,239,.93) 0%,rgba(246,242,234,.90) 52%,rgba(239,232,220,.93) 100%),
+      url('./assets/bg-quiz.jpg') center/cover no-repeat fixed}
+    @media(max-width:767px){html.light .ob-shell{background:
+      radial-gradient(85% 45% at 50% -6%,#FFFDF8 0%,rgba(255,253,248,0) 62%),
+      linear-gradient(180deg,rgba(248,245,239,.94) 0%,rgba(246,242,234,.91) 52%,rgba(239,232,220,.94) 100%),
+      url('./assets/bg-quiz-mobile.jpg') center/cover no-repeat}}
     html.light .ob-shell::before{content:"";position:absolute;inset:0;pointer-events:none;background:
       linear-gradient(rgba(17,19,24,.045) 1px,transparent 1px),
       linear-gradient(90deg,rgba(17,19,24,.045) 1px,transparent 1px);
@@ -924,6 +947,50 @@
       .ob-frame::after{transform:translateY(15px) scale(.945)}
     }
     @media(prefers-reduced-motion:reduce){.lang-menu{animation:none}}
+    /* ============================================================
+       SIGNUP COMPACT — fits 1280x720 / 1366x768 without scrolling
+       ============================================================ */
+    html.light .auth-main{background:
+      linear-gradient(180deg,rgba(248,245,239,.90),rgba(246,242,234,.93)),
+      url('./assets/bg-auth.jpg') center/cover no-repeat}
+    @media(max-width:1023px){html.light .auth-main{background:
+      linear-gradient(180deg,rgba(248,245,239,.92),rgba(246,242,234,.94)),
+      url('./assets/bg-auth-mobile.jpg') center/cover no-repeat}}
+    html.light .auth-card{background:#FFFCF7;border-color:#DDD6CA;box-shadow:0 24px 56px -28px rgba(52,44,26,.28),0 8px 20px -12px rgba(70,58,32,.14)}
+    .auth-main{padding:1.5rem 1.25rem}
+    .auth-back{top:1rem;left:1rem}
+    .auth-card.auth-compact{padding:clamp(1.1rem,2.6vh,1.6rem) clamp(1.1rem,2.2vw,1.75rem)}
+    .auth-compact .auth-h{font-size:1.3rem}
+    .auth-compact .auth-sub{margin-top:.2rem;font-size:.82rem}
+    .auth-compact .label{margin-bottom:.2rem;font-size:.72rem}
+    .auth-compact .input{padding:.55rem .8rem;font-size:.9rem;border-radius:.6rem}
+    .auth-compact #signupForm.space-y-4>*+*{margin-top:.7rem}
+    .auth-compact .btn{padding-top:.65rem;padding-bottom:.65rem}
+    .auth-compact .my-5{margin-top:.7rem!important;margin-bottom:.7rem!important}
+    .auth-compact .su-stud{padding:.5rem .65rem;font-size:.78rem;gap:.05rem}
+    .auth-compact .su-stud span{font-size:.64rem}
+    .auth-compact #pwStrText{margin-top:.15rem}
+    .auth-card-wrap{max-width:31rem}
+    /* marketing aside: compact on laptop heights */
+    @media(max-height:820px){
+      .auth-aside{padding:2rem}
+      .auth-preview{display:none}
+      .auth-aside-h{font-size:1.55rem}
+      .auth-aside-p{margin-top:.5rem;font-size:.95rem;max-width:30ch}
+      .auth-aside-list{margin-top:1rem;gap:.5rem;font-size:.9rem}
+      .auth-main{padding:1.1rem 1.25rem}
+      .auth-mobrand{margin-bottom:.75rem}
+    }
+    @media(max-height:740px){
+      .auth-card.auth-compact{padding:1rem 1.25rem}
+      .auth-compact .auth-h{font-size:1.18rem}
+      .auth-compact #signupForm.space-y-4>*+*{margin-top:.55rem}
+      .auth-compact .input{padding:.48rem .75rem}
+    }
+    @media(max-width:640px){
+      .auth-card.auth-compact{padding:1.15rem 1rem}
+      .auth-main{padding:1.25rem .9rem}
+    }
   </style>
 </head>
 <body>
@@ -961,6 +1028,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=82"></script>
+  <script type="module" src="./app.js?v=84"></script>
 </body>
 </html>
