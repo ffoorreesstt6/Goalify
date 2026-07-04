@@ -400,7 +400,7 @@ const I18N_EXTRA7={
 Object.keys(I18N_EXTRA7).forEach(l=>{I18N[l]=Object.assign({},I18N_EXTRA7[l],I18N[l]);});
 function curLang(){return localStorage.getItem('goalify_lang')||'en';}
 function langSelect(){const cur=curLang();const L=LANGS.find(l=>l[0]===cur)||LANGS[0];
-  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="dialog" aria-expanded="false" title="Language"><span class="lang-flag">${L[2]||'🌐'}</span><span class="lang-code">${esc((L[0]||'en').slice(0,2).toUpperCase())}</span><span aria-hidden="true" style="font-size:.68rem;color:var(--muted);line-height:1">⌄</span></button>
+  return `<div class="lang-dd" data-lang-dd><button type="button" class="lang-btn" data-action="langMenu" aria-haspopup="dialog" aria-expanded="false" title="Language" aria-label="Change language — current: ${esc(L[1])}"><span class="lang-flag" aria-hidden="true">${L[2]||'🌐'}</span><span class="lang-code">${esc((L[0]||'en').slice(0,2).toUpperCase())}</span><span class="lang-caret" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
   <div class="lang-menu hidden" role="dialog" aria-label="Choose language">
     <div class="lang-menu-head"><span class="lang-menu-title">Language</span><span class="lang-menu-count" data-lang-count>${LANGS.length}</span></div>
     <div class="lang-search-wrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="text" id="langSearch" class="lang-search" placeholder="Search language…" autocomplete="off" spellcheck="false"></div>
@@ -420,16 +420,24 @@ function positionLangMenu(dd){
   if(!dd)return;
   const btn=dd.querySelector('.lang-btn'),m=dd.querySelector('.lang-menu');
   if(!btn||!m)return;
+  // measure the real menu box (animation neutralized) and clamp both axes to the
+  // viewport, so the panel stays fully visible from any trigger position
+  // (top-right headers, bottom-left sidebar footers, cramped landscape, etc).
+  const pad=8,vw=window.innerWidth,vh=window.innerHeight;
   m.classList.remove('up');
-  m.style.left='';
-  m.style.right='0';
-  const br=btn.getBoundingClientRect(), w=Math.min(300,window.innerWidth-16);
-  const spaceBelow=window.innerHeight-br.bottom, spaceAbove=br.top;
-  if(spaceBelow<330&&spaceAbove>spaceBelow)m.classList.add('up');
-  if(br.right-w<8){
-    m.style.right='auto';
-    m.style.left=`${Math.max(8-br.left,0)}px`;
+  m.style.left='';m.style.right='';m.style.top='';m.style.bottom='';
+  const prevAnim=m.style.animation;m.style.animation='none';
+  const br=btn.getBoundingClientRect(),ddR=dd.getBoundingClientRect();
+  let r=m.getBoundingClientRect();
+  if(vh-br.bottom<r.height+18&&br.top>vh-br.bottom){m.classList.add('up');r=m.getBoundingClientRect();}
+  if(r.left<pad||r.right>vw-pad){
+    const t=Math.min(Math.max(ddR.right-r.width,pad),Math.max(vw-r.width-pad,pad));
+    m.style.left=(t-ddR.left)+'px';m.style.right='auto';
+    r=m.getBoundingClientRect();
   }
+  if(r.top<pad){m.style.top=(pad-ddR.top)+'px';m.style.bottom='auto';}
+  else if(r.bottom>vh-pad){m.style.top=(Math.max(vh-pad-r.height,pad)-ddR.top)+'px';m.style.bottom='auto';}
+  m.style.animation=prevAnim;
 }
 // translate a single string (used where we build text in JS, e.g. toasts) — English fallback if key missing
 function t(s){const lang=curLang();if(lang==='en')return s;const dict=I18N[lang];if(!dict)return s;const key=(s==null?'':String(s)).trim();return (key&&dict[key]!=null)?String(s).replace(key,dict[key]):s;}
@@ -1077,6 +1085,7 @@ function authWrap(inner){
     </aside>
     <main class="auth-main">
       <a href="#home" class="auth-back">← Back to home</a>
+      <div class="auth-lang">${langSelect()}</div>
       <div class="auth-card-wrap anim">
         <div class="auth-mobrand">${brand('#home')}</div>
         ${inner}
@@ -1092,8 +1101,8 @@ function loginView(){
     <p class="auth-sub">Log in to your Goalify account.</p>
     <div class="mt-6">${googleBtn}</div>${authDivider}
     <form id="loginForm" class="space-y-4">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Email</label><input name="email" type="email" class="input" required></div><div><label class="label">Language</label><select name="language" class="input">${LANGS.map(l=>`<option value="${l[0]}">${l[2]||'🌐'} ${l[1]}</option>`).join('')}</select></div></div>
-      <div><label class="label">Password</label><div class="relative"><input id="lpw" name="password" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="lpw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div>
+      <div><label class="label">Email</label><input name="email" type="email" class="input" autocomplete="email" required></div>
+      <div><label class="label">Password</label><div class="relative"><input id="lpw" name="password" type="password" class="input !pr-10" autocomplete="current-password" required><button type="button" data-action="togglePw" data-target="lpw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1" aria-label="Show or hide password">${EYE_ON}</button></div></div>
       <div class="flex items-center justify-between text-sm"><label class="flex items-center gap-2" style="color:var(--muted)"><input type="checkbox" name="remember" checked> Remember me</label><a href="#forgot" class="text-accent-purple hover:underline">Forgot password?</a></div>
       <button class="btn btn-primary w-full" id="loginBtn">Log in</button>
     </form>
@@ -1105,12 +1114,12 @@ function signupView(){
     <p class="auth-sub">Start free. No credit card required.</p>
     <div class="mt-3.5">${googleBtn}</div>${authDivider}
     <form id="signupForm" class="space-y-4">
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" required></div><div><label class="label">Last name</label><input name="last_name" class="input"></div></div>
-      <div><label class="label">Email</label><input name="email" type="email" class="input" required></div>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)"></p></div>
-      <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1">${EYE_ON}</button></div></div></div>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" required></div>
-      <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">First name</label><input name="first_name" class="input" autocomplete="given-name" required></div><div><label class="label">Last name</label><input name="last_name" class="input" autocomplete="family-name"></div></div>
+      <div><label class="label">Email</label><input name="email" type="email" class="input" autocomplete="email" required></div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Password</label><div class="relative"><input id="spw" name="password" type="password" class="input !pr-10" data-action="pwStr" minlength="8" autocomplete="new-password" required><button type="button" data-action="togglePw" data-target="spw" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1" aria-label="Show or hide password">${EYE_ON}</button></div><div class="mt-1.5 h-1 rounded-full overflow-hidden" style="background:var(--border)"><div id="pwStrFill" class="h-full rounded-full transition-all duration-300" style="width:0%"></div></div><p id="pwStrText" class="mt-0.5 text-[10px] h-3" style="color:var(--muted)" aria-live="polite"></p></div>
+      <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" autocomplete="new-password" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1" aria-label="Show or hide password">${EYE_ON}</button></div></div></div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" autocomplete="bday" required></div>
+      <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" autocomplete="country-name" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
       <div><label class="label">Are you a student?</label><div class="grid grid-cols-2 gap-2">
         <label class="su-stud"><input type="radio" name="is_student" value="yes" class="sr-only">🎓 Yes<span>Pro free for 2 years — verify after signup</span></label>
         <label class="su-stud"><input type="radio" name="is_student" value="no" class="sr-only" checked>💼 No<span>Continue with the standard setup</span></label>
@@ -1174,6 +1183,14 @@ const SPEND_CATS=[
 const FRUSTRATE=[['delivery','Food Delivery','🍕'],['cigarettes','Cigarettes','🚬'],['gaming','Gaming','🎮'],['shopping','Shopping','🛍️'],['coffee','Coffee','☕'],['apps','Subscriptions','📱'],['other','Other','✨']];
 const BANKCHECK=[['rarely','Rarely','😅'],['weekly','Weekly','🙂'],['fewdays','Every few days','👍'],['daily','Daily','🔥']];
 const CHALLENGE=[['impulse','Impulse spending','💸'],['saving','Saving consistently','📉'],['unexpected','Unexpected expenses','😬'],['bills','Bills','🧾'],['goals','Reaching goals','🎯'],['understand','Understanding spending','📊']];
+// ── extended onboarding question banks (answers stored alongside the core
+// quiz data; they do NOT feed the spend/persona calculations) ──
+const EMPLOYMENT=[['student','Student','🎓'],['employed','Employed','💼'],['self','Self-employed','🚀'],['between','Between jobs','🔍'],['retired','Retired','🌅']];
+const DEBTQ=[['none','No debt','🟢'],['small','Under €1,000','🟡'],['medium','€1,000 – €5,000','🟠'],['large','Over €5,000','🔴']];
+const EFUND=[['yes','Yes — 3+ months of expenses','🛡️'],['some','Some — under 3 months','🌱'],['no','Not yet','😬']];
+const SAVEHABIT=[['auto','Every month, automatically','🤖'],['manual','Most months, manually','✍️'],['leftover','Whatever is left over','🤞'],['rarely','I rarely manage to','😅']];
+const INVESTQ=[['regular','Yes — I invest regularly','📈'],['dabble','I dabble a little','🧪'],['curious','Not yet, but curious','👀'],['later','Not interested for now','🙅']];
+const MOTIV=[['fire','Extremely — let\'s go','🔥'],['high','Pretty motivated','💪'],['mid','Somewhat','🙂'],['low','I need the push','🛋️']];
 const spendCat=(k)=>SPEND_CATS.find(x=>x[0]===k);
 const spendLabel=(v)=>v>=1000?'€1000+':'€'+v;
 // ── real-world price database — average € price PER PRODUCT, PER COUNTRY ──
@@ -1229,14 +1246,35 @@ function catMonthly(c,freq){return Math.round((+freq||0)*priceFor(c.key)*WK);}
 const FREQ_OPTS=[0,1,2,3,4,5,6,7];
 
 let QSTEP=0,SPENDIDX=0,SHOWINSIGHT=false;
-let QA={lang:'en',income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+let QA={lang:'en',income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:'',employment:'',debt:'',efund:'',savehabit:'',invest:'',motivation:''};
 // reset quiz/onboarding answers to defaults (used by "Restart Quiz")
 function resetQuizState(){
   QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
-  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:(ME&&ME.country)||'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+  localStorage.removeItem('goalify_quiz_draft');
+  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:(ME&&ME.country)||'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:'',employment:'',debt:'',efund:'',savehabit:'',invest:'',motivation:''};
 }
-const QSTEPS=['language','income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
-const QPROG=['income','country','spend','subs','frustrate','reduce','bankcheck','challenge'];
+const QSTEPS=['language','income','employment','country','spend','subs','debt','efund','savehabit','frustrate','reduce','invest','bankcheck','motivation','challenge'];
+const QPROG=QSTEPS.slice(1);
+// named sections shown as chips above the progress bar
+const QSECTIONS=[['👤','About you',['income','employment','country']],['💳','Spending',['spend','subs']],['🏦','Your money',['debt','efund','savehabit']],['🔁','Habits',['frustrate','reduce','bankcheck']],['🧠','Mindset',['invest','motivation','challenge']]];
+// rough seconds-per-step → "~X min left" (spend counts its remaining categories)
+function quizEta(key){
+  const i=QPROG.indexOf(key);let s=0;
+  QPROG.forEach((k,j)=>{if(j<i)return;
+    if(k==='spend')s+=(k===key?Math.max(1,FREQ_CATS.length-SPENDIDX):FREQ_CATS.length)*4;
+    else if(k==='subs')s+=15; else s+=8;});
+  return Math.max(1,Math.round(s/60));
+}
+// autosave — the quiz survives refreshes, language switches and accidental exits
+function saveQuizDraft(){try{localStorage.setItem('goalify_quiz_draft',JSON.stringify({s:QSTEP,i:SPENDIDX,a:QA}));}catch(e){}}
+function loadQuizDraft(){
+  try{const d=JSON.parse(localStorage.getItem('goalify_quiz_draft'));
+    if(d&&d.a&&typeof d.s==='number'&&d.s>0&&d.s<QSTEPS.length){
+      QSTEP=d.s;SPENDIDX=Math.min(Math.max(+d.i||0,0),FREQ_CATS.length-1);SHOWINSIGHT=false;
+      QA=Object.assign({},QA,d.a);return true;
+    }}catch(e){}
+  return false;
+}
 
 function computePersona2(){
   const t={saver:0,goal_chaser:0,student_budgeter:0,lifestyle_spender:0,impulse_buyer:0,future_investor:0};
@@ -1257,13 +1295,16 @@ function spendInsight(idx){
 }
 
 function quizView(){
-  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:''};
+  QA={lang:curLang(),income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:'',employment:'',debt:'',efund:'',savehabit:'',invest:'',motivation:''};
   QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;
+  loadQuizDraft(); // resume where the user left off (cleared on finish/restart)
   return `<div class="ob-shell"><div class="ob-shell-top">${brand('#home',{size:32})}</div><div class="relative w-full max-w-2xl" id="qInner"></div></div>`;
 }
 function qFrame(key,body,nav,sub){
   const idx=QPROG.indexOf(key),total=QPROG.length,stepNum=idx+1,prog=Math.round(stepNum/total*100);
-  const bar=`<div class="mb-6"><div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}${sub?` · ${sub}`:''}</span><span>${prog}%</span></div><div class="ob-prog"><div style="width:${prog}%"></div></div></div>`;
+  const secIdx=QSECTIONS.findIndex(s=>s[2].includes(key));
+  const chips=`<div class="qsec" aria-hidden="true">${QSECTIONS.map((s,i)=>`<span class="qsec-chip ${i<secIdx?'done':i===secIdx?'on':''}">${i<secIdx?'✓':s[0]} ${s[1]}</span>`).join('')}</div>`;
+  const bar=`<div class="mb-6">${chips}<div class="mb-2 flex justify-between text-xs font-semibold" style="color:var(--muted)"><span>Step ${stepNum} of ${total}${sub?` · ${sub}`:''}</span><span>~${quizEta(key)} min left · ${prog}%</span></div><div class="ob-prog" role="progressbar" aria-label="Quiz progress" aria-valuenow="${prog}" aria-valuemin="0" aria-valuemax="100"><div style="width:${prog}%"></div></div></div>`;
   const back=`<button class="text-sm font-medium" style="color:var(--muted)" data-action="qback">← Back</button>`;
   return `${bar}<div class="ob-frame anim">${body}<div class="mt-7 flex items-center justify-between gap-3">${back}${nav||'<span></span>'}</div></div>`;
 }
@@ -1275,22 +1316,30 @@ function renderQuiz(){
   const key=QSTEPS[QSTEP];
   if(key==='language') inner.innerHTML=stepLanguage();
   else if(key==='income') inner.innerHTML=stepIncome();
+  else if(key==='employment') inner.innerHTML=stepPick('employment','What best describes you right now?','This tunes your tips — and students unlock Pro for free.',EMPLOYMENT);
   else if(key==='country') inner.innerHTML=stepCountry();
   else if(key==='spend') inner.innerHTML=stepSpend();
   else if(key==='subs') inner.innerHTML=stepSubs();
+  else if(key==='debt') inner.innerHTML=stepPick('debt','Do you currently have any debt?','Loans, cards, buy-now-pay-later — a rough range is enough.',DEBTQ);
+  else if(key==='efund') inner.innerHTML=stepPick('efund','Do you have an emergency fund?','Money set aside for surprises — the single biggest stress reducer.',EFUND);
+  else if(key==='savehabit') inner.innerHTML=stepPick('savehabit','How do you usually save?','Be honest — Goalify meets you where you are.',SAVEHABIT);
   else if(key==='frustrate') inner.innerHTML=stepPick('frustrate','Which spending category frustrates you most?','',FRUSTRATE);
   else if(key==='reduce') inner.innerHTML=stepPick('reduce','If you could reduce ONE expense, which would it be?','',FRUSTRATE);
+  else if(key==='invest') inner.innerHTML=stepPick('invest','How do you feel about investing?','No pressure — this only shapes future guidance.',INVESTQ);
   else if(key==='bankcheck') inner.innerHTML=stepPick('bankcheck','How often do you check your bank account?','',BANKCHECK);
-  else if(key==='challenge') inner.innerHTML=stepPick('challenge',"What's your biggest money challenge?",'',CHALLENGE);
+  else if(key==='motivation') inner.innerHTML=stepPick('motivation','How motivated are you to level up your money?','There is no wrong answer — we adapt to your pace.',MOTIV);
+  else if(key==='challenge') inner.innerHTML=stepPick('challenge',"What's your biggest money challenge?",'Last question — your money profile is seconds away. 🎉',CHALLENGE);
+  saveQuizDraft();
 }
 function stepLanguage(){
   const cur=curLang();
-  return `<div class="anim text-center">
-    <div class="mb-4 text-5xl animate-float">🌍</div>
-    <h1 class="text-3xl font-extrabold sm:text-4xl">Choose Your Language</h1>
-    <p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify will personalize your experience in your preferred language.</p>
-    <div class="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">${LANGS.map(l=>{const fc=FLAG_COLORS[l[0]]||['var(--accent1)','var(--accent2)'],on=cur===l[0];return `<button data-action="qlang" data-l="${l[0]}" class="ob-card lang-card ${on?'sel':''}" style="--fc1:${fc[0]};--fc2:${fc[1]}"><span class="lang-flag">${flagSVG(l[0])}</span><span class="font-semibold">${l[1]}</span>${on?`<span class="ml-auto" style="color:${fc[0]}">✓</span>`:''}</button>`;}).join('')}</div>
-    <button class="btn btn-primary mt-7 w-full sm:w-auto sm:px-12" data-action="qnext">Continue →</button>
+  const NATIVE={en:'English',sq:'Albanian',de:'German',es:'Spanish',it:'Italian',fr:'French'};
+  return `<div class="anim lang-stage text-center">
+    <span class="lp-eyebrow"><span class="dot"></span> Welcome — let's make Goalify yours</span>
+    <h1 class="t-display mt-4">Choose your language</h1>
+    <p class="mx-auto mt-2 max-w-md t-body" style="color:var(--muted)">Your dashboard, tips and coach will all speak it. You can change this anytime in Settings.</p>
+    <div class="lang-xl-grid mt-8">${LANGS.map(l=>{const fc=FLAG_COLORS[l[0]]||['var(--accent1)','var(--accent2)'],on=cur===l[0];return `<button data-action="qlang" data-l="${l[0]}" class="ob-card lang-card lang-xl ${on?'sel':''}" style="--fc1:${fc[0]};--fc2:${fc[1]}" aria-pressed="${on}"><span class="lang-flag">${flagSVG(l[0])}</span><span class="lang-xl-name">${l[1]}</span><span class="lang-xl-sub">${NATIVE[l[0]]||''}</span>${on?`<span class="lang-xl-check" style="background:${fc[0]}">✓</span>`:''}</button>`;}).join('')}</div>
+    <button class="btn btn-primary btn-lg mt-8 w-full sm:w-auto sm:px-14" data-action="qnext">Continue →</button>
   </div>`;
 }
 function stepIncome(){
@@ -1369,18 +1418,23 @@ async function finishQuiz(inner){
   const potential=savings<=0?'Low':savings<150?'Low':savings<400?'Medium':savings<800?'High':'Very High';
   const persona=computePersona2();
   const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
-  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge});}
+  if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,employment:QA.employment,debt_level:QA.debt,emergency_fund:QA.efund,saving_habit:QA.savehabit,invest_interest:QA.invest,motivation:QA.motivation});}
   else{
     // primary profile update uses only columns guaranteed to exist (after migration)
     try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,spend_freq:QA.freq,personality:persona,onboarded:true,country:QA.country,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}
     catch(e){try{await sb.from('profiles').update({onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}catch(_){}}
     // store full onboarding answers (best-effort; won't block onboarding if the table is missing)
     try{await sb.from('quiz_answers').upsert({user_id:SESSION.user.id,income,country:QA.country,freq:QA.freq,spend:QA.spend,subs:QA.subs,frustrate:QA.frustrate,reduce:QA.reduce,bankcheck:QA.bankcheck,challenge:QA.challenge,personality:persona},{onConflict:'user_id'});}catch(e){}
+    // extended answers — written separately so a missing `extras` column can never
+    // block the core onboarding save above
+    try{await sb.from('quiz_answers').update({extras:{employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}}).eq('user_id',SESSION.user.id);}catch(e){}
     // seed spending entries from the quiz (best-effort)
     try{const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){}
   }
   await loadProfile();
   if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
+  try{localStorage.setItem('goalify_quiz_extras_'+uid(),JSON.stringify({employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}));}catch(e){}
+  localStorage.removeItem('goalify_quiz_draft'); // quiz complete — drop the resume draft
   const p=PERSONAS[persona]||PERSONAS.goal_chaser;
   const topRows=top3.length?top3.map(([k,v])=>`<div class="ob-result-card"><span class="text-2xl">${catEmoji(k)}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${catLabel(k)}</p></div><span class="font-bold">${fmt(v)}/mo</span></div>`).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
   const opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>k!=='groceries'&&k!=='fuel'&&k!=='subscriptions')||sorted[0]||null);
@@ -1402,6 +1456,7 @@ async function finishQuiz(inner){
     <button class="btn btn-primary mt-5 w-full" data-action="qgoal">Next: set your goal →</button>
   </div>`;
   drawQuizChart(QA.spend);
+  setTimeout(()=>{try{launchConfetti();}catch(e){}},250); // celebrate completing onboarding
 }
 // Mandatory goal — users must set a target before the dashboard unlocks.
 function stepGoalCreate(inner){
@@ -2597,6 +2652,9 @@ async function render(){
   document.documentElement.removeAttribute('data-biz');
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
+  // per-screen ambient identity — drives html[data-route] backdrop CSS
+  {const rk=hash.startsWith('app/')?'app-'+((hash.split('/')[1]||'dashboard').split('?')[0]):hash.startsWith('payment-success')?'success':(hash.split(/[?&=]/)[0]||'home');
+   document.documentElement.setAttribute('data-route',(rk.replace(/[^a-zA-Z0-9-]/g,'')||'home'));}
 
   // In demo mode, only auth *callbacks* are bypassed (login/signup pages still show).
   if(DEMO_MODE && (hash.startsWith('access_token')||hash.startsWith('error='))){
@@ -2690,7 +2748,20 @@ async function render(){
   }
   location.hash='#home';
 }
-async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MODE){el.innerHTML='<div class="glass rounded-2xl p-5 text-sm text-slate-400">Student verification is not available in demo mode.</div>';return;}const {data}=await sb.from('student_verifications').select('*').order('created_at',{ascending:false}).limit(1);const v=data?.[0];if(v){const c=v.status==='approved'?'text-emerald-400':v.status==='rejected'?'text-red-400':'text-amber-300';el.innerHTML=`<div class="glass rounded-2xl p-5"><p class="text-sm">Latest request: <b class="${c}">${v.status}</b> · ${esc(v.university)}</p></div>`;}}
+async function renderSVStatus(){const el=$('#svStatus');if(!el)return;if(DEMO_MODE){el.innerHTML='<div class="glass rounded-2xl p-5 text-sm text-slate-400">Student verification is not available in demo mode.</div>';return;}const {data}=await sb.from('student_verifications').select('*').order('created_at',{ascending:false}).limit(1);const v=data?.[0];if(v){
+  const S={approved:['🎉','Approved','var(--jade2)','var(--jade)','Your student status is verified — Pro is active on your account.'],
+           rejected:['✕','Not approved','#f87171','var(--danger)','This request was declined. Double-check your details and submit again.'],
+           pending:['⏳','Under review','var(--gold2)','var(--gold)','An admin is reviewing your request — most are decided within 48 hours.']};
+  const s=S[v.status]||S.pending;
+  el.innerHTML=`<div class="glass rounded-2xl p-5 anim" style="border-color:color-mix(in srgb,${s[3]} 45%,var(--border))">
+    <div class="flex items-start gap-3">
+      <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg" style="background:color-mix(in srgb,${s[3]} 14%,transparent)">${s[0]}</span>
+      <div class="min-w-0">
+        <p class="text-sm font-bold" style="color:${s[2]}">${s[1]} <span class="font-medium" style="color:var(--muted)">· ${esc(v.university)}</span></p>
+        <p class="mt-0.5 text-xs" style="color:var(--muted)">${s[4]}</p>
+      </div>
+    </div>
+  </div>`;}}
 
 // ============================================================
 // ███ BUSINESS OS — a separate product for the Business plan ███
@@ -3094,7 +3165,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='inboxReadAll'){inboxItems().forEach(n=>markInboxRead(n.id));toast('All caught up ✓');render();}
     else if(act==='imgCancel'){closeImgEditor();}
     else if(act==='imgApply'){applyImgEditor();}
-    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd){x.classList.remove('open');const b=x.querySelector('.lang-btn');if(b)b.setAttribute('aria-expanded','false');}});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');if(willOpen){positionLangMenu(dd);const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}}
+    else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd){x.classList.remove('open');const b=x.querySelector('.lang-btn');if(b)b.setAttribute('aria-expanded','false');}});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');if(willOpen){positionLangMenu(dd);const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');if(window.matchMedia&&window.matchMedia('(hover:hover)').matches){setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}else{m.style.left='';m.style.right='';m.style.top='';m.style.bottom='';}}}
     else if(act==='langPick'){const dd=a.closest('[data-lang-dd]');if(dd){const m=dd.querySelector('.lang-menu'),b=dd.querySelector('.lang-btn');if(m)m.classList.add('hidden');dd.classList.remove('open');if(b)b.setAttribute('aria-expanded','false');}setLang(a.getAttribute('data-lang'));}
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
@@ -3339,10 +3410,15 @@ document.addEventListener('submit',async(e)=>{
     else if(f.id==='chatForm'){const inp=$('#chatInput');const v=inp.value.trim();if(v){inp.value='';sendChat(v);}}
     else if(f.id==='svForm'){
       if(DEMO_MODE){toast('Student verification is not available in demo mode','err');return;}
+      const sbtn=f.querySelector('button.btn-primary');
+      if(sbtn){sbtn.disabled=true;sbtn.textContent='Uploading…';}
+      const fail=(m)=>{if(sbtn){sbtn.disabled=false;sbtn.textContent='Submit for verification →';}toast(m,'err');};
       const fd=new FormData(f);const file=fd.get('document');let docUrl=null;
       if(file&&file.size){const path=SESSION.user.id+'/'+Date.now()+'_'+file.name.replace(/[^\w.]/g,'_');const {error:upErr}=await sb.storage.from('documents').upload(path,file);if(!upErr)docUrl=path;}
+      if(sbtn)sbtn.textContent='Submitting…';
       const {error}=await sb.from('student_verifications').insert({user_id:SESSION.user.id,university:fd.get('university'),student_email:fd.get('student_email'),document_url:docUrl});
-      if(error)return toast(error.message,'err');toast('Submitted! An admin will review it.');render();
+      if(error)return fail(error.message);
+      toast('Submitted! An admin will review it. 🎓');render();
     }
   }catch(err){toast(err.message||'Error','err');}
 });
