@@ -926,10 +926,12 @@ function landing(){
       <div class="lp-navbar flex items-center justify-between rounded-2xl px-4 py-2.5">
         ${brand()}
         <nav class="lp-nav hidden gap-8 md:flex text-sm" style="color:var(--muted)">${navItem('Features','feat')}${navItem('How it works','how')}${navItem('Pricing','pricing')}${navItem('FAQ','faq')}</nav>
-        <div class="flex items-center gap-2.5">${langSelect()}${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline px-2 text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm whitespace-nowrap">Start for free</a>`}<button class="mnav-btn" data-action="mnav" aria-label="Open menu" aria-controls="mnavPanel">☰</button></div>
+        <div class="flex items-center gap-2.5"><span class="hidden md:inline-flex">${langSelect()}</span>${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline px-2 text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm whitespace-nowrap">Start for free</a>`}<button class="mnav-btn" data-action="mnav" aria-label="Open menu" aria-controls="mnavPanel">☰</button></div>
       </div>
       <div id="mnavPanel" class="mnav-panel hidden md:hidden">
         <a href="#home" data-scroll="feat">Features</a><a href="#home" data-scroll="how">How it works</a><a href="#home" data-scroll="pricing">Pricing</a><a href="#home" data-scroll="faq">FAQ</a>
+        <a href="#privacy">Privacy &amp; Policy</a>
+        <div class="mnav-lang"><span>Language</span>${langSelect()}</div>
         <div class="mt-1 border-t pt-2" style="border-color:var(--border)">${SESSION?`<a href="#app/dashboard">Open app →</a>`:`<a href="#login">Log in</a><a href="#signup" class="font-bold" style="color:var(--accent3)">Start for free →</a>`}</div>
       </div>
     </div>
@@ -1124,9 +1126,13 @@ function signupView(){
         <label class="su-stud"><input type="radio" name="is_student" value="yes" class="sr-only">🎓 Yes<span>Pro free for 2 years — verify after signup</span></label>
         <label class="su-stud"><input type="radio" name="is_student" value="no" class="sr-only" checked>💼 No<span>Continue with the standard setup</span></label>
       </div><p id="studHint" class="mt-1.5 hidden text-[11px]" style="color:var(--jade2)">Nice — after signup we'll point you straight to student verification.</p></div>
+      <div class="space-y-1.5">
+        <label class="su-consent"><input type="checkbox" name="accept_privacy" required><span>I agree to the <a href="#privacy" class="text-accent-purple font-semibold hover:underline">Privacy Policy &amp; Terms</a> <b style="color:var(--danger)">*</b></span></label>
+        <label class="su-consent"><input type="checkbox" name="accept_news"><span>Send me occasional product news &amp; saving tips <i style="color:var(--muted)">(optional)</i></span></label>
+      </div>
       <button class="btn btn-primary w-full" id="signupBtn">Create account</button>
     </form>
-    <p class="mt-2.5 text-center text-[11px]" style="color:var(--muted)">By continuing you agree to our <a href="#home" class="hover:underline">Terms</a> & <a href="#home" class="hover:underline">Privacy Policy</a>. · Have an account? <a href="#login" class="text-accent-purple font-semibold hover:underline">Log in</a></p></div>`);
+    <p class="mt-2.5 text-center text-[11px]" style="color:var(--muted)">Have an account? <a href="#login" class="text-accent-purple font-semibold hover:underline">Log in</a></p></div>`);
 }
 function forgotView(){
   return authWrap(`<div class="auth-card"><h1 class="auth-h">Reset your password</h1><p class="auth-sub">We'll email you a secure reset link.</p>
@@ -1163,6 +1169,42 @@ function verifyView(email){
     <p class="mt-4 text-sm" style="color:var(--muted)">Didn't get it? <button type="button" id="otpResend" data-action="resendCode" data-email="${esc(email||'')}" class="text-accent-purple hover:underline">Resend code</button></p>
     <a href="#login" class="btn btn-ghost mt-3 w-full text-sm">Back to login</a>
   </div>`);
+}
+
+// ── Privacy Policy & Terms (public page, linked from menu + signup) ──
+function privacyView(){
+  const sec=(t,body)=>`<section class="legal-sec"><h2 class="t-h3">${t}</h2>${body}</section>`;
+  return `<div class="legal-shell">
+    <header class="legal-top">${brand()}<a href="#home" class="auth-back" style="position:static">← Back to home</a></header>
+    <main class="legal-wrap glass-strong">
+      <p class="t-label">Legal</p>
+      <h1 class="t-h1 mt-1">Privacy Policy &amp; Terms</h1>
+      <p class="t-caption mt-2">Last updated: July 4, 2026 · Applies to goalify.online and the Goalify app.</p>
+      ${sec('1. Who we are',`<p>Goalify ("we", "us") is a personal-finance goal tracker. This page explains what data we collect, why we collect it, and the choices you have. By creating an account you agree to these terms.</p>`)}
+      ${sec('2. Data we collect',`<ul>
+        <li><b>Account data</b> — name, email address, date of birth, country and preferred language, provided when you sign up (directly or via Google sign-in).</li>
+        <li><b>Financial inputs</b> — the goals, budgets, spending estimates and quiz answers you enter. We never connect to your bank; every figure in Goalify is something you typed yourself.</li>
+        <li><b>Usage basics</b> — theme, language and progress preferences stored locally on your device (localStorage) so the app remembers you.</li>
+        <li><b>Student verification</b> — if you request the student discount: university, student email and the enrolment document you upload, reviewed by a human and used only for verification.</li>
+      </ul>`)}
+      ${sec('3. How we use it',`<ul>
+        <li>To run the product: your goals, streaks, insights and coach tips are computed from the data you enter.</li>
+        <li>To secure your account: authentication and sessions are handled by Supabase with row-level security — <b>only you can read your rows</b>.</li>
+        <li>To process payments: paid plans are handled by Paddle, our merchant of record. We never see or store your card details.</li>
+        <li>To email you: transactional messages (verification codes, receipts) always; product news and saving tips <b>only if you opted in</b> — you can unsubscribe anytime.</li>
+      </ul>`)}
+      ${sec('4. What we never do',`<ul>
+        <li>We never sell your personal data.</li>
+        <li>We never share your financial inputs with advertisers.</li>
+        <li>We never connect to your bank account or read transactions.</li>
+      </ul>`)}
+      ${sec('5. Your rights',`<p>You can export, correct or delete your data at any time. Deleting your account from <b>Settings → Danger zone</b> permanently removes your profile, goals and expenses. EU/EEA users have the full set of GDPR rights (access, rectification, erasure, portability, objection); to exercise them, contact us at the address below.</p>`)}
+      ${sec('6. Data retention & security',`<p>Data lives in Supabase (PostgreSQL, EU-hosted) protected by row-level security and encrypted in transit. Local preferences stay on your device until you clear them. Uploaded verification documents are deleted after review. We keep account data only while your account exists.</p>`)}
+      ${sec('7. Terms of use',`<p>Goalify provides guidance, not licensed financial advice — always use your own judgment for financial decisions. Free plans are free forever; paid plans renew until cancelled and can be cancelled anytime from the app. Don't abuse, reverse-engineer or resell the service. We may update these terms; material changes will be announced in-app.</p>`)}
+      ${sec('8. Contact',`<p>Questions or requests: <b>privacy@goalify.online</b>. We reply within 30 days.</p>`)}
+      <a href="#signup" class="btn btn-primary mt-6">Create your account →</a>
+    </main>
+  </div>`;
 }
 
 // ============================================================
@@ -2704,6 +2746,7 @@ async function render(){
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
+  if(hash==='privacy'){siteTheme();root.innerHTML=privacyView();window.scrollTo(0,0);return;}
   if(hash==='verify'){siteTheme();root.innerHTML=verifyView(localStorage.getItem('goalify_pending_email'));_otpCooldown=0;setTimeout(()=>{const i=document.getElementById('otpInput');if(i)i.focus();},50);return;}
   if(hash==='reset'){siteTheme();root.innerHTML=resetView();return;}
   // need session below
@@ -3325,6 +3368,8 @@ document.addEventListener('submit',async(e)=>{
       if(fd.get('password')!==fd.get('confirm'))return toast('Passwords do not match','err');
       const {score}=pwStrength(fd.get('password'));
       if(score<3)return toast('Password too weak — needs 8+ chars, a number, and a letter','err');
+      if(!fd.get('accept_privacy'))return toast('Please accept the Privacy Policy & Terms to continue','err');
+      const newsOptIn=!!fd.get('accept_news');
       const bd=fd.get('birthdate')||'',ctry=fd.get('country')||'',lng=fd.get('language')||'en';
       if(lng){localStorage.setItem('goalify_lang',lng);}
       // seed onboarding state so the quiz can skip language & country (already collected here)
@@ -3333,7 +3378,7 @@ document.addEventListener('submit',async(e)=>{
       const btn=$('#signupBtn');btn.disabled=true;btn.textContent='Creating…';
       const email=fd.get('email');
       const redirectTo=location.protocol==='file:'?undefined:location.origin+(location.pathname==='/'?'':location.pathname);
-      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),dob:bd,country:ctry,language:lng}}});
+      const {data,error}=await sb.auth.signUp({email,password:fd.get('password'),options:{emailRedirectTo:redirectTo,data:{first_name:fd.get('first_name'),last_name:fd.get('last_name'),dob:bd,country:ctry,language:lng,marketing_opt_in:newsOptIn,privacy_accepted_at:new Date().toISOString()}}});
       btn.disabled=false;btn.textContent='Create account';
       if(error)return toast(error.message,'err');
       if(data.session){location.hash='#quiz';}
