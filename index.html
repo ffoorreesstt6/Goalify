@@ -1138,6 +1138,17 @@
     @media(min-width:1025px){
       .lpv{min-height:440px}
     }
+    /* ---- touch targets: interactive controls reach ≥36px on touch/small
+       screens without changing the visual density of the desktop layout ---- */
+    @media(max-width:640px),(pointer:coarse){
+      .mhead select.input{min-height:2.4rem;padding:.45rem .55rem!important}
+      .seg .seg-btn{min-height:2.25rem}
+      .icon-btn{width:2.4rem;height:2.4rem}
+      .app-main button.py-1\.5{min-height:2.1rem}
+      .app-main button.h-7.w-7{height:2.15rem!important;width:2.15rem!important}
+      /* tiny inline text actions: grow the hit area, not the layout */
+      .app-main button.text-xs:not(.btn):not(.seg-btn){padding:.3rem .35rem;margin:-.3rem -.35rem}
+    }
   </style>
 </head>
 <body>
