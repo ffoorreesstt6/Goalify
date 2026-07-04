@@ -837,6 +837,30 @@ function demoCoachReply(q,mode){
 // -------------------- icons --------------------
 const LOGO='<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2L4 7v10l8 5 8-5V7l-8-5z" stroke-linejoin="round"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const GOOGLE_SVG='<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.2 34.9 26.7 36 24 36c-5.3 0-9.7-3.1-11.3-7.6l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.3 5.3C39.9 36.3 44 31 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>';
+// ── inline SVG icon set — inherits currentColor + accent gradient, keeps the
+// glass aesthetic crisp where emoji-as-UI used to sit. Decorative/human emoji
+// (personas, marquee flags, testimonials) are intentionally kept. ──
+const ICON_PATHS={
+  goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" stroke-linejoin="round"/>',
+  trophy:'<path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M9 20h6M10 20l.5-4M14 20l-.5-4"/>',
+  lock:'<rect x="4.5" y="10" width="15" height="10" rx="2.2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/>',
+  shield:'<path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/>',
+  encrypt:'<rect x="4.5" y="10" width="15" height="10" rx="2.2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5"/>',
+  export:'<path d="M12 15V3m0 0 4 4m-4-4-4 4"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+  noads:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/>',
+  sync:'<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.6L4 16M4 20v-4h4"/>',
+  student:'<path d="M12 4 2 9l10 5 10-5-10-5z"/><path d="M6 11v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5M22 9v5"/>',
+  check:'<path d="m4 12 5 5L20 6"/>',
+  cross:'<path d="M6 6l12 12M18 6 6 18"/>',
+  euro:'<path d="M17 6a7 7 0 1 0 0 12M5 10h8M5 14h8"/>',
+  flame:'<path d="M12 3c1 3-1.5 4-1.5 6.5A2.5 2.5 0 0 0 13 12c0-1 .7-1.8.7-1.8.9 1.2 1.8 2.7 1.8 4.6a5.5 5.5 0 1 1-11 0c0-3.6 3.5-5.2 3.5-9 0-1 .5-2 1.5-2.8z" stroke-linejoin="round"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/>',
+  timer:'<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/>'
+};
+function ICON(name,cls){const p=ICON_PATHS[name]||'';return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;}
 const ICON_DATA="data:image/png;base64,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";
 const BRAND_ICON=(size=40)=>`<img src="${ICON_DATA}" alt="Goalify" style="height:${size}px;width:auto;display:inline-block" />`;
 // Official logo lockup: icon mark + wordmark image (navy on light, white on dark).
@@ -903,21 +927,184 @@ function landingPreview(){
     </div>
   </div>`;
 }
+// ── Hero micro-demo: the core loop, alive. Euro logged → categorized →
+// goal ring ticks up → streak flame. Pure CSS transitions + one rAF counter;
+// respects reduced motion (renders a settled end-state, no loop). ──
+function heroDemo(){
+  const bars=[46,60,52,74,58,88,70].map(h=>`<span style="height:${h}%"></span>`).join('');
+  return `<div class="hd" id="heroDemo" role="img" aria-label="Demo: logging spending, auto-categorising it, and watching an Emergency Fund goal rise to 65% with an 8-day streak.">
+    <div class="hd-top">
+      <div><p class="hd-hi">Good morning, Alex 👋</p><p class="hd-sub">Your money, on track</p></div>
+      <span class="hd-streak"><span class="hd-flame">${ICON('flame','ic-sm')}</span><b id="hdStreak">6</b><span class="hd-streak-l">day streak</span></span>
+    </div>
+    <div class="hd-log" id="hdLog">
+      <span class="hd-log-ic">${ICON('euro','ic-sm')}</span>
+      <div class="hd-log-body"><span class="hd-log-title" id="hdLogTitle">Coffee</span><span class="hd-log-sub">just now</span></div>
+      <span class="hd-log-amt" id="hdLogAmt">€4.20</span>
+      <span class="hd-chip" id="hdChip">☕ Food &amp; Drinks</span>
+    </div>
+    <div class="hd-goal">
+      <div class="hd-ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="hd-ring-bg" cx="60" cy="60" r="52"/><circle class="hd-ring-fg" id="hdRing" cx="60" cy="60" r="52"/></svg>
+        <div class="hd-ring-c"><b id="hdPct">57</b><span>%</span></div>
+      </div>
+      <div class="hd-goal-info">
+        <p class="hd-goal-name">Emergency Fund</p>
+        <p class="hd-goal-amt"><b id="hdSaved">€1,140</b> <span style="color:var(--muted)">/ €2,000</span></p>
+        <div class="hd-bars" aria-hidden="true">${bars}</div>
+        <p class="hd-goal-tag">On track for <b>March</b> 🎯</p>
+      </div>
+    </div>
+  </div>`;
+}
+let _hdTimers=[],_hdRaf=0;
+function stopHeroDemo(){_hdTimers.forEach(clearTimeout);_hdTimers=[];if(_hdRaf){cancelAnimationFrame(_hdRaf);_hdRaf=0;}}
+function startHeroDemo(){
+  stopHeroDemo();
+  const el=document.getElementById('heroDemo');if(!el)return;
+  const ring=el.querySelector('#hdRing'),pctEl=el.querySelector('#hdPct'),savedEl=el.querySelector('#hdSaved'),streakEl=el.querySelector('#hdStreak'),flame=el.querySelector('.hd-flame'),log=el.querySelector('#hdLog'),chip=el.querySelector('#hdChip'),title=el.querySelector('#hdLogTitle'),amt=el.querySelector('#hdLogAmt');
+  const C=2*Math.PI*52;ring.style.strokeDasharray=C;
+  const setRing=p=>{ring.style.strokeDashoffset=C*(1-p/100);};
+  const money=n=>'€'+n.toLocaleString('en-IE');
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){setRing(65);pctEl.textContent='65';savedEl.textContent=money(1300);streakEl.textContent='8';log.classList.add('in');chip.classList.add('in');return;}
+  const scenes=[
+    {title:'Coffee',amt:'€4.20',chip:'☕ Food & Drinks',pct:60,saved:1200,streak:6},
+    {title:'No-spend day',amt:'+ €12',chip:'✓ Saved',pct:63,saved:1260,streak:7},
+    {title:'Groceries',amt:'€28.40',chip:'🛒 Groceries',pct:65,saved:1300,streak:8}
+  ];
+  let i=0,curPct=57;
+  function animPct(from,to){const t0=performance.now(),dur=760;(function f(now){const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3),v=from+(to-from)*e;setRing(v);pctEl.textContent=Math.round(v);if(k<1)_hdRaf=requestAnimationFrame(f);})(performance.now());}
+  function scene(){
+    if(!document.getElementById('heroDemo'))return stopHeroDemo();
+    const s=scenes[i%scenes.length];
+    log.classList.remove('in');chip.classList.remove('in');
+    _hdTimers.push(setTimeout(()=>{title.textContent=s.title;amt.textContent=s.amt;log.classList.add('in');},240));
+    _hdTimers.push(setTimeout(()=>{chip.textContent=s.chip;chip.classList.add('in');},900));
+    _hdTimers.push(setTimeout(()=>{animPct(curPct,s.pct);curPct=s.pct;savedEl.textContent=money(s.saved);streakEl.textContent=s.streak;flame.classList.remove('bump');void flame.offsetWidth;flame.classList.add('bump');},1500));
+    _hdTimers.push(setTimeout(()=>{i++;scene();},4200));
+  }
+  setRing(curPct);pctEl.textContent=String(curPct);
+  scene();
+}
+// ── Testimonials (persona-matched). Honest framing: Goalify is newly
+// launched, so these are clearly-labelled representative personas, not
+// fabricated named customers — see the caption in the section. ──
+function landingStars(n){
+  const full='<svg class="ic-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6 6.6.6-5 4.3 1.5 6.5L12 16.9 5.9 20l1.6-6.5-5-4.3 6.6-.6L12 2z"/></svg>';
+  const empty='<svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l2.9 6 6.6.6-5 4.3 1.5 6.5L12 16.9 5.9 20l1.6-6.5-5-4.3 6.6-.6L12 2z"/></svg>';
+  let s='';for(let i=1;i<=5;i++)s+=(i<=n?full:empty);return s;
+}
+function landingTestimonials(){
+  const T=[
+    ['A','Amir','Student · Vienna','var(--accent1)','var(--accent2)',5,'The student verification gave me Pro free, and seeing a semester-abroad fund fill up actually keeps me off delivery apps.'],
+    ['J','Jules','Young professional · Lyon','var(--jade)','var(--jade2)',5,'First salary, no clue where it went. Two weeks in, Goalify showed me €180/month in subscriptions I forgot about.'],
+    ['M','Maria','Parent of two · Porto','var(--gold)','var(--gold2)',4,'We set a shared holiday goal and the streak keeps the whole family honest. Calm, not preachy — exactly what we needed.']
+  ];
+  return `<section class="lp-sec mx-auto max-w-7xl px-4">
+    <div class="mx-auto max-w-2xl text-center reveal">
+      <p class="lp-kicker gtext">Built for people like you</p>
+      <h2 class="lp-h2 mt-3">Money lives, three ways</h2>
+      <p class="lp-lead mt-4">Goalify is newly launched — these are representative personas that show who it's built for and how it fits real routines.</p>
+    </div>
+    <div class="mt-12 grid gap-6 lg:grid-cols-3">
+      ${T.map((t,i)=>`<figure class="lp-tst reveal" style="transition-delay:${i*0.06}s">
+        <div class="lp-tst-stars" role="img" aria-label="${t[5]} out of 5">${landingStars(t[5])}</div>
+        <blockquote class="lp-tst-q">“${t[6]}”</blockquote>
+        <figcaption class="lp-tst-by"><span class="lp-tst-av" style="background:linear-gradient(135deg,${t[3]},${t[4]})" aria-hidden="true">${t[1][0]}</span><span><span class="lp-tst-n">${t[1]}</span><br><span class="lp-tst-r">${t[2]}</span></span></figcaption>
+      </figure>`).join('')}
+    </div>
+  </section>`;
+}
+// ── "Why Goalify" comparison — honest, skimmable, 3 columns ──
+function landingComparison(){
+  const row=(cls,t)=>`<div class="lp-cmp-li ${cls}">${ICON(cls==='y'?'check':'cross','ic-sm')}<span>${t}</span></div>`;
+  return `<section class="lp-sec mx-auto max-w-7xl px-4">
+    <div class="mx-auto max-w-2xl text-center reveal">
+      <p class="lp-kicker gtext">Why Goalify</p>
+      <h2 class="lp-h2 mt-3">Better than a spreadsheet or your bank app</h2>
+      <p class="lp-lead mt-4">Honestly compared — here's where each one lands.</p>
+    </div>
+    <div class="lp-cmp reveal">
+      <div class="lp-cmp-col win"><div class="lp-cmp-h">${ICON('goal','ic-sm')} Goalify <span class="lp-cmp-badge">You are here</span></div><div class="lp-cmp-list">
+        ${row('y','Goals with a real, dated plan')}${row('y','Auto-categorised spending in seconds')}${row('y','Streaks &amp; levels that build the habit')}${row('y','Local price data for 190+ countries')}${row('y','Works in 6 languages, on every device')}
+      </div></div>
+      <div class="lp-cmp-col"><div class="lp-cmp-h">${ICON('chart','ic-sm')} Spreadsheet</div><div class="lp-cmp-list">
+        ${row('y','Fully flexible if you enjoy formulas')}${row('n','Every entry is manual and tedious')}${row('n','No streaks, nudges or motivation')}${row('n','No local price estimates')}${row('n','Breaks the moment you skip a week')}
+      </div></div>
+      <div class="lp-cmp-col"><div class="lp-cmp-h">${ICON('lock','ic-sm')} Bank app</div><div class="lp-cmp-list">
+        ${row('y','Accurate record of what you spent')}${row('n','Shows the past, not a plan forward')}${row('n','Locked to one bank / one country')}${row('n','No cross-account savings goals')}${row('n','Optimised for the bank, not for you')}
+      </div></div>
+    </div>
+  </section>`;
+}
+// ── Interactive 3-tap teaser → live projected timeline, then CTA into
+// signup with the answers pre-filled (reuses the quiz income brackets). ──
+const LT_SPEND=[['low','A little','🍃',0.15],['some','Some',' 🙂',0.28],['lots','A lot','😅',0.42]];
+const LT_GOALS=[['1000','€1,000','🛡️'],['3000','€3,000','✈️'],['6000','€6,000','🚗']];
+let LT={income:0,spendKey:'',goal:0,step:0};
+function landingTeaser(){
+  return `<section id="sec-try" class="lp-sec mx-auto max-w-6xl px-4">
+    <div class="mx-auto max-w-2xl text-center reveal">
+      <p class="lp-kicker gtext">Try it now</p>
+      <h2 class="lp-h2 mt-3">See your first goal in 3 taps</h2>
+      <p class="lp-lead mt-4">No sign-up needed — get a live projection, then start free with it pre-filled.</p>
+    </div>
+    <div class="lt reveal mt-10"><div class="lt-grid">
+      <div>
+        <div class="lt-dots" aria-hidden="true">${[0,1,2].map(i=>`<span class="lt-dot ${i===0?'on':''}" data-lt-dot="${i}"></span>`).join('')}</div>
+        <div id="ltBody"></div>
+      </div>
+      <div class="lt-viz" id="ltViz"><p class="lt-viz-empty">${ICON('spark','ic-lg')}<br>Answer three quick taps and your projected timeline appears here.</p></div>
+    </div></div>
+  </section>`;
+}
+function ltRender(){
+  const body=document.getElementById('ltBody');if(!body)return;
+  document.querySelectorAll('[data-lt-dot]').forEach((d,i)=>d.classList.toggle('on',i<=LT.step));
+  if(LT.step===0){
+    body.innerHTML=`<p class="lt-step-h">1 · What's your monthly income?</p><div class="lt-opts">${INCOME_BRACKETS.map(b=>`<button class="lt-opt ${LT.income===b[2]?'sel':''}" data-action="ltPick" data-lt="income" data-v="${b[2]}">${b[1]}</button>`).join('')}</div>`;
+  }else if(LT.step===1){
+    body.innerHTML=`<p class="lt-step-h">2 · How much do you spend on wants?</p><div class="lt-opts">${LT_SPEND.map(s=>`<button class="lt-opt ${LT.spendKey===s[0]?'sel':''}" data-action="ltPick" data-lt="spend" data-v="${s[0]}">${s[2]} ${s[1]}</button>`).join('')}</div>`;
+  }else{
+    body.innerHTML=`<p class="lt-step-h">3 · What are you saving for?</p><div class="lt-opts">${LT_GOALS.map(g=>`<button class="lt-opt ${LT.goal==+g[0]?'sel':''}" data-action="ltPick" data-lt="goal" data-v="${g[0]}">${g[2]} ${g[1]}</button>`).join('')}</div>`;
+  }
+}
+function ltProject(){
+  const viz=document.getElementById('ltViz');if(!viz)return;
+  const sp=LT_SPEND.find(s=>s[0]===LT.spendKey)||LT_SPEND[1];
+  const monthly=Math.max(20,Math.round(LT.income*(0.22-sp[3]*0.25)+LT.income*0.05)); // honest-ish: lower wants ⇒ more saved
+  const perMonth=Math.max(25,monthly);
+  const months=Math.max(1,Math.ceil(LT.goal/perMonth));
+  const d=new Date();d.setMonth(d.getMonth()+months);
+  const when=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  // build a small SVG projection curve
+  const W=280,H=90,pts=8;let path='',area='';
+  for(let i=0;i<pts;i++){const x=8+i*((W-16)/(pts-1));const prog=Math.pow(i/(pts-1),1);const y=H-6-prog*(H-16);path+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' ';}
+  const last=path.trim().split(' ');const lx=8+(pts-1)*((W-16)/(pts-1));
+  area=`M8 ${H-6} `+path.replace(/^M/,'L')+`L${(W-8).toFixed(1)} ${H-6} Z`;
+  viz.innerHTML=`<p class="lt-step-h" style="color:var(--muted);font-size:.8rem;font-weight:600">Reach €${(+LT.goal).toLocaleString('en-IE')} by</p>
+    <div class="lt-proj-fig"><span class="gtext">${when}</span></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-top:.15rem">Saving about <b style="color:var(--text)">€${perMonth.toLocaleString('en-IE')}/mo</b> · ~${months} month${months===1?'':'s'}</p>
+    <svg class="lt-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="${area}"/><path class="line" d="${path.trim()}"/><circle cx="${(W-8).toFixed(1)}" cy="${(H-6-(H-16)).toFixed(1)}" r="4"/></svg>
+    <a href="#signup" class="btn btn-primary w-full mt-3" data-action="ltStart">Start free with this goal →</a>`;
+}
+function initLandingTeaser(){LT={income:0,spendKey:'',goal:0,step:0};ltRender();}
 function landing(){
   const cta='#signup';
   const feats=[
-    ['🎯','Set any goal','Name what you are saving for, set a target, and watch a clear, doable plan appear.','rgba(139,92,246,.16)'],
-    ['📊','See where money goes','Log spending in seconds and get a clean breakdown of the habits worth changing.','rgba(34,197,94,.16)'],
-    ['⚡','Reach goals faster','Goalify turns small daily savings into a real timeline — then helps you beat it.','rgba(245,158,11,.16)'],
-    ['🏆','Stay motivated','Streaks, levels and milestones make saving feel like progress, not punishment.','rgba(59,130,246,.16)'],
-    ['🔒','Private by design','Your data is protected with row-level security — only you can see it.','rgba(236,72,153,.16)'],
-    ['🌍','Built for everyone','Six languages and a mindset for students, workers and families alike.','rgba(99,102,241,.16)']
+    ['goal','Set any goal','Name what you are saving for, set a target, and watch a clear, doable plan appear.','var(--accent2)'],
+    ['chart','See where money goes','Log spending in seconds and get a clean breakdown of the habits worth changing.','var(--jade)'],
+    ['bolt','Reach goals faster','Goalify turns small daily savings into a real timeline — then helps you beat it.','var(--gold)'],
+    ['trophy','Stay motivated','Streaks, levels and milestones make saving feel like progress, not punishment.','var(--steel)'],
+    ['lock','Private by design','Your data is protected with row-level security — only you can see it.','var(--coral)'],
+    ['globe','Built for everyone','Six languages and a mindset for students, workers and families alike.','var(--accent1)']
   ];
   const steps=[
-    ['👤','Create your account','Sign up free in seconds — no card required.'],
-    ['🎯','Set your first goal','Tell Goalify what you are saving for and by when.'],
-    ['📊','Track & build habits','Log spending, follow your plan, keep your streak alive.'],
-    ['🏆','Reach it','Hit milestones, level up, and start the next goal.']
+    ['student','Create your account','Sign up free in seconds — no card required.'],
+    ['goal','Set your first goal','Tell Goalify what you are saving for and by when.'],
+    ['chart','Track & build habits','Log spending, follow your plan, keep your streak alive.'],
+    ['trophy','Reach it','Hit milestones, level up, and start the next goal.']
   ];
   const navItem=(t,to)=>`<a href="#home" data-scroll="${to}" class="lp-nav-link">${t}</a>`;
   const trust=[['✓','Free forever plan'],['✓','No credit card required'],['✓','Cancel anytime'],['🔒','Row-level security']];
@@ -948,13 +1135,13 @@ function landing(){
             <a href="${cta}" class="btn btn-primary lp-btn-lg">Start for free →</a>
             <a href="#home" data-scroll="how" class="btn btn-ghost lp-btn-lg">See how it works</a>
           </div>
-          <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--jade2)">${t[0]}</span>${t[1]}</span>`).join('')}</div>
-          <div class="lp-hero-trust"><span class="lp-hero-avs"><span>★</span><span>G</span><span>+</span></span><span class="text-sm" style="color:var(--muted)">Trusted by thousands saving toward their goals</span></div>
+          <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--jade2)">${t[0]==='✓'?ICON('check','ic-sm'):t[0]}</span>${t[1]}</span>`).join('')}</div>
+          <div class="lp-hero-trust"><span class="inline-flex items-center gap-1.5 text-sm" style="color:var(--muted)">${ICON('globe','ic-sm')} 6 languages · <span style="color:var(--jade2)">€0</span> to start · no card required</span></div>
         </div>
         <div class="reveal" style="transition-delay:.08s">
           <div class="lp-frame lp-float">
             <div class="lp-frame-bar"><i></i><i></i><i></i></div>
-            ${landingPreview()}
+            ${heroDemo()}
           </div>
         </div>
       </div>
@@ -979,7 +1166,7 @@ function landing(){
         <p class="lp-lead mt-4">Powerful where it counts, calm everywhere else.</p>
       </div>
       <div class="lp-bento mt-14">
-        ${feats.map((f,i)=>{const span=['col-3','col-3','col-2','col-2','col-2','col-6'][i]||'col-2';const vis=i===0?`<div class="mt-4"><div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)"><span>Emergency Fund</span><span>62%</span></div><div style="margin-top:.4rem;height:8px;border-radius:9999px;background:color-mix(in srgb,var(--text) 8%,transparent);overflow:hidden"><div style="width:62%;height:100%;border-radius:9999px;background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3))"></div></div></div>`:i===1?`<div class="mt-4" style="display:flex;align-items:flex-end;gap:6px;height:46px" aria-hidden="true">${[40,68,52,84,60,92,74].map(h=>`<span style="flex:1;height:${h}%;border-radius:4px;background:linear-gradient(180deg,var(--accent3),var(--accent1))"></span>`).join('')}</div>`:'';return `<article class="cell ${span} reveal" style="transition-delay:${(i%3)*0.05}s"><span class="sheen"></span><span class="lp-ico" style="background:${f[3]}">${f[0]}</span><h3 class="mt-4 text-lg font-bold">${f[1]}</h3><p class="mt-1.5 text-sm leading-relaxed" style="color:var(--muted)">${f[2]}</p>${vis}</article>`;}).join('')}
+        ${feats.map((f,i)=>{const span=['col-3','col-3','col-2','col-2','col-2','col-6'][i]||'col-2';const vis=i===0?`<div class="mt-4"><div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)"><span>Emergency Fund</span><span>62%</span></div><div style="margin-top:.4rem;height:8px;border-radius:9999px;background:color-mix(in srgb,var(--text) 8%,transparent);overflow:hidden"><div style="width:62%;height:100%;border-radius:9999px;background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3))"></div></div></div>`:i===1?`<div class="mt-4" style="display:flex;align-items:flex-end;gap:6px;height:46px" aria-hidden="true">${[40,68,52,84,60,92,74].map(h=>`<span style="flex:1;height:${h}%;border-radius:4px;background:linear-gradient(180deg,var(--accent3),var(--accent1))"></span>`).join('')}</div>`:'';return `<article class="cell ${span} reveal" style="transition-delay:${(i%3)*0.05}s"><span class="sheen"></span><span class="lp-ico lp-ico-grad" style="color:${f[3]};background:color-mix(in srgb,${f[3]} 15%,transparent)">${ICON(f[0])}</span><h3 class="mt-4 text-lg font-bold">${f[1]}</h3><p class="mt-1.5 text-sm leading-relaxed" style="color:var(--muted)">${f[2]}</p>${vis}</article>`;}).join('')}
       </div>
     </section>
 
@@ -990,7 +1177,7 @@ function landing(){
         <p class="lp-lead mt-4">Get started in minutes and take control of your money.</p>
       </div>
       <div class="lp-steps mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        ${steps.map((s,i)=>`<div class="relative text-center reveal" style="transition-delay:${i*0.07}s"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl glass-strong" style="position:relative;z-index:1">${s[0]}</div><div class="mx-auto mt-4 lp-stepnum">${i+1}</div><h3 class="mt-4 font-bold">${s[1]}</h3><p class="mt-1.5 text-sm" style="color:var(--muted)">${s[2]}</p></div>`).join('')}
+        ${steps.map((s,i)=>`<div class="relative text-center reveal" style="transition-delay:${i*0.07}s"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl glass-strong lp-step-ico" style="position:relative;z-index:1">${ICON(s[0],'ic-lg')}</div><div class="mx-auto mt-4 lp-stepnum">${i+1}</div><h3 class="mt-4 font-bold">${s[1]}</h3><p class="mt-1.5 text-sm" style="color:var(--muted)">${s[2]}</p></div>`).join('')}
       </div>
     </section>
 
@@ -1009,6 +1196,8 @@ function landing(){
       </div>
     </section>
 
+    ${landingTestimonials()}
+
     <section id="sec-privacy" class="mx-auto max-w-7xl px-4" style="padding-bottom:clamp(3.5rem,7.5vw,5.75rem)">
       <div class="mx-auto max-w-2xl text-center reveal">
         <p class="lp-kicker" style="color:var(--steel2)">Privacy &amp; security</p>
@@ -1016,13 +1205,17 @@ function landing(){
         <p class="lp-lead mt-4">Specific protections — not vague promises.</p>
       </div>
       <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        ${[['🔐','Row-level security','Every row in the database is scoped to your account — other users can never query your data.'],['🛡️','Encrypted in transit','All traffic between your device and our infrastructure runs over HTTPS/TLS.'],['📤','Export &amp; delete anytime','One click exports your data; deleting your account removes it permanently.'],['🚫','No ads, no data selling','Goalify is funded by plans — never by selling your behaviour to advertisers.']].map((t,i)=>`<div class="lp-sec-tile reveal" style="transition-delay:${i*0.05}s"><span class="lp-ico" style="background:color-mix(in srgb,var(--steel) 16%,transparent)">${t[0]}</span><h3 class="mt-3 font-bold">${t[1]}</h3><p class="mt-1 text-sm leading-relaxed" style="color:var(--muted)">${t[2]}</p></div>`).join('')}
+        ${[['shield','Row-level security','Every row in the database is scoped to your account — other users can never query your data.'],['encrypt','Encrypted in transit','All traffic between your device and our infrastructure runs over HTTPS/TLS.'],['export','Export &amp; delete anytime','One click exports your data; deleting your account removes it permanently.'],['noads','No ads, no data selling','Goalify is funded by plans — never by selling your behaviour to advertisers.']].map((t,i)=>`<div class="lp-sec-tile reveal" style="transition-delay:${i*0.05}s"><span class="lp-ico" style="color:var(--steel2);background:color-mix(in srgb,var(--steel) 16%,transparent)">${ICON(t[0])}</span><h3 class="mt-3 font-bold">${t[1]}</h3><p class="mt-1 text-sm leading-relaxed" style="color:var(--muted)">${t[2]}</p></div>`).join('')}
       </div>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        <div class="lp-sec-tile reveal flex items-start gap-3"><span class="lp-ico shrink-0" style="background:color-mix(in srgb,var(--gold) 16%,transparent)">🎓</span><div><h3 class="font-bold">Student benefits</h3><p class="mt-1 text-sm" style="color:var(--muted)">Verify once with your university email and get <b style="color:var(--text)">Pro free for 2 years</b> — unlimited goals, analytics and trends included.</p></div></div>
-        <div class="lp-sec-tile reveal flex items-start gap-3" style="transition-delay:.05s"><span class="lp-ico shrink-0" style="background:color-mix(in srgb,var(--accent2) 14%,transparent)">🔄</span><div><h3 class="font-bold">Cross-device sync</h3><p class="mt-1 text-sm" style="color:var(--muted)">Your account lives in the cloud — start on your laptop, log a coffee from your phone, everything stays in step.</p></div></div>
+        <div class="lp-sec-tile reveal flex items-start gap-3"><span class="lp-ico shrink-0" style="color:var(--gold2);background:color-mix(in srgb,var(--gold) 16%,transparent)">${ICON('student')}</span><div><h3 class="font-bold">Student benefits</h3><p class="mt-1 text-sm" style="color:var(--muted)">Verify once with your university email and get <b style="color:var(--text)">Pro free for 2 years</b> — unlimited goals, analytics and trends included.</p></div></div>
+        <div class="lp-sec-tile reveal flex items-start gap-3" style="transition-delay:.05s"><span class="lp-ico shrink-0" style="color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent)">${ICON('sync')}</span><div><h3 class="font-bold">Cross-device sync</h3><p class="mt-1 text-sm" style="color:var(--muted)">Your account lives in the cloud — start on your laptop, log a coffee from your phone, everything stays in step.</p></div></div>
       </div>
     </section>
+
+    ${landingComparison()}
+
+    ${landingTeaser()}
 
     <section id="sec-pricing" class="lp-sec mx-auto max-w-7xl px-4">
       <div class="mx-auto max-w-2xl text-center reveal">
@@ -1040,7 +1233,7 @@ function landing(){
 
     <section id="sec-faq" class="lp-sec mx-auto max-w-3xl px-4">
       <div class="text-center reveal"><p class="lp-kicker gtext">FAQ</p><h2 class="lp-h2 mt-3">Questions, answered</h2></div>
-      <div class="mt-12 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="lp-faq reveal"><button data-action="faq" data-i="${i}"><span>${f[0]}</span><span class="chev" id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm leading-relaxed" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
+      <div class="mt-12 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Does Goalify connect to my bank?','No — Goalify never touches your bank. Every figure is one you enter yourself, which is why it works in any country and needs no sensitive banking permissions.'],['Which languages does it support?','Six today — English, Albanian, German, Spanish, Italian and French — with the whole interface translated, switchable anytime from the menu.'],['How are the spending estimates calculated?','The onboarding quiz uses average local prices across 190+ countries, so a coffee or a night out is estimated in your currency — you can fine-tune every number later.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['Can I cancel anytime?','Yes. Paid plans renew until you cancel, and you can cancel or downgrade whenever you like — no lock-in, no cancellation fee.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="lp-faq reveal"><button data-action="faq" data-i="${i}"><span>${f[0]}</span><span class="chev" id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm leading-relaxed" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
     </section>
 
     <section class="mx-auto max-w-5xl px-4" style="padding-bottom:clamp(4rem,9vw,7rem)">
@@ -1504,12 +1697,14 @@ async function finishQuiz(inner){
 function stepGoalCreate(inner){
   qScrollTop();
   const EMO=['🎯','🎮','💻','📱','🚗','✈️','🏠','🛡️','🎓','💍','🏝️','💰'];
+  // pre-fill from the landing "try it now" teaser, if the user came from there
+  let _tzTarget='';try{const tz=JSON.parse(localStorage.getItem('goalify_teaser'));if(tz&&tz.goal&&Date.now()-(tz.ts||0)<864e5){_tzTarget=String(tz.goal);}localStorage.removeItem('goalify_teaser');}catch(_){}
   inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">
     <div class="text-center"><div class="text-5xl">🎯</div><h1 class="mt-2 text-2xl font-bold sm:text-3xl">Set your first goal</h1><p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify needs a target to turn your spending into savings recommendations. This is required to start.</p></div>
     <div class="mt-6 space-y-4">
       <div><span class="label">Pick an icon</span><div id="qgEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-10 w-10 items-center justify-center rounded-lg text-lg ${i===0?'sel ob-chip':'ob-chip'}">${x}</button>`).join('')}</div></div>
       <div><label class="label">Goal name</label><input id="qgName" class="input" placeholder="e.g. Gaming Setup"></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" min="1" class="input" placeholder="1500"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input" min="${new Date().toISOString().slice(0,7)}" value="${(()=>{const d=new Date();d.setMonth(d.getMonth()+6);return d.toISOString().slice(0,7);})()}"></div></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" min="1" class="input" placeholder="1500" value="${_tzTarget}"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input" min="${new Date().toISOString().slice(0,7)}" value="${(()=>{const d=new Date();d.setMonth(d.getMonth()+6);return d.toISOString().slice(0,7);})()}"></div></div>
       <p id="qgErr" class="text-sm text-red-400 h-4"></p>
       <button class="btn btn-primary w-full" data-action="qcreategoal">Create goal & open dashboard →</button>
     </div></div>`;
@@ -2691,6 +2886,7 @@ async function loadAiInsights(){
 // ============================================================
 async function render(){
   destroyCharts();
+  stopHeroDemo();
   document.documentElement.removeAttribute('data-biz');
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
@@ -2742,7 +2938,7 @@ async function render(){
   }
 
   // public routes (light premium theme)
-  if(hash==='home'){siteTheme();root.innerHTML=landing();window.scrollTo(0,0);return;}
+  if(hash==='home'){siteTheme();root.innerHTML=landing();window.scrollTo(0,0);requestAnimationFrame(()=>{startHeroDemo();initLandingTeaser();});return;}
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
@@ -3200,6 +3396,8 @@ document.addEventListener('click',async(e)=>{
       }
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
+    else if(act==='ltPick'){const kind=a.getAttribute('data-lt'),v=a.getAttribute('data-v');if(kind==='income'){LT.income=+v;LT.step=1;ltRender();}else if(kind==='spend'){LT.spendKey=v;LT.step=2;ltRender();}else if(kind==='goal'){LT.goal=+v;ltProject();}}
+    else if(act==='ltStart'){try{localStorage.setItem('goalify_teaser',JSON.stringify({income:LT.income,goal:LT.goal,ts:Date.now()}));}catch(_){}if(typeof QA!=='undefined'&&QA&&LT.income)QA.income=LT.income;/* anchor navigates to #signup */}
     else if(act==='mnav'){const p=document.getElementById('mnavPanel');if(p)p.classList.toggle('hidden');}
     else if(act==='soTab'){SOTAB=a.getAttribute('data-tab');render();}
     else if(act==='lbTab'){LBTAB=a.getAttribute('data-tab');render();}

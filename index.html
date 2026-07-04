@@ -1095,6 +1095,96 @@
       .auth-main{padding:1.25rem .9rem}
     }
     /* ============================================================
+       LANDING V5 — inline icons · live hero demo · testimonials ·
+       interactive teaser · comparison. All theme-token driven.
+       ============================================================ */
+    .ic{width:1.5rem;height:1.5rem;display:inline-block;vertical-align:middle;flex-shrink:0}
+    .ic-sm{width:1.05rem;height:1.05rem}
+    .ic-lg{width:1.85rem;height:1.85rem}
+    .lp-ico .ic{width:1.5rem;height:1.5rem}
+    .lp-step-ico{color:var(--accent2)}
+    /* ---- hero live demo ---- */
+    .hd{position:relative;display:flex;flex-direction:column;gap:.85rem;padding:1.1rem;min-height:360px;border-radius:1rem;background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--border);overflow:hidden}
+    html.light .hd{background:#fff;border-color:#EEF0F7}
+    .hd-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
+    .hd-hi{font-weight:800;font-size:1.02rem;letter-spacing:-.01em}
+    .hd-sub{font-size:.76rem;color:var(--muted);margin-top:.1rem}
+    .hd-streak{display:inline-flex;align-items:center;gap:.28rem;padding:.32rem .6rem;border-radius:9999px;font-size:.74rem;font-weight:700;color:var(--coral);background:color-mix(in srgb,var(--coral) 13%,transparent);border:1px solid color-mix(in srgb,var(--coral) 30%,transparent);white-space:nowrap}
+    .hd-streak b{font-size:.86rem}
+    .hd-flame{display:inline-flex}.hd-flame .ic{color:var(--coral)}
+    .hd-flame.bump{animation:hdBump .5s var(--ease-spring)}
+    @keyframes hdBump{0%{transform:scale(1)}40%{transform:scale(1.35) rotate(-6deg)}100%{transform:scale(1)}}
+    .hd-log{position:relative;display:flex;align-items:center;gap:.6rem;padding:.7rem .8rem;border-radius:.8rem;background:color-mix(in srgb,var(--text) 4%,transparent);border:1px solid var(--border);opacity:0;transform:translateY(8px);transition:opacity .4s var(--ease-out),transform .4s var(--ease-out)}
+    .hd-log.in{opacity:1;transform:none}
+    .hd-log-ic{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:.55rem;color:var(--jade2);background:color-mix(in srgb,var(--jade) 15%,transparent);flex-shrink:0}
+    .hd-log-body{display:flex;flex-direction:column;min-width:0}
+    .hd-log-title{font-weight:700;font-size:.86rem;line-height:1.1}
+    .hd-log-sub{font-size:.68rem;color:var(--muted)}
+    .hd-log-amt{margin-left:auto;font-weight:800;font-size:.9rem;flex-shrink:0}
+    .hd-chip{position:absolute;right:.7rem;bottom:-.7rem;font-size:.66rem;font-weight:700;padding:.2rem .55rem;border-radius:9999px;color:var(--accent2);background:var(--card);border:1px solid color-mix(in srgb,var(--accent2) 40%,var(--border));opacity:0;transform:scale(.8);transition:opacity .3s var(--ease-spring),transform .3s var(--ease-spring)}
+    html.light .hd-chip{background:#fff}
+    .hd-chip.in{opacity:1;transform:none}
+    .hd-goal{display:flex;align-items:center;gap:1rem;margin-top:.5rem;padding:.9rem;border-radius:.9rem;background:color-mix(in srgb,var(--text) 3%,transparent);border:1px solid var(--border)}
+    .hd-ring{position:relative;width:96px;height:96px;flex-shrink:0}
+    .hd-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .hd-ring-bg{fill:none;stroke:color-mix(in srgb,var(--text) 10%,transparent);stroke-width:9}
+    .hd-ring-fg{fill:none;stroke:url(#hdGrad);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .1s linear}
+    .hd-ring-c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.35rem}
+    .hd-ring-c span{font-size:.8rem;color:var(--muted);margin-left:1px;align-self:flex-start;margin-top:.5rem}
+    .hd-goal-name{font-weight:800;font-size:.95rem}
+    .hd-goal-amt{margin-top:.15rem;font-size:.82rem}
+    .hd-goal-amt b{font-size:.95rem}
+    .hd-bars{display:flex;align-items:flex-end;gap:4px;height:26px;margin-top:.5rem}
+    .hd-bars span{flex:1;border-radius:3px;background:linear-gradient(180deg,var(--accent3),var(--accent1))}
+    .hd-goal-tag{margin-top:.45rem;font-size:.72rem;color:var(--muted)}
+    .hd-goal-tag b{color:var(--text)}
+    @media(prefers-reduced-motion:reduce){.hd-log,.hd-chip{transition:none}.hd-flame.bump{animation:none}.hd-ring-fg{transition:none}}
+    @media(max-width:400px){.hd-goal{flex-direction:column;text-align:center}.hd-bars{width:100%}}
+    /* ---- testimonials ---- */
+    .lp-tst{display:flex;flex-direction:column;gap:1rem;border-radius:var(--r-xl);padding:1.5rem;background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--border);box-shadow:var(--shadow-md)}
+    html.light .lp-tst{border-color:var(--border)}
+    .lp-tst-stars{display:inline-flex;gap:2px;color:var(--gold2)}
+    html.light .lp-tst-stars{color:var(--gold)}
+    .lp-tst-q{font-size:1rem;line-height:1.6;color:var(--text);flex:1}
+    .lp-tst-by{display:flex;align-items:center;gap:.7rem}
+    .lp-tst-av{display:inline-flex;align-items:center;justify-content:center;width:2.6rem;height:2.6rem;border-radius:9999px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+    .lp-tst-n{font-weight:700;font-size:.9rem}
+    .lp-tst-r{font-size:.76rem;color:var(--muted)}
+    /* ---- interactive teaser ---- */
+    .lt{position:relative;border-radius:var(--r-2xl);padding:clamp(1.25rem,3vw,2.25rem);background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--border);box-shadow:var(--shadow-md);overflow:hidden}
+    .lt-grid{display:grid;gap:1.5rem;align-items:center}
+    @media(min-width:820px){.lt-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+    .lt-step-h{font-weight:800;font-size:1.05rem}
+    .lt-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-top:1rem}
+    .lt-opt{display:flex;align-items:center;gap:.5rem;justify-content:center;min-height:3rem;padding:.6rem .7rem;border-radius:.8rem;border:1px solid var(--border);background:color-mix(in srgb,var(--text) 3%,transparent);color:var(--text);font-weight:700;font-size:.88rem;cursor:pointer;transition:transform .15s var(--ease-spring),border-color .15s,background .15s}
+    .lt-opt:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent2) 45%,var(--border))}
+    .lt-opt.sel{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent);box-shadow:0 0 0 1px var(--accent2)}
+    .lt-dots{display:flex;gap:.4rem;margin-bottom:1rem}
+    .lt-dot{width:2rem;height:.3rem;border-radius:9999px;background:color-mix(in srgb,var(--text) 12%,transparent)}
+    .lt-dot.on{background:linear-gradient(90deg,var(--accent1),var(--accent2))}
+    .lt-viz{position:relative;border-radius:1rem;padding:1.1rem;background:color-mix(in srgb,var(--text) 3%,transparent);border:1px solid var(--border);min-height:210px;display:flex;flex-direction:column;justify-content:center}
+    .lt-viz-empty{color:var(--muted);font-size:.86rem;text-align:center;line-height:1.6}
+    .lt-proj-fig{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:800;letter-spacing:-.02em}
+    .lt-proj-fig .gtext{font-weight:800}
+    .lt-chart{width:100%;height:96px;margin-top:.6rem}
+    .lt-chart path.area{fill:url(#ltArea)}
+    .lt-chart path.line{fill:none;stroke:url(#ltLine);stroke-width:2.5;stroke-linecap:round}
+    .lt-chart circle{fill:var(--accent2);stroke:var(--card);stroke-width:2}
+    @media(prefers-reduced-motion:reduce){.lt-opt{transition:none}}
+    /* ---- comparison ---- */
+    .lp-cmp{display:grid;gap:1rem;margin-top:3rem}
+    @media(min-width:768px){.lp-cmp{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    .lp-cmp-col{border-radius:var(--r-xl);padding:1.4rem;background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+    .lp-cmp-col.win{border-color:color-mix(in srgb,var(--accent2) 55%,var(--border));box-shadow:0 0 0 1px color-mix(in srgb,var(--accent2) 30%,transparent),var(--shadow-md)}
+    .lp-cmp-h{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.02rem}
+    .lp-cmp-badge{margin-left:auto;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,var(--accent1),var(--accent2));padding:.15rem .5rem;border-radius:9999px}
+    .lp-cmp-list{margin-top:1rem;display:flex;flex-direction:column;gap:.65rem}
+    .lp-cmp-li{display:flex;gap:.55rem;font-size:.88rem;line-height:1.45;color:var(--muted)}
+    .lp-cmp-li .ic{margin-top:.05rem}
+    .lp-cmp-li.y{color:var(--text)}.lp-cmp-li.y .ic{color:var(--jade2)}
+    .lp-cmp-li.n .ic{color:color-mix(in srgb,var(--danger) 80%,var(--muted))}
+    html.light .lp-cmp-li.y .ic{color:var(--jade)}
+    /* ============================================================
        RESPONSIVE HARDENING — mobile-first safety net
        Base styles serve 320–480px; progressive enhancement at
        481px (tablet), 769px (laptop), 1025px (large desktop).
@@ -1204,6 +1294,12 @@
   </style>
 </head>
 <body>
+  <!-- shared SVG gradients (theme-token driven) referenced by hero ring + teaser chart -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <linearGradient id="hdGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent1)"/><stop offset="1" stop-color="var(--accent3)"/></linearGradient>
+    <linearGradient id="ltLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--accent1)"/><stop offset="1" stop-color="var(--accent3)"/></linearGradient>
+    <linearGradient id="ltArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent2)" stop-opacity="0.35"/><stop offset="1" stop-color="var(--accent2)" stop-opacity="0"/></linearGradient>
+  </defs></svg>
   <div id="root" class="min-h-screen"><div class="load-screen"><div class="load-mark" aria-hidden="true"></div><p>Loading Goalify…</p></div></div>
   <div id="modal"></div>
   <div id="toast"></div>
@@ -1238,6 +1334,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=88"></script>
+  <script type="module" src="./app.js?v=89"></script>
 </body>
 </html>
