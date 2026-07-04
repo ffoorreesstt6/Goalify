@@ -490,6 +490,7 @@ function planNav(plan){
   if(c.social!=='none')nav.push(['social','Social','👥']);
   nav.push(['inbox','Inbox','📥']);
   nav.push(['profile','Profile','🪪']);
+  nav.push(['store','Store','🛍️']);
   nav.push(['rewards','Rewards','🎁']);
   nav.push(['plans','Plans','💳']);
   if(plan==='free')nav.push(['student','Student Verify','🎓']);
@@ -733,6 +734,90 @@ function missionTarget(m){return m.cadence==='daily'?(m.perWeek||5):(m.perWeek||
 function missionDueToday(m){if(m.status!=='active')return false;return m.cadence==='daily'?!isDoneToday(m.id):doneThisWeek(m.id)<missionTarget(m);}
 function checkInMission(id){const o=mlogs();o[id]=o[id]||{};o[id][todayISO()]=true;setMlogs(o);}
 function uncheckMission(id){const o=mlogs();if(o[id])delete o[id][todayISO()];setMlogs(o);}
+
+// ============================================================
+// GOALCOINS — MVP economy (append-only ledger in localStorage; same
+// function shapes as the future Supabase RPCs so the swap is trivial).
+// Server-authoritative caps/idempotency are mirrored here client-side.
+// ============================================================
+const COIN_EARN={checkin:5,streak7:25,goal_complete:100,recap:20};
+const COIN_DAILY_CAP=120;
+function coinKey(){return 'goalify_coins_'+uid();}
+function coinLedger(){try{return JSON.parse(localStorage.getItem(coinKey()))||[];}catch(e){return [];}}
+function setCoinLedger(l){localStorage.setItem(coinKey(),JSON.stringify(l));}
+function coinBalance(){return coinLedger().reduce((s,r)=>s+(r.delta||0),0);}
+function coinEarnedToday(){const t=todayISO();return coinLedger().filter(r=>r.delta>0&&(r.at||'').slice(0,10)===t).reduce((s,r)=>s+r.delta,0);}
+function coinHas(reason,ref){return coinLedger().some(r=>r.reason===reason&&r.ref===ref);}
+// EARN — whitelisted amounts, once-per-ref idempotency, daily cap. Returns coins actually credited.
+function creditCoins(reason,ref){
+  const amt=COIN_EARN[reason];if(!amt)return 0;
+  if(ref&&coinHas(reason,ref))return 0;                 // idempotent
+  if(coinEarnedToday()+amt>COIN_DAILY_CAP)return 0;      // daily cap
+  const l=coinLedger();l.push({delta:amt,reason,ref:ref||null,at:new Date().toISOString()});setCoinLedger(l);
+  return amt;
+}
+// SPEND — atomic balance check. Returns true on success.
+function spendCoins(reason,item,cost){
+  if(coinBalance()<cost)return false;
+  const l=coinLedger();l.push({delta:-cost,reason,ref:item,at:new Date().toISOString()});setCoinLedger(l);
+  return true;
+}
+const COIN_REASON_LABEL={checkin:'Habit check-in',streak7:'7-day streak',goal_complete:'Goal completed',recap:'Weekly recap',cosmetic:'Store purchase'};
+// fly-to-wallet — coins are appended to <body> so they survive a render()
+// (earn events re-render #root); the count-up runs on the fresh pill after.
+function visibleCoinPill(){return [...document.querySelectorAll('.coin-pill')].find(p=>p.getBoundingClientRect().width>0);}
+function flyCoins(fromEl){
+  const pill=visibleCoinPill();
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!pill||!fromEl||reduce)return;
+  const pr=pill.getBoundingClientRect(),fr=fromEl.getBoundingClientRect();
+  const tx=pr.left+pr.width/2,ty=pr.top+pr.height/2,sx=fr.left+fr.width/2,sy=fr.top+fr.height/2;
+  for(let i=0;i<5;i++){
+    const g=document.createElement('div');g.className='coin-fly';g.textContent='⊙';
+    g.style.left=(sx-10)+'px';g.style.top=(sy-10)+'px';document.body.appendChild(g);
+    const a=g.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${(tx-sx).toFixed(1)}px,${(ty-sy).toFixed(1)}px) scale(.4)`,opacity:0}],{duration:460,delay:i*55,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
+    a.onfinish=()=>g.remove();
+  }
+}
+// bump + count-up on the (post-render) visible pill
+function pulseCoinPill(from,to){
+  const pill=visibleCoinPill();const bals=[...document.querySelectorAll('.coin-bal')];if(!bals.length)return;
+  if(pill){pill.classList.remove('coinPill-bump');void pill.offsetWidth;pill.classList.add('coinPill-bump');}
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const setAll=v=>bals.forEach(b=>b.textContent=Math.round(v).toLocaleString('en-IE'));
+  if(reduce){setAll(to);return;}
+  const t0=performance.now(),dur=520;(function f(now){const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);setAll(from+(to-from)*e);if(k<1)requestAnimationFrame(f);})(performance.now());
+}
+// credit + fly (before the caller's render). The count-up is replayed on the
+// freshly-rendered pill via the _coinPulse hook consumed at the end of render().
+let _coinPulse=null;
+function coinEarn(reason,ref,fromEl){
+  const before=coinBalance();const got=creditCoins(reason,ref);
+  if(got>0){flyCoins(fromEl);_coinPulse={from:before,to:before+got};}
+  return got;
+}
+// ---- cosmetics store ----
+const STORE_ITEMS=[
+  {id:'ban_sunset',cat:'banner',name:'Sunset banner',cost:200,css:'linear-gradient(120deg,#ff7e5f,#feb47b)'},
+  {id:'ban_ocean',cat:'banner',name:'Ocean banner',cost:200,css:'linear-gradient(120deg,#2193b0,#6dd5ed)'},
+  {id:'ban_aurora',cat:'banner',name:'Aurora banner',cost:450,css:'linear-gradient(120deg,#8a2be2,#00d4ff,#43e97b)'},
+  {id:'theme_emerald',cat:'accent',name:'Emerald theme',cost:300,accent:'green',css:'linear-gradient(120deg,#059669,#4ade80)'},
+  {id:'coin_gold',cat:'coinskin',name:'Gold coin skin',cost:250,color:'#E5C879',css:'linear-gradient(120deg,#C8A45D,#E5C879)'},
+  {id:'frame_silver',cat:'frame',name:'Silver frame',cost:400,frame:'frame-silver',css:'linear-gradient(120deg,#c0c7d0,#ffffff)'},
+  {id:'flame_blue',cat:'flameskin',name:'Blue Fire streak',cost:350,color:'#4ea3ff',css:'linear-gradient(120deg,#2193b0,#4ea3ff)'},
+];
+function ownedItems(){try{return JSON.parse(localStorage.getItem('goalify_cosmetics_'+uid()))||[];}catch(e){return [];}}
+function setOwnedItems(a){localStorage.setItem('goalify_cosmetics_'+uid(),JSON.stringify(a));}
+function ownsItem(id){return ownedItems().includes(id);}
+function equipped(){try{return JSON.parse(localStorage.getItem('goalify_equipped_'+uid()))||{};}catch(e){return {};}}
+function setEquipped(o){localStorage.setItem('goalify_equipped_'+uid(),JSON.stringify(o));}
+function equipItem(it){const e=equipped();e[it.cat]=it.id;setEquipped(e);if(it.cat==='accent'&&it.accent){applyTheme(null,it.accent);}}
+function coinGlyphColor(){const e=equipped();const it=STORE_ITEMS.find(x=>x.id===e.coinskin);return it&&it.color?it.color:'var(--gold2)';}
+function coinPillHTML(compact){
+  const bal=coinBalance(),col=coinGlyphColor();
+  if(compact)return `<a href="#app/store" id="coinPillM" class="coin-pill" title="GoalCoins"><span class="coin-glyph" style="color:${col}">⊙</span><span class="coin-bal">${bal.toLocaleString('en-IE')}</span></a>`;
+  return `<a href="#app/store" id="coinPill" class="coin-pill coin-pill-full" aria-label="GoalCoins balance ${bal}"><span class="coin-glyph" style="color:${col}">⊙</span><span class="coin-bal">${bal.toLocaleString('en-IE')}</span><span class="coin-pill-cta">Store →</span></a>`;
+}
 function goalXp(g){return (g.missions||[]).reduce((s,m)=>s+Object.keys(missionLog(m.id)).length*(DIFF[m.difficulty]?.xp||5),0);}
 function goalLevel(g){const xp=goalXp(g);let lvl=GOAL_LEVELS[0],idx=0;GOAL_LEVELS.forEach((L,i)=>{if(xp>=L[0]){lvl=L;idx=i;}});const next=GOAL_LEVELS[idx+1];return {idx:idx+1,name:lvl[1],emoji:lvl[2],xp,next:next?next[0]:null,prev:lvl[0]};}
 function goalProgress(g){const money=g.target_amount?pct(g.saved_amount,g.target_amount):null,ms=g.missions||[];let cons=null;
@@ -1726,9 +1811,10 @@ function shell(route,inner){
     ${themeBtn}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
+    <div class="mx-3 mb-2">${coinPillHTML()}</div>
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><div class="px-1 pb-2">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
-  <div class="lg:pl-64"><div class="mhead flex items-center justify-between gap-2 border-b lg:hidden" style="border-color:var(--border)">${brand('#app/dashboard',{dark:true,size:22})}<div class="flex items-center gap-1.5">${langSelect()}<select onchange="location.hash='#app/'+this.value" class="input !w-auto">${NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[2]} ${n[1]}</option>`).join('')}</select></div></div><main class="app-main mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
+  <div class="lg:pl-64"><div class="mhead flex items-center justify-between gap-2 border-b lg:hidden" style="border-color:var(--border)">${brand('#app/dashboard',{dark:true,size:22})}<div class="flex items-center gap-1.5">${coinPillHTML(true)}${langSelect()}<select onchange="location.hash='#app/'+this.value" class="input !w-auto">${NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[2]} ${n[1]}</option>`).join('')}</select></div></div><main class="app-main mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
 }
 function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
 function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid='g'+label.replace(/\W/g,'');return `<div class="flex flex-col items-center"><div class="relative" style="width:140px;height:140px"><svg width="140" height="140" style="transform:rotate(-90deg)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="70" cy="70" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle cx="70" cy="70" r="${r}" stroke="url(#${gid})" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s ease"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold">${score}</span><span class="text-xs text-slate-400">${sub||''}</span></div></div><p class="mt-2 text-sm font-medium text-slate-400">${label}</p></div>`;}
@@ -2682,6 +2768,24 @@ function openGiftModal(){
 }
 // -------------------- Rewards / referrals --------------------
 function referralCode(){let c=localStorage.getItem('goalify_refcode');if(!c){c=(ME?.first_name||'GOAL').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)||'GOAL';c+=Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('goalify_refcode',c);}return c;}
+function storeView(){
+  const bal=coinBalance(),eq=equipped();
+  const card=(it)=>{
+    const owned=ownsItem(it.id),isEq=eq[it.cat]===it.id,afford=bal>=it.cost;
+    let btn;
+    if(isEq)btn=`<span class="chip ok">✓ Equipped</span>`;
+    else if(owned)btn=`<button class="btn btn-ghost btn-sm w-full" data-action="equipItem" data-id="${it.id}">Equip</button>`;
+    else btn=`<button class="btn ${afford?'btn-primary':'btn-ghost'} btn-sm w-full" data-action="buyItem" data-id="${it.id}" ${afford?'':'disabled'}><span class="coin-glyph" style="color:${afford?'inherit':'var(--muted)'}">⊙</span> ${it.cost}</button>`;
+    return `<div class="gcard p-4 anim"><div class="store-swatch" style="background:${it.css}">${it.cat==='frame'?'<span class="store-frame-dot"></span>':it.cat==='coinskin'?'<span style="font-size:1.6rem;color:'+(it.color||'#fff')+'">⊙</span>':it.cat==='flameskin'?'<span style="font-size:1.5rem">🔥</span>':''}</div><p class="mt-3 font-bold text-sm">${it.name}</p><p class="text-[11px] mb-3" style="color:var(--muted)">${({banner:'Profile banner',accent:'Dashboard theme',coinskin:'Coin skin',frame:'Avatar frame',flameskin:'Streak flame'})[it.cat]}</p>${btn}</div>`;
+  };
+  return `<div class="dash-stack space-y-6">
+    <div class="page-head"><div><h1 class="page-h1">Progress Shop</h1><p class="page-sub">Spend GoalCoins to make Goalify yours. Earn more by checking in, hitting streaks and completing goals.</p></div>
+      <div class="coin-pill coin-pill-full" style="pointer-events:none"><span class="coin-glyph" style="color:${coinGlyphColor()}">⊙</span><span class="coin-bal">${bal.toLocaleString('en-IE')}</span><span class="coin-pill-cta">balance</span></div></div>
+    <div class="seg" role="tablist"><button class="seg-btn on" role="tab">Cosmetics</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Boosts · soon</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Rewards · soon</button></div>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">${STORE_ITEMS.map(card).join('')}</div>
+    <p class="text-xs" style="color:var(--muted)">More cosmetics, boosts and real-value rewards are coming. GoalCoins are earned in-app — never bought.</p>
+  </div>`;
+}
 function rewardsView(){
   const code=referralCode();
   const link=location.origin+location.pathname+'#r='+code;
@@ -2975,7 +3079,7 @@ async function render(){
     // Onboarding already requires a goal. Never force completed users back to goal creation —
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.analytics){drawSpend('year');drawCat();}
@@ -2983,6 +3087,7 @@ async function render(){
     if(route2==='simulator'){runSim();}
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
     if(route2==='student'){renderSVStatus();}
+    if(_coinPulse){const p=_coinPulse;_coinPulse=null;requestAnimationFrame(()=>pulseCoinPill(p.from,p.to));}
     return;
   }
   location.hash='#home';
@@ -3396,6 +3501,8 @@ document.addEventListener('click',async(e)=>{
       }
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
+    else if(act==='buyItem'){const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it)return;if(ownsItem(it.id)){toast('Already owned');return;}if(!spendCoins('cosmetic',it.id,it.cost)){toast('Not enough GoalCoins — earn more by checking in!','err');return;}const owned=ownedItems();owned.push(it.id);setOwnedItems(owned);equipItem(it);const b=coinBalance();toast('🎉 '+it.name+' unlocked & equipped');render();requestAnimationFrame(()=>pulseCoinPill(b+it.cost,b));}
+    else if(act==='equipItem'){const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it||!ownsItem(it.id))return;equipItem(it);toast('✓ '+it.name+' equipped');render();}
     else if(act==='ltPick'){const kind=a.getAttribute('data-lt'),v=a.getAttribute('data-v');if(kind==='income'){LT.income=+v;LT.step=1;ltRender();}else if(kind==='spend'){LT.spendKey=v;LT.step=2;ltRender();}else if(kind==='goal'){LT.goal=+v;ltProject();}}
     else if(act==='ltStart'){try{localStorage.setItem('goalify_teaser',JSON.stringify({income:LT.income,goal:LT.goal,ts:Date.now()}));}catch(_){}if(typeof QA!=='undefined'&&QA&&LT.income)QA.income=LT.income;/* anchor navigates to #signup */}
     else if(act==='mnav'){const p=document.getElementById('mnavPanel');if(p)p.classList.toggle('hidden');}
@@ -3411,13 +3518,13 @@ document.addEventListener('click',async(e)=>{
     else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
-    else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
+    else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;if(isDoneToday(id)){uncheckMission(id);toast('Check-in undone');}else{checkInMission(id);const xp=DIFF[m.difficulty]?.xp||5;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});const st=missionStreak(id);coinEarn('checkin',id+':'+todayISO(),a);if(st>0&&st%7===0)coinEarn('streak7',id+':'+st,a);toast('✓ '+(st>1?st+'-day streak! ':'')+'+'+xp+' XP');}await loadProfile();render();}
     else if(act==='pauseMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const m=(g.missions||[]).find(x=>x.id===id);if(m){m.status=m.status==='paused'?'active':'paused';break;}}render();}
     else if(act==='delMission'){const id=a.getAttribute('data-id');for(const g of GOALS){const i=(g.missions||[]).findIndex(x=>x.id===id);if(i>-1){g.missions.splice(i,1);break;}}const o=mlogs();delete o[id];setMlogs(o);toast('Mission removed');render();}
     else if(act==='togglePrivate'){const gid=a.getAttribute('data-id');const g=GOALS.find(x=>x.id===gid);if(g){g.private=!g.private;if(!DEMO_MODE){await sb.from('goals').update({private:g.private}).eq('id',gid);}toast(g.private?'Goal is now private 🔒':'Goal is now public 🌍');render();}}
     else if(act==='archiveGoal'){const gid=a.getAttribute('data-id');const g=GOALS.find(x=>x.id===gid);if(!g)return;const ns=g.status==='archived'?'active':'archived';g.status=ns;if(!DEMO_MODE){await sb.from('goals').update({status:ns}).eq('id',gid);}toast(ns==='archived'?'Goal archived 📦':'Goal restored ♻️');render();}
     else if(act==='delGoal'){if(ME.plan==='free'){toast('Free plan: archive goals instead of deleting. Upgrade to delete.','err');return;}const gid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_GOALS.findIndex(g=>g.id===gid);if(idx>-1)DEMO_GOALS.splice(idx,1);toast('Goal deleted');render();}else{await sb.from('goals').delete().eq('id',gid);toast('Goal deleted');render();}}
-    else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done){DEMO_ME.xp=(DEMO_ME.xp||0)+100;toast('🎉 Goal completed! +100 XP (demo)');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done){await sb.rpc('award_xp',{p_amount:100});toast('🎉 Goal completed! +100 XP');}render();}}}
+    else if(act==='contrib'){const id=a.getAttribute('data-id');const amt=+$('#c-'+id).value;if(amt){const g=GOALS.find(x=>x.id===id);const wasDone=g.completed;const ns=Math.max(0,Number(g.saved_amount)+amt);const done=ns>=g.target_amount;if(DEMO_MODE){g.saved_amount=ns;g.completed=done;if(done&&!wasDone){DEMO_ME.xp=(DEMO_ME.xp||0)+100;coinEarn('goal_complete',id,a);toast('🎉 Goal completed! +100 XP');}else toast('Progress saved (demo)');render();}else{await sb.from('goals').update({saved_amount:ns,completed:done}).eq('id',id);if(done&&!wasDone){await sb.rpc('award_xp',{p_amount:100});coinEarn('goal_complete',id,a);toast('🎉 Goal completed! +100 XP');}render();}}}
     else if(act==='delExp'){const eid=a.getAttribute('data-id');if(DEMO_MODE){const idx=DEMO_EXPENSES.findIndex(x=>x.id===eid);if(idx>-1)DEMO_EXPENSES.splice(idx,1);render();}else{await sb.from('expenses').delete().eq('id',eid);render();}}
     else if(act==='tf'){a.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='';b.style.color='var(--muted)';b.classList.remove('text-white');});a.style.background='linear-gradient(90deg,var(--accent1),var(--accent2))';a.style.color='';a.classList.add('text-white');drawSpend(a.getAttribute('data-tf'));}
     else if(act==='ask'){const q=a.getAttribute('data-q');sendChat(q,q.toLowerCase().includes('roast')?'roast':'coach');}
