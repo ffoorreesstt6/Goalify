@@ -1138,6 +1138,41 @@
     @media(min-width:1025px){
       .lpv{min-height:440px}
     }
+    /* ============================================================
+       MOBILE HEADER & HERO — spec-true mobile experience
+       Sticky in-flow header (never overlaps content), aligned rows,
+       ≥44px touch targets, stacked trust list, mobile type scale.
+       ============================================================ */
+    @media(max-width:640px){
+      /* the fixed header wraps to two rows (~96px) but the hero only padded
+         for 56px, hiding the eyebrow underneath it. Sticky keeps the header
+         pinned AND in flow, so overlap is structurally impossible. */
+      html[data-route="home"] header.fixed{position:sticky;top:0}
+      html[data-route="home"] .lp-hero{padding-top:1.5rem!important}
+      /* header row 2: language selector · CTA · menu — evenly distributed,
+         all vertically centered at equal height */
+      .lp-navbar{row-gap:.6rem;align-items:center}
+      .lp-navbar>div:last-child{flex:1 1 100%;justify-content:space-between;gap:.5rem}
+      .lp-navbar .btn{min-height:2.75rem;padding:.55rem 1.05rem;font-size:.9rem}
+      .lang-btn{height:2.75rem;padding:0 .8rem;font-size:.8rem;border-radius:.9rem}
+      .lang-btn .lang-flag{font-size:1.15rem}
+      .mnav-btn{width:2.75rem;height:2.75rem;font-size:1.15rem}
+      /* hero CTAs: full width, thumb-friendly 48px */
+      .lp-hero .btn{min-height:3rem}
+      /* trust list: one signal per line, scannable */
+      .lp-hero .gap-x-6{flex-direction:column;align-items:flex-start;gap:.55rem}
+    }
+    /* mobile typography scale — H1 28-32 · H2 22-24 · lead 15-16 */
+    @media(max-width:480px){
+      .lp-h1{font-size:clamp(1.75rem,8.5vw,2rem)}
+      .lp-h2{font-size:clamp(1.4rem,6.5vw,1.5rem)}
+      .lp-lead{font-size:.95rem;line-height:1.6}
+      .lp-eyebrow{font-size:.74rem;padding:.38rem .8rem .38rem .62rem}
+    }
+    /* hamburger menu: smooth slide-down on open */
+    @keyframes menuIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+    .mnav-panel:not(.hidden){animation:menuIn .22s var(--ease-out) both}
+    @media(prefers-reduced-motion:reduce){.mnav-panel:not(.hidden){animation:none}}
     /* ---- touch targets: interactive controls reach ≥36px on touch/small
        screens without changing the visual density of the desktop layout ---- */
     @media(max-width:640px),(pointer:coarse){
