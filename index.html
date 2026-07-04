@@ -1094,6 +1094,50 @@
       .auth-card.auth-compact{padding:1.15rem 1rem}
       .auth-main{padding:1.25rem .9rem}
     }
+    /* ============================================================
+       RESPONSIVE HARDENING — mobile-first safety net
+       Base styles serve 320–480px; progressive enhancement at
+       481px (tablet), 769px (laptop), 1025px (large desktop).
+       ============================================================ */
+    /* fluid spacing tokens — use instead of fixed padding/margins */
+    :root{
+      --sp-1:clamp(.25rem,.2rem + .25vw,.5rem);
+      --sp-2:clamp(.5rem,.4rem + .5vw,1rem);
+      --sp-3:clamp(.75rem,.6rem + .75vw,1.5rem);
+      --sp-4:clamp(1rem,.8rem + 1vw,2rem);
+      --sp-6:clamp(1.5rem,1.1rem + 1.6vw,3rem);
+      --sp-8:clamp(2rem,1.4rem + 2.4vw,4.5rem);
+    }
+    /* overflow safety — nothing may push the page sideways */
+    html,body{max-width:100%;overflow-x:hidden}
+    #root{overflow-x:clip}
+    /* grid children may always shrink; long words can never blow out a column */
+    #root .grid>*{min-width:0}
+    h1,h2,h3,h4,p,a,button{overflow-wrap:break-word}
+    /* media scales proportionally, never distorts or clips */
+    img,video{max-width:100%;height:auto}
+    svg{max-width:100%}
+    canvas{max-width:100%}
+    /* hero dashboard showcase — fluid at every viewport
+       (base: stacked stats 2-up, summary cards 2-up + full-width third) */
+    .lpv{width:100%;min-height:0}
+    .lpv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .lpv-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .lpv-cards>div:last-child{grid-column:1 / -1}
+    /* 481px+ · tablet: full stat row returns */
+    @media(min-width:481px){
+      .lpv-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .lpv-cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .lpv-cards>div:last-child{grid-column:auto}
+    }
+    /* 769px+ · laptop: showcase regains its designed height */
+    @media(min-width:769px){
+      .lpv{min-height:420px}
+    }
+    /* 1025px+ · large desktop: showcase sidebar visible (matches .lp-side) */
+    @media(min-width:1025px){
+      .lpv{min-height:440px}
+    }
   </style>
 </head>
 <body>
@@ -1131,6 +1175,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=86"></script>
+  <script type="module" src="./app.js?v=87"></script>
 </body>
 </html>
