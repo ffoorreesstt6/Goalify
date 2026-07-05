@@ -1248,6 +1248,78 @@
     .store-lock-badge{position:absolute;top:.6rem;right:.6rem;z-index:2;font-size:.9rem;background:var(--glass-strong);border:1px solid var(--border);border-radius:9999px;width:1.7rem;height:1.7rem;display:flex;align-items:center;justify-content:center}
     .store-card-locked .store-swatch{filter:saturate(.85)}
     /* ============================================================
+       MOBILE DENSITY — compact, IG/Snapchat-tight. Everything on the
+       app pages gets smaller: chrome, cards, buttons, type, spacing.
+       Scoped to phones so desktop stays roomy.
+       ============================================================ */
+    @media(max-width:640px){
+      /* chrome */
+      .mtopbar{padding:.45rem .7rem}
+      .mtopbar img{height:20px!important}
+      .mtopbar span.font-extrabold{font-size:1rem!important}
+      .coin-pill{height:1.7rem;padding:0 .55rem;font-size:.74rem}
+      .coin-glyph{font-size:.9rem}
+      .mnav-btn{width:2.1rem;height:2.1rem;font-size:1rem}
+      .mfeat-tab{height:1.8rem;padding:0 .6rem;font-size:.66rem}
+      .mfeat-tabs{top:3.1rem}
+      .app-main{padding-top:3.35rem!important;padding-left:.7rem!important;padding-right:.7rem!important;padding-bottom:5rem!important}
+      .mbottom{padding:.2rem .3rem calc(.2rem + env(safe-area-inset-bottom))}
+      .mtab{padding:.25rem 0;gap:.05rem}
+      .mtab-ic{font-size:1.05rem}
+      .mtab-l{font-size:.54rem}
+      /* section rhythm — tighter everywhere */
+      .dash-stack{gap:.7rem!important}
+      .dash-stack>*+*{margin-top:0!important}
+      .dash-stack.space-y-5>*+*,.dash-stack.space-y-6>*+*{margin-top:.7rem!important}
+      .space-y-6>*+*{margin-top:.7rem!important}.space-y-5>*+*{margin-top:.6rem!important}.space-y-4>*+*{margin-top:.5rem!important}
+      /* cards — less air */
+      .glass,.glass-strong,.gcard,.kpi,.stat-card,.lp-sec-tile,.biz-card{border-radius:.85rem!important}
+      .stat-card{padding:.5rem .6rem!important}
+      .stat-card>*+*,.stat-card p{margin-top:.1rem!important}
+      /* blanket: any Tailwind padding utility on a card shrinks on mobile */
+      .app-main .p-3,.app-main .p-4,.app-main .p-5,.app-main .p-6,.app-main .sm\:p-6,.app-main .sm\:p-8{padding:.7rem!important}
+      .app-main .px-4,.app-main .sm\:px-6{padding-left:.7rem!important;padding-right:.7rem!important}
+      .app-main .py-8{padding-top:.7rem!important;padding-bottom:.7rem!important}
+      .kpi{padding:.5rem .6rem!important}
+      .kpi .k-v{font-size:.98rem!important}
+      .kpi .k-l{font-size:.56rem!important}
+      .stat-num{font-size:clamp(.95rem,5vw,1.25rem)!important}
+      .stat-lbl{font-size:.54rem!important}
+      /* tighten common vertical margins between stacked blocks */
+      .app-main .mt-6,.app-main .mt-5{margin-top:.7rem!important}
+      .app-main .mt-4{margin-top:.5rem!important}
+      .app-main .mt-3{margin-top:.4rem!important}
+      /* type */
+      .page-h1{font-size:1.1rem!important}
+      .page-sub{font-size:.72rem!important}
+      .dash-h1{font-size:1.05rem!important}
+      /* buttons — snappy, not chunky (but keep ≥40px only for the primary bottom actions) */
+      .app-main .btn{padding:.42rem .7rem!important;font-size:.78rem!important;border-radius:.55rem!important}
+      .dash-newgoal{height:34px!important;padding:0 .7rem!important;font-size:.75rem!important}
+      .app-main .btn-sm{padding:.38rem .6rem!important;font-size:.72rem!important}
+      .app-main .btn-lg{padding:.6rem 1rem!important;font-size:.86rem!important}
+      .app-main .input{padding:.5rem .7rem!important;font-size:.85rem!important}
+      .app-main .chip{font-size:.6rem!important;padding:.15rem .45rem!important}
+      .icon-btn{width:1.85rem;height:1.85rem}
+      .seg .seg-btn{padding:.35rem .65rem!important;font-size:.72rem!important}
+      /* grids a touch tighter */
+      .grid{gap:.55rem!important}
+      /* store + goalverse cosmetics compact */
+      .store-swatch{height:42px!important}
+      .gcard.p-4{padding:.6rem!important}
+      .gcard .btn-sm{padding:.32rem .5rem!important;font-size:.68rem!important}
+      .store-hero{padding:.85rem!important;border-radius:.85rem!important}
+      .store-hero h2{font-size:1rem!important}
+      .gv-stage{border-radius:.85rem!important}
+      /* feature-help ⋮ smaller */
+      .feat-help{width:1.7rem;height:1.7rem;font-size:1rem}
+    }
+    @media(max-width:400px){
+      .mtab-l{font-size:.5rem}
+      .app-main .btn{padding:.45rem .7rem!important}
+      .stat-num{font-size:1.05rem!important}
+    }
+    /* ============================================================
        GOALCOINS — header pill · fly-to-wallet · store
        ============================================================ */
     .coin-pill{display:inline-flex;align-items:center;gap:.35rem;height:2rem;padding:0 .7rem;border-radius:9999px;font-weight:800;font-size:.82rem;line-height:1;color:var(--text);text-decoration:none;cursor:pointer;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 35%,var(--border));transition:transform .15s var(--ease-spring),border-color .15s,background .15s;white-space:nowrap}
@@ -1411,6 +1483,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=91"></script>
+  <script type="module" src="./app.js?v=92"></script>
 </body>
 </html>
