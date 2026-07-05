@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "mkdir -p public && cp index.html public/index.html && cp app.js public/app.js && cp -r assets public/assets && cp -r galery public/galery && cp favicon.ico manifest.webmanifest browserconfig.xml public/ && cp assets/apple-touch-icon.png public/apple-touch-icon.png",
+  "buildCommand": "mkdir -p public && cp -r assets galery public/ && cp index.html app.js favicon.ico manifest.webmanifest browserconfig.xml public/",
   "outputDirectory": "public",
   "installCommand": "echo done",
   "cleanUrls": true,
