@@ -1,9 +1,28 @@
 {
   "framework": null,
-  "buildCommand": "mkdir -p public && cp index.html public/index.html && cp app.js public/app.js",
+  "buildCommand": "mkdir -p public && cp index.html public/index.html && cp app.js public/app.js && cp -r assets public/assets && cp -r galery public/galery && cp favicon.ico manifest.webmanifest browserconfig.xml public/ && cp assets/apple-touch-icon.png public/apple-touch-icon.png",
   "outputDirectory": "public",
   "installCommand": "echo done",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/(favicon.ico|apple-touch-icon.png)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    },
+    {
+      "source": "/(manifest.webmanifest|browserconfig.xml)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+    },
+    {
+      "source": "/app.js",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    }
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|galery/|favicon\\.ico|apple-touch-icon\\.png|manifest\\.webmanifest|browserconfig\\.xml|robots\\.txt|sitemap\\.xml|app\\.js).*)", "destination": "/index.html" }
   ]
 }
