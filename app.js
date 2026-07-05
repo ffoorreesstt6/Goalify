@@ -491,6 +491,7 @@ function planNav(plan){
   nav.push(['inbox','Inbox','📥']);
   nav.push(['profile','Profile','🪪']);
   nav.push(['store','Store','🛍️']);
+  if(plan==='premium'||plan==='business')nav.push(['goalverse','GoalVerse','🌌']);
   nav.push(['rewards','Rewards','🎁']);
   nav.push(['plans','Plans','💳']);
   if(plan==='free')nav.push(['student','Student Verify','🎓']);
@@ -749,10 +750,16 @@ function coinBalance(){return coinLedger().reduce((s,r)=>s+(r.delta||0),0);}
 function coinEarnedToday(){const t=todayISO();return coinLedger().filter(r=>r.delta>0&&(r.at||'').slice(0,10)===t).reduce((s,r)=>s+r.delta,0);}
 function coinHas(reason,ref){return coinLedger().some(r=>r.reason===reason&&r.ref===ref);}
 // EARN — whitelisted amounts, once-per-ref idempotency, daily cap. Returns coins actually credited.
+function coinMultiplier(){return ME?.plan==='premium'||ME?.plan==='business'?2:ME?.plan==='pro'?1.5:1;}
 function creditCoins(reason,ref){
-  const amt=COIN_EARN[reason];if(!amt)return 0;
+  const base=COIN_EARN[reason];if(!base)return 0;
   if(ref&&coinHas(reason,ref))return 0;                 // idempotent
+  let amt=Math.round(base*coinMultiplier());            // tier ×1 / ×1.5 / ×2
   if(coinEarnedToday()+amt>COIN_DAILY_CAP)return 0;      // daily cap
+  const wcap=coinWeeklyCap();const wk=coinEarnedThisWeek();
+  if(wk>=wcap)return 0;                                  // weekly cap (Free = 80)
+  if(wk+amt>wcap)amt=wcap-wk;                            // partial credit up to cap
+  if(amt<=0)return 0;
   const l=coinLedger();l.push({delta:amt,reason,ref:ref||null,at:new Date().toISOString()});setCoinLedger(l);
   return amt;
 }
@@ -813,6 +820,28 @@ function equipped(){try{return JSON.parse(localStorage.getItem('goalify_equipped
 function setEquipped(o){localStorage.setItem('goalify_equipped_'+uid(),JSON.stringify(o));}
 function equipItem(it){const e=equipped();e[it.cat]=it.id;setEquipped(e);if(it.cat==='accent'&&it.accent){applyTheme(null,it.accent);}}
 function coinGlyphColor(){const e=equipped();const it=STORE_ITEMS.find(x=>x.id===e.coinskin);return it&&it.color?it.color:'var(--gold2)';}
+// ── three-dot feature help: registers copy + returns a ⋮ trigger ──
+const FEAT_HELP={};
+function featHelp(title,what,why,tips,learn){
+  FEAT_HELP[title]={what,why,tips,learn:learn||''};
+  return `<button class="feat-help" data-action="featHelp" data-help="${esc(title)}" aria-label="About ${esc(title)}" title="About ${esc(title)}">⋮</button>`;
+}
+function openFeatHelp(title,h){
+  const m=document.getElementById('modal');if(!m)return;
+  m.innerHTML=`<div class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" data-fh-back><div class="w-full sm:max-w-md glass-modal rounded-t-2xl sm:rounded-2xl p-6 anim"><div class="flex items-start justify-between gap-3"><h2 class="text-lg font-extrabold">${esc(title)}</h2><button class="icon-btn" data-fh-x aria-label="Close">✕</button></div>
+    <div class="mt-4 space-y-3 text-sm">
+      <div><p class="t-label">What it does</p><p class="mt-0.5" style="color:var(--muted)">${esc(h.what)}</p></div>
+      <div><p class="t-label">Why it's useful</p><p class="mt-0.5" style="color:var(--muted)">${esc(h.why)}</p></div>
+      <div><p class="t-label">Best tips</p><p class="mt-0.5" style="color:var(--muted)">${esc(h.tips)}</p></div>
+    </div>
+    <button class="btn btn-primary w-full mt-5" data-fh-x>Got it</button></div></div>`;
+  const close=()=>{m.innerHTML='';};
+  m.querySelector('[data-fh-back]').addEventListener('click',e=>{if(e.target===e.currentTarget)close();});
+  m.querySelectorAll('[data-fh-x]').forEach(b=>b.addEventListener('click',close));
+}
+// weekly earn cap by tier (Free intentionally throttled to drive upgrades)
+function coinWeeklyCap(){return ME?.plan==='premium'||ME?.plan==='business'?99999:ME?.plan==='pro'?99999:80;}
+function coinEarnedThisWeek(){const ws=weekStartISO();return coinLedger().filter(r=>r.delta>0&&(r.at||'').slice(0,10)>=ws).reduce((s,r)=>s+r.delta,0);}
 function coinPillHTML(compact){
   const bal=coinBalance(),col=coinGlyphColor();
   if(compact)return `<a href="#app/store" id="coinPillM" class="coin-pill" title="GoalCoins"><span class="coin-glyph" style="color:${col}">⊙</span><span class="coin-bal">${bal.toLocaleString('en-IE')}</span></a>`;
@@ -1802,6 +1831,54 @@ function stepGoalCreate(inner){
 // APP SHELL
 // ============================================================
 const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['squad','Squad','👥'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
+// ── mobile-native chrome: minimal top bar · hamburger (support only) ·
+// two floating feature menus · 5-button bottom nav ──
+const MBOTTOM=[['dashboard','Home','🏠'],['settings','Settings','⚙️'],['profile','Profile','👤'],['store','Store','🛍'],['inbox','Inbox','📥']];
+function mfeatItem(label,route,icon,locked){
+  return `<a href="#app/${route}" class="mfeat-item${locked?' locked':''}" data-mclose><span class="mfeat-ic">${icon}</span><span>${label}</span>${locked?'<span class="mfeat-lock">🔒</span>':'<span class="mfeat-arr">›</span>'}</a>`;
+}
+function mobileChrome(route){
+  const c=caps(ME?.plan||'free');const plan=ME?.plan||'free';
+  const premium=(plan==='premium'||plan==='business');
+  const LEFT=[
+    ['Future Simulator','simulator','🔮',!c.analytics],
+    ['Impact Calculator','spendcalc','💸',!c.analytics],
+    ['Analytics','analytics','📈',!c.analytics],
+    ['Challenges','challenges','🏆',!c.gamify],
+    ['Goals Timeline','goals','🎯',false],
+  ];
+  const RIGHT=[
+    ['Social','social','👥',c.social==='none'],
+    ['Rewards','rewards','🎁',false],
+    ['Referrals','rewards','🔗',false],
+    ['Leaderboards','social','🏅',c.social==='none'],
+    ['Student Verify','student','🎓',false],
+    ['GoalVerse','goalverse','🌌',!premium],
+  ];
+  const btn=(n)=>`<a href="#app/${n[0]}" class="mtab ${route===n[0]?'on':''}" aria-label="${n[1]}"><span class="mtab-ic">${n[2]}</span><span class="mtab-l">${n[1]}</span></a>`;
+  return `
+  <header class="mtopbar lg:hidden">
+    <a href="#app/dashboard" class="flex items-center gap-2"><img src="${ICON_DATA}" alt="" style="height:24px;width:auto"><span class="font-extrabold text-lg">Goal<span class="gtext">ify</span></span></a>
+    <div class="flex items-center gap-2">${coinPillHTML(true)}<button class="mnav-btn" data-action="mmenu" aria-label="Menu" aria-controls="mMenu">☰</button></div>
+  </header>
+  <div id="mMenuOv" class="msheet-ov hidden" data-action="mmenuClose"></div>
+  <nav id="mMenu" class="msheet hidden lg:hidden" aria-label="Support">
+    <div class="msheet-grip"></div>
+    <a href="#home" data-mmenu>❓ FAQ</a>
+    <a href="#privacy" data-mmenu>🛡️ Privacy Policy</a>
+    <a href="#privacy" data-mmenu>📄 Terms of Service</a>
+    <a href="mailto:support@goalify.online" data-mmenu>✉️ Contact Support</a>
+    <button data-action="logout">↩︎ Logout</button>
+  </nav>
+  <div class="mfeat-tabs lg:hidden">
+    <button class="mfeat-tab" data-action="mfeat" data-side="left" aria-label="Productivity tools">‹ Tools</button>
+    <button class="mfeat-tab" data-action="mfeat" data-side="right" aria-label="Community tools">Community ›</button>
+  </div>
+  <div id="mfeatOv" class="mfeat-ov hidden" data-action="mfeatClose"></div>
+  <div id="mfeatLeft" class="mfeat-panel left hidden"><p class="mfeat-h">⚡ Productivity</p>${LEFT.map(x=>mfeatItem(x[0],x[1],x[2],x[3])).join('')}</div>
+  <div id="mfeatRight" class="mfeat-panel right hidden"><p class="mfeat-h">🌐 Community</p>${RIGHT.map(x=>mfeatItem(x[0],x[1],x[2],x[3])).join('')}</div>
+  <nav class="mbottom lg:hidden" aria-label="Primary">${MBOTTOM.map(btn).join('')}</nav>`;
+}
 function shell(route,inner){
   const isAdmin=ME?.role==='admin';const NAV=planNav(ME?.plan||'free');const c=caps(ME?.plan||'free');
   const themeBtn = (c.themes==='full'||c.themes==='red') ? `<a href="#app/settings" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5"><span>🎨</span>Theme<span class="ml-auto text-[10px]" style="color:var(--muted)">${c.themes==='full'?'customize':'red'}</span></a>` : '';
@@ -1814,7 +1891,7 @@ function shell(route,inner){
     <div class="mx-3 mb-2">${coinPillHTML()}</div>
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><div class="px-1 pb-2">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
-  <div class="lg:pl-64"><div class="mhead flex items-center justify-between gap-2 border-b lg:hidden" style="border-color:var(--border)">${brand('#app/dashboard',{dark:true,size:22})}<div class="flex items-center gap-1.5">${coinPillHTML(true)}${langSelect()}<select onchange="location.hash='#app/'+this.value" class="input !w-auto">${NAV.map(n=>`<option value="${n[0]}" ${route===n[0]?'selected':''}>${n[2]} ${n[1]}</option>`).join('')}</select></div></div><main class="app-main mx-auto max-w-6xl px-4 py-8 sm:px-6">${inner}</main></div></div>`;
+  <div class="lg:pl-64">${mobileChrome(route)}<main class="app-main mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">${inner}</main></div></div>`;
 }
 function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
 function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid='g'+label.replace(/\W/g,'');return `<div class="flex flex-col items-center"><div class="relative" style="width:140px;height:140px"><svg width="140" height="140" style="transform:rotate(-90deg)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="70" cy="70" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle cx="70" cy="70" r="${r}" stroke="url(#${gid})" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s ease"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold">${score}</span><span class="text-xs text-slate-400">${sub||''}</span></div></div><p class="mt-2 text-sm font-medium text-slate-400">${label}</p></div>`;}
@@ -2768,22 +2845,61 @@ function openGiftModal(){
 }
 // -------------------- Rewards / referrals --------------------
 function referralCode(){let c=localStorage.getItem('goalify_refcode');if(!c){c=(ME?.first_name||'GOAL').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)||'GOAL';c+=Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('goalify_refcode',c);}return c;}
+// ── GoalVerse — flagship Premium: a living world that grows with savings ──
+function goalverseView(){
+  const premium=(ME?.plan==='premium'||ME?.plan==='business');
+  const saved=totalSavedAll();const streak=(()=>{try{return bestStreakRecord();}catch(e){return 0;}})();
+  const goalsDone=(GOALS||[]).filter(g=>g.completed).length;
+  // world "level" from real progress → how lush the scene is (0..5)
+  const lvl=Math.min(5,Math.floor(saved/1000)+goalsDone);
+  const weather=streak>=7?'clear':streak>=3?'partly':'storm';
+  const trees=Math.min(9,2+lvl);const bldgs=Math.min(6,1+Math.floor(lvl*1.2));
+  const treeEls=Array.from({length:trees},(_,i)=>{const x=8+i*(84/Math.max(1,trees-1));const h=10+((i*37)%14);return `<g class="gv-tree" style="--d:${i*0.2}s"><rect x="${x-1}" y="${150-h}" width="2" height="${h}" fill="#5b3b1a"/><circle cx="${x}" cy="${148-h}" r="${6+(i%3)}" fill="var(--jade${i%2?'':'2'},#2F9E75)"/></g>`;}).join('');
+  const bldgEls=Array.from({length:bldgs},(_,i)=>{const w=12,x=120+i*16;const h=24+((i*29)%40)+lvl*4;return `<g class="gv-b" style="--d:${i*0.15}s"><rect x="${x}" y="${150-h}" width="${w}" height="${h}" rx="2" fill="url(#gvB)"/>${Array.from({length:Math.floor(h/10)},(_,r)=>`<rect x="${x+2}" y="${150-h+4+r*10}" width="3" height="4" fill="var(--gold2)" opacity=".8"/><rect x="${x+7}" y="${150-h+4+r*10}" width="3" height="4" fill="var(--gold2)" opacity=".6"/>`).join('')}</g>`;}).join('');
+  const scene=`<div class="gv-stage ${premium?'':'gv-locked'}" data-weather="${weather}">
+    <svg viewBox="0 0 220 160" class="gv-svg" preserveAspectRatio="xMidYMid slice" aria-label="Your GoalVerse world">
+      <defs>
+        <linearGradient id="gvSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent1)" stop-opacity=".55"/><stop offset="1" stop-color="var(--accent3)" stop-opacity=".18"/></linearGradient>
+        <linearGradient id="gvB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--steel2)"/><stop offset="1" stop-color="var(--steel)"/></linearGradient>
+        <radialGradient id="gvSun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="var(--gold2)"/><stop offset="1" stop-color="var(--gold2)" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="220" height="160" fill="url(#gvSky)"/>
+      <circle class="gv-sun" cx="186" cy="30" r="22" fill="url(#gvSun)"/>
+      ${weather==='storm'?'<g class="gv-clouds">'+Array.from({length:4},(_,i)=>`<ellipse cx="${30+i*50}" cy="${24+(i%2)*10}" rx="20" ry="8" fill="#8892a6" opacity=".5"/>`).join('')+'</g>':''}
+      ${Array.from({length:lvl*4+6},(_,i)=>`<circle class="gv-star" cx="${(i*53)%220}" cy="${(i*29)%70}" r=".8" fill="#fff" style="--d:${(i%5)*0.4}s"/>`).join('')}
+      <path d="M0 150 Q110 135 220 150 L220 160 L0 160 Z" fill="var(--jade,#2F9E75)" opacity=".9"/>
+      ${treeEls}${bldgEls}
+      <g class="gv-coins">${Array.from({length:3+lvl},(_,i)=>`<text class="gv-coin" x="${20+i*24}" y="120" style="--d:${i*0.5}s" fill="var(--gold2)" font-size="9">⊙</text>`).join('')}</g>
+    </svg>
+    ${!premium?`<div class="gv-lockcard"><div class="text-4xl">🌌</div><h3 class="text-lg font-extrabold mt-2">GoalVerse is a Premium world</h3><p class="text-sm mt-1" style="color:var(--muted)">Every euro you save grows a living world — cities rise, forests bloom, storms clear as your streak holds. Unlock the flagship Goalify experience.</p><a href="#app/plans" class="btn btn-primary mt-4">Unlock GoalVerse →</a></div>`:''}
+  </div>`;
+  const stat=(l,v,e)=>`<div class="kpi"><div class="k-l">${e} ${l}</div><div class="k-v">${v}</div></div>`;
+  return `<div class="dash-stack space-y-5">
+    <div class="page-head"><div><h1 class="page-h1">GoalVerse ${premium?'':'<span class="chip gold">Premium</span>'}</h1><p class="page-sub">Your money, as a living world. It grows every time you save and hold a streak.</p></div>${featHelp('GoalVerse','A living world that visually evolves with your real savings and habits.','It turns abstract numbers into something you can watch grow — the strongest reason to keep saving.','Hold a 7-day streak to clear the weather; complete goals to unlock landmarks.')}</div>
+    ${scene}
+    <div class="grid grid-cols-3 gap-3">${stat('World level','Lv '+lvl,'🌍')}${stat('Total saved',fmt(saved),'💰')}${stat('Weather',weather==='clear'?'Clear ☀️':weather==='partly'?'Fair ⛅':'Stormy ⛈️','🌦️')}</div>
+    ${premium?`<div class="glass rounded-2xl p-4"><p class="font-bold text-sm">🛒 Spend GoalCoins on your world</p><div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">${[['Aurora sky',300,'🌌'],['Golden hour',250,'🌇'],['Neon city',400,'🌃'],['Cherry forest',350,'🌸']].map(x=>`<button class="ob-chip" style="flex-direction:column;height:auto;padding:.7rem" data-action="gvBuy" data-name="${x[0]}" data-cost="${x[1]}"><span style="font-size:1.4rem">${x[2]}</span><span class="text-xs font-semibold mt-1">${x[0]}</span><span class="text-[11px]" style="color:var(--gold2)">⊙ ${x[1]}</span></button>`).join('')}</div></div>`:''}
+  </div>`;
+}
 function storeView(){
-  const bal=coinBalance(),eq=equipped();
+  const bal=coinBalance(),eq=equipped();const plan=ME?.plan||'free';const free=plan==='free';
   const card=(it)=>{
     const owned=ownsItem(it.id),isEq=eq[it.cat]===it.id,afford=bal>=it.cost;
     let btn;
-    if(isEq)btn=`<span class="chip ok">✓ Equipped</span>`;
+    if(free)btn=`<button class="btn btn-ghost btn-sm w-full" data-action="storeLock"><span>🔒</span> Preview</button>`;
+    else if(isEq)btn=`<span class="chip ok">✓ Equipped</span>`;
     else if(owned)btn=`<button class="btn btn-ghost btn-sm w-full" data-action="equipItem" data-id="${it.id}">Equip</button>`;
     else btn=`<button class="btn ${afford?'btn-primary':'btn-ghost'} btn-sm w-full" data-action="buyItem" data-id="${it.id}" ${afford?'':'disabled'}><span class="coin-glyph" style="color:${afford?'inherit':'var(--muted)'}">⊙</span> ${it.cost}</button>`;
-    return `<div class="gcard p-4 anim"><div class="store-swatch" style="background:${it.css}">${it.cat==='frame'?'<span class="store-frame-dot"></span>':it.cat==='coinskin'?'<span style="font-size:1.6rem;color:'+(it.color||'#fff')+'">⊙</span>':it.cat==='flameskin'?'<span style="font-size:1.5rem">🔥</span>':''}</div><p class="mt-3 font-bold text-sm">${it.name}</p><p class="text-[11px] mb-3" style="color:var(--muted)">${({banner:'Profile banner',accent:'Dashboard theme',coinskin:'Coin skin',frame:'Avatar frame',flameskin:'Streak flame'})[it.cat]}</p>${btn}</div>`;
+    return `<div class="gcard p-4 anim${free?' store-card-locked':''}">${free?'<span class="store-lock-badge">🔒</span>':''}<div class="store-swatch" style="background:${it.css}">${it.cat==='frame'?'<span class="store-frame-dot"></span>':it.cat==='coinskin'?'<span style="font-size:1.6rem;color:'+(it.color||'#fff')+'">⊙</span>':it.cat==='flameskin'?'<span style="font-size:1.5rem">🔥</span>':''}</div><p class="mt-3 font-bold text-sm">${it.name}</p><p class="text-[11px] mb-3" style="color:var(--muted)">${({banner:'Profile banner',accent:'Dashboard theme',coinskin:'Coin skin',frame:'Avatar frame',flameskin:'Streak flame'})[it.cat]}</p>${btn}</div>`;
   };
+  const lockBanner=free?`<div class="store-hero"><div class="store-hero-shine"></div><div class="relative"><p class="text-xs font-bold uppercase tracking-widest" style="color:var(--gold2)">🔒 Store locked · Free plan</p><h2 class="text-xl font-extrabold mt-1">Browse now — unlock with Pro</h2><p class="text-sm mt-1" style="color:rgba(255,255,255,.85)">Preview every cosmetic. Upgrade to spend GoalCoins, equip items and earn faster (×1.5–×2 + monthly stipend).</p><a href="#app/plans" class="btn mt-3 bg-white" style="color:#4C1D95;font-weight:700">Unlock the Store →</a></div></div>`:'';
   return `<div class="dash-stack space-y-6">
-    <div class="page-head"><div><h1 class="page-h1">Progress Shop</h1><p class="page-sub">Spend GoalCoins to make Goalify yours. Earn more by checking in, hitting streaks and completing goals.</p></div>
+    <div class="page-head"><div class="flex items-center gap-2"><div><h1 class="page-h1">Progress Shop</h1><p class="page-sub">Spend GoalCoins to make Goalify yours. Earn more by checking in, hitting streaks and completing goals.</p></div>${featHelp('Progress Shop','A cosmetic shop where GoalCoins buy banners, themes, frames and effects.','Rewards the saving habit with self-expression — and shows the value of upgrading.','Free users preview everything; Pro & Premium can buy, equip and earn faster.')}</div>
       <div class="coin-pill coin-pill-full" style="pointer-events:none"><span class="coin-glyph" style="color:${coinGlyphColor()}">⊙</span><span class="coin-bal">${bal.toLocaleString('en-IE')}</span><span class="coin-pill-cta">balance</span></div></div>
-    <div class="seg" role="tablist"><button class="seg-btn on" role="tab">Cosmetics</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Boosts · soon</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Rewards · soon</button></div>
+    ${lockBanner}
+    <div class="seg" role="tablist"><button class="seg-btn on" role="tab">Cosmetics</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Boosts · soon</button><button class="seg-btn" role="tab" disabled style="opacity:.5">Featured · soon</button></div>
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">${STORE_ITEMS.map(card).join('')}</div>
-    <p class="text-xs" style="color:var(--muted)">More cosmetics, boosts and real-value rewards are coming. GoalCoins are earned in-app — never bought.</p>
+    <p class="text-xs" style="color:var(--muted)">GoalCoins are earned in-app — never bought. ${free?'Free plan earns up to 80 GC/week.':plan==='pro'?'Pro earns ×1.5 + 200 GC monthly stipend.':'Premium earns ×2 + 600 GC monthly stipend.'}</p>
   </div>`;
 }
 function rewardsView(){
@@ -3075,11 +3191,11 @@ async function render(){
     const c=caps(ME.plan);
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
-    const route2base=(allowed.has(route)||route==='student')?route:'dashboard';
+    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store')?route:'dashboard';
     // Onboarding already requires a goal. Never force completed users back to goal creation —
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.analytics){drawSpend('year');drawCat();}
@@ -3501,8 +3617,15 @@ document.addEventListener('click',async(e)=>{
       }
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
-    else if(act==='buyItem'){const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it)return;if(ownsItem(it.id)){toast('Already owned');return;}if(!spendCoins('cosmetic',it.id,it.cost)){toast('Not enough GoalCoins — earn more by checking in!','err');return;}const owned=ownedItems();owned.push(it.id);setOwnedItems(owned);equipItem(it);const b=coinBalance();toast('🎉 '+it.name+' unlocked & equipped');render();requestAnimationFrame(()=>pulseCoinPill(b+it.cost,b));}
-    else if(act==='equipItem'){const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it||!ownsItem(it.id))return;equipItem(it);toast('✓ '+it.name+' equipped');render();}
+    else if(act==='mmenu'){const m=$('#mMenu'),o=$('#mMenuOv');const open=m.classList.contains('hidden');m.classList.toggle('hidden',!open);o.classList.toggle('hidden',!open);}
+    else if(act==='mmenuClose'){$('#mMenu')?.classList.add('hidden');$('#mMenuOv')?.classList.add('hidden');}
+    else if(act==='mfeat'){const side=a.getAttribute('data-side');const L=$('#mfeatLeft'),R=$('#mfeatRight'),o=$('#mfeatOv');const panel=side==='left'?L:R,other=side==='left'?R:L;const open=panel.classList.contains('hidden');other.classList.add('hidden');panel.classList.toggle('hidden',!open);o.classList.toggle('hidden',!open);}
+    else if(act==='mfeatClose'){$('#mfeatLeft')?.classList.add('hidden');$('#mfeatRight')?.classList.add('hidden');$('#mfeatOv')?.classList.add('hidden');}
+    else if(act==='storeLock'){toast('🔒 Upgrade to Pro to spend GoalCoins & equip items');location.hash='#app/plans';}
+    else if(act==='featHelp'){const h=FEAT_HELP[a.getAttribute('data-help')];if(h)openFeatHelp(a.getAttribute('data-help'),h);}
+    else if(act==='gvBuy'){const cost=+a.getAttribute('data-cost'),name=a.getAttribute('data-name');if(!spendCoins('goalverse',name,cost)){toast('Not enough GoalCoins for '+name,'err');return;}const b=coinBalance();toast('🌌 '+name+' applied to your GoalVerse');render();requestAnimationFrame(()=>pulseCoinPill(b+cost,b));}
+    else if(act==='buyItem'){if((ME?.plan||'free')==='free'){toast('🔒 Upgrade to Pro to buy items');location.hash='#app/plans';return;}const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it)return;if(ownsItem(it.id)){toast('Already owned');return;}if(!spendCoins('cosmetic',it.id,it.cost)){toast('Not enough GoalCoins — earn more by checking in!','err');return;}const owned=ownedItems();owned.push(it.id);setOwnedItems(owned);equipItem(it);const b=coinBalance();toast('🎉 '+it.name+' unlocked & equipped');render();requestAnimationFrame(()=>pulseCoinPill(b+it.cost,b));}
+    else if(act==='equipItem'){if((ME?.plan||'free')==='free'){toast('🔒 Upgrade to Pro to equip items');return;}const it=STORE_ITEMS.find(x=>x.id===a.getAttribute('data-id'));if(!it||!ownsItem(it.id))return;equipItem(it);toast('✓ '+it.name+' equipped');render();}
     else if(act==='ltPick'){const kind=a.getAttribute('data-lt'),v=a.getAttribute('data-v');if(kind==='income'){LT.income=+v;LT.step=1;ltRender();}else if(kind==='spend'){LT.spendKey=v;LT.step=2;ltRender();}else if(kind==='goal'){LT.goal=+v;ltProject();}}
     else if(act==='ltStart'){try{localStorage.setItem('goalify_teaser',JSON.stringify({income:LT.income,goal:LT.goal,ts:Date.now()}));}catch(_){}if(typeof QA!=='undefined'&&QA&&LT.income)QA.income=LT.income;/* anchor navigates to #signup */}
     else if(act==='mnav'){const p=document.getElementById('mnavPanel');if(p)p.classList.toggle('hidden');}
