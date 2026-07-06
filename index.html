@@ -1349,6 +1349,27 @@
       .stat-num{font-size:1.05rem!important}
     }
     /* ============================================================
+       ONBOARDING — goal-create suggestions + estimate + premium bg
+       ============================================================ */
+    .qg-sugg{display:inline-flex;align-items:center;gap:.3rem;padding:.4rem .7rem;border-radius:9999px;font-size:.8rem;font-weight:600;color:var(--text);background:var(--glass);border:1px solid var(--border);cursor:pointer;transition:transform .15s var(--ease-spring),border-color .15s,background .15s}
+    .qg-sugg:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent2) 45%,var(--border))}
+    .qg-sugg.on{border-color:var(--jade,#2F8F72);background:color-mix(in srgb,var(--jade,#2F8F72) 12%,transparent);box-shadow:0 0 0 1px var(--jade,#2F8F72)}
+    .qg-summary{border-radius:.8rem;padding:.7rem .9rem;font-size:.9rem;line-height:1.5;background:linear-gradient(135deg,color-mix(in srgb,var(--jade) 12%,transparent),color-mix(in srgb,var(--gold) 10%,transparent));border:1px solid color-mix(in srgb,var(--jade) 28%,var(--border))}
+    /* premium fintech backdrop for the onboarding shell — analytics lines +
+       soft grid + faint sparkline; warm/jade/gold/steel, no purple blobs */
+    .ob-shell::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+      background-image:
+        linear-gradient(color-mix(in srgb,var(--steel) 10%,transparent) 1px,transparent 1px),
+        linear-gradient(90deg,color-mix(in srgb,var(--steel) 10%,transparent) 1px,transparent 1px);
+      background-size:52px 52px;
+      -webkit-mask-image:radial-gradient(80% 60% at 50% 12%,#000 20%,transparent 80%);mask-image:radial-gradient(80% 60% at 50% 12%,#000 20%,transparent 80%)}
+    html:not(.light) .ob-shell{background:
+      radial-gradient(60% 45% at 82% -6%,color-mix(in srgb,var(--steel) 16%,transparent),transparent 70%),
+      radial-gradient(50% 40% at 8% 4%,color-mix(in srgb,var(--jade) 12%,transparent),transparent 70%),
+      radial-gradient(46% 40% at 60% 104%,color-mix(in srgb,var(--gold) 10%,transparent),transparent 72%),
+      var(--bg)}
+    .ob-shell>*{position:relative;z-index:1}
+    /* ============================================================
        GOALCOINS — header pill · fly-to-wallet · store
        ============================================================ */
     .coin-pill{display:inline-flex;align-items:center;gap:.35rem;height:2rem;padding:0 .7rem;border-radius:9999px;font-weight:800;font-size:.82rem;line-height:1;color:var(--text);text-decoration:none;cursor:pointer;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 35%,var(--border));transition:transform .15s var(--ease-spring),border-color .15s,background .15s;white-space:nowrap}
@@ -1512,6 +1533,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=94"></script>
+  <script type="module" src="./app.js?v=95"></script>
 </body>
 </html>

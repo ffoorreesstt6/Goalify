@@ -1838,18 +1838,44 @@ function stepGoalCreate(inner){
   const EMO=['🎯','🎮','💻','📱','🚗','✈️','🏠','🛡️','🎓','💍','🏝️','💰'];
   // pre-fill from the landing "try it now" teaser, if the user came from there
   let _tzTarget='';try{const tz=JSON.parse(localStorage.getItem('goalify_teaser'));if(tz&&tz.goal&&Date.now()-(tz.ts||0)<864e5){_tzTarget=String(tz.goal);}localStorage.removeItem('goalify_teaser');}catch(_){}
-  inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-8 anim">
-    <div class="text-center"><div class="text-5xl">🎯</div><h1 class="mt-2 text-2xl font-bold sm:text-3xl">Set your first goal</h1><p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">Goalify needs a target to turn your spending into savings recommendations. This is required to start.</p></div>
-    <div class="mt-6 space-y-4">
+  const SUGG=[['🚗','BMW M4',65000],['🎮','Gaming Setup',1500],['✈️','Trip to Japan',3500],['🎓','University',8000],['🏠','First Apartment',5000],['🛡️','Emergency Fund',3000]];
+  inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-8 anim qg-card">
+    <div class="text-center"><div class="text-5xl animate-float">🎯</div><h1 class="mt-2 text-2xl font-bold sm:text-3xl">Set your first goal</h1><p class="mx-auto mt-2 max-w-md text-sm" style="color:var(--muted)">This is what we'll help you reach. Pick a suggestion or make your own.</p></div>
+    <div class="mt-5"><span class="label">Popular goals</span><div class="mt-1 flex flex-wrap gap-2">${SUGG.map(s=>`<button type="button" class="qg-sugg" data-action="qgSuggest" data-e="${s[0]}" data-n="${esc(s[1])}" data-t="${s[2]}">${s[0]} ${s[1]}</button>`).join('')}</div></div>
+    <div class="mt-5 space-y-4">
       <div><span class="label">Pick an icon</span><div id="qgEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-10 w-10 items-center justify-center rounded-lg text-lg ${i===0?'sel ob-chip':'ob-chip'}">${x}</button>`).join('')}</div></div>
       <div><label class="label">Goal name</label><input id="qgName" class="input" placeholder="e.g. Gaming Setup"></div>
       <div class="grid grid-cols-2 gap-3"><div><label class="label">Target amount (€)</label><input id="qgTarget" type="number" inputmode="numeric" min="1" class="input" placeholder="1500" value="${_tzTarget}"></div><div><label class="label">Target date</label><input id="qgDate" type="month" class="input" min="${new Date().toISOString().slice(0,7)}" value="${(()=>{const d=new Date();d.setMonth(d.getMonth()+6);return d.toISOString().slice(0,7);})()}"></div></div>
+      <div id="qgSummary" class="qg-summary" aria-live="polite"></div>
       <p id="qgErr" class="text-sm text-red-400 h-4"></p>
-      <button class="btn btn-primary w-full" data-action="qcreategoal">Create goal & open dashboard →</button>
+      <button class="btn btn-primary btn-lg w-full" data-action="qcreategoal">Create goal & open dashboard →</button>
     </div></div>`;
   let emo='🎯';
   $('#qgEmo').addEventListener('click',e=>{const b=e.target.closest('[data-e]');if(!b)return;emo=b.getAttribute('data-e');QA._goalEmo=emo;$('#qgEmo').querySelectorAll('button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   QA._goalEmo='🎯';
+  updateQgSummary();
+}
+// live "you'll reach it by…" estimate on the goal-create page
+function updateQgSummary(){
+  const el=$('#qgSummary');if(!el)return;
+  const target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';
+  if(target<=0){el.innerHTML='<span style="color:var(--muted)">Enter a target to see your plan…</span>';return;}
+  let months=6;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y)months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));}
+  const per=Math.ceil(target/months);const d=new Date();d.setMonth(d.getMonth()+months);
+  const when=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  el.innerHTML=`Save about <b class="gtext">${fmt(per)}/mo</b> to reach <b>${fmt(target)}</b> by <b>${when}</b> 🎯`;
+}
+// Finalize onboarding: persist onboarded=true to the profile + onboarding_progress,
+// celebrate, then route to the dashboard. Never leaves the user stuck.
+async function finishOnboarding(){
+  if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); window._goalSubmitting=false;
+  if(!DEMO_MODE&&SESSION){
+    try{await sb.from('profiles').update({onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}catch(e){console.error('[Goalify] onboarded flag write failed:',e);}
+    try{await sb.from('onboarding_progress').upsert({user_id:SESSION.user.id,completed:true,completed_at:new Date().toISOString()},{onConflict:'user_id'});}catch(e){/* table optional */}
+  }
+  try{launchConfetti();}catch(e){}
+  toast('🎯 Goal created!');
+  setTimeout(()=>{location.hash='#app/dashboard';render();},450);
 }
 
 // ============================================================
@@ -3758,22 +3784,38 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=FREQ_CATS.length)QSTEP++;renderQuiz();}
     else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
     else if(act==='qgoal'){const inner=$('#qInner');if(inner)stepGoalCreate(inner);}
+    else if(act==='qgSuggest'){const n=a.getAttribute('data-n'),t=a.getAttribute('data-t'),e2=a.getAttribute('data-e');const nm=$('#qgName'),tg=$('#qgTarget');if(nm)nm.value=n;if(tg&&t)tg.value=t;QA._goalEmo=e2;const emoBox=$('#qgEmo');if(emoBox){emoBox.querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x.getAttribute('data-e')===e2));}document.querySelectorAll('.qg-sugg').forEach(x=>x.classList.toggle('on',x===a));updateQgSummary();}
     else if(act==='qcreategoal'){
       if(window._goalSubmitting)return; // guard against double-submit duplicates
       const name=($('#qgName')?.value||'').trim(),target=+($('#qgTarget')?.value||0),dateM=$('#qgDate')?.value||'';const err=$('#qgErr');
       if(!name||target<=0){if(err)err.textContent='Enter a goal name and target amount.';return;}
+      const resetBtn=()=>{window._goalSubmitting=false;if(a){a.textContent='Create goal & open dashboard →';a.style.pointerEvents='';}};
       // already have an active goal from this flow? don't create a duplicate — just finish onboarding
-      if(!DEMO_MODE&&Array.isArray(GOALS)&&GOALS.some(g=>!g.completed)){if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');location.hash='#app/dashboard';render();return;}
+      if(!DEMO_MODE&&Array.isArray(GOALS)&&GOALS.some(g=>!g.completed)){await finishOnboarding();return;}
       let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}
       const emo=QA._goalEmo||'🎯';
       window._goalSubmitting=true; if(err)err.textContent=''; if(a){a.textContent='Creating…';a.style.pointerEvents='none';}
       if(DEMO_MODE){const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};DEMO_GOALS.unshift(g);}
       else{
-        const {error}=await sb.from('goals').insert({user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null,private:false});
-        if(error){window._goalSubmitting=false;if(a){a.textContent='Create goal & open dashboard →';a.style.pointerEvents='';}if(err)err.textContent=friendlyErr(error,"Couldn't save your goal — please try again.");return;}
+        // make sure we still hold a live session before writing
+        if(!SESSION){try{const {data}=await sb.auth.getSession();SESSION=(data&&data.session)||null;}catch(_){}}
+        if(!SESSION){resetBtn();if(err)err.textContent='Your session expired — please log in again.';setTimeout(()=>{location.hash='#login';},900);return;}
+        const payload={user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null,private:false};
+        let {error}=await sb.from('goals').insert(payload);
+        if(error){
+          console.error('[Goalify] goal insert failed:',error);           // surface the REAL cause
+          // self-heal: a missing profile / onboarding rows can break writes → provision + retry once
+          try{await sb.rpc('ensure_bootstrap');}catch(e){console.error('[Goalify] ensure_bootstrap failed:',e);}
+          const retry=await sb.from('goals').insert(payload); error=retry.error;
+          if(error){
+            console.error('[Goalify] goal insert retry failed:',error);
+            resetBtn();
+            if(err)err.textContent="Couldn't save your goal — "+(error.message||'please try again')+'.'; // no hiding
+            return;
+          }
+        }
       }
-      if(ME)ME.onboarded=true;localStorage.setItem('goalify_onboarded','1');window._goalSubmitting=false;
-      toast('🎯 Goal created!');location.hash='#app/dashboard';render();
+      await finishOnboarding();
     }
     else if(act==='approveChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='approved';setChalState(arr);const def=CHALLENGES.find(x=>x.key===k);const xp=def?.xp||0;if(DEMO_MODE)DEMO_ME.xp=(DEMO_ME.xp||0)+xp;else await sb.rpc('award_xp',{p_amount:xp}).catch(()=>{});await loadProfile();toast('✓ Approved — +'+xp+' XP granted');}render();}
     else if(act==='rejectChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='rejected';setChalState(arr);}toast('Submission rejected — no XP');render();}
@@ -3783,6 +3825,7 @@ document.addEventListener('click',async(e)=>{
 });
 document.addEventListener('input',(e)=>{
   if(e.target&&e.target.id==='spendSlider'){const cat=e.target.getAttribute('data-cat'),v=+e.target.value||0;QA.spend[cat]=v;const lbl=document.getElementById('spendVal');if(lbl)lbl.textContent=spendLabel(v);}
+  if(e.target&&(e.target.id==='qgTarget'||e.target.id==='qgDate')){updateQgSummary();}
 });
 document.addEventListener('change',async(e)=>{
   if(e.target.id==='langSel'){setLang(e.target.value);return;}
