@@ -1933,16 +1933,29 @@ async function finishQuiz(inner){
   const sorted=Object.entries(QA.spend).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]),top3=sorted.slice(0,3);
   if(DEMO_MODE){Object.assign(DEMO_ME,{monthly_income:income,monthly_savings:savings,budget:{...QA.spend},spend_freq:{...QA.freq},personality:persona,onboarded:true,savings_potential:potential,country:QA.country,frustrate_category:QA.frustrate,reduce_category:QA.reduce,bank_check:QA.bankcheck,money_challenge:QA.challenge,employment:QA.employment,debt_level:QA.debt,emergency_fund:QA.efund,saving_habit:QA.savehabit,invest_interest:QA.invest,motivation:QA.motivation});}
   else{
-    // primary profile update uses only columns guaranteed to exist (after migration)
-    try{await sb.from('profiles').update({monthly_income:income,monthly_savings:savings,budget:QA.spend,spend_freq:QA.freq,personality:persona,onboarded:true,country:QA.country,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}
-    catch(e){try{await sb.from('profiles').update({onboarded:true,updated_at:new Date().toISOString()}).eq('id',SESSION.user.id);}catch(_){}}
-    // store full onboarding answers (best-effort; won't block onboarding if the table is missing)
-    try{await sb.from('quiz_answers').upsert({user_id:SESSION.user.id,income,country:QA.country,freq:QA.freq,spend:QA.spend,subs:QA.subs,frustrate:QA.frustrate,reduce:QA.reduce,bankcheck:QA.bankcheck,challenge:QA.challenge,personality:persona},{onConflict:'user_id'});}catch(e){}
-    // extended answers — written separately so a missing `extras` column can never
-    // block the core onboarding save above
-    try{await sb.from('quiz_answers').update({extras:{employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}}).eq('user_id',SESSION.user.id);}catch(e){}
-    // seed spending entries from the quiz (best-effort)
-    try{const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:SESSION.user.id,amount:v,category:k,source:'quiz',spent_at:todayISO()}));if(rows.length)await sb.from('expenses').insert(rows);}catch(e){}
+    const uid2=SESSION.user.id;
+    // Full profile write. Supabase .update() returns {error} instead of throwing,
+    // so we must inspect it — a single unknown column would otherwise silently
+    // drop the whole write (this is exactly what hid spending before).
+    const full={monthly_income:income,monthly_savings:savings,budget:QA.spend,spend_freq:QA.freq,personality:persona,onboarded:true,country:QA.country,updated_at:new Date().toISOString()};
+    let {error:pErr}=await sb.from('profiles').update(full).eq('id',uid2);
+    if(pErr){
+      console.error('[Goalify] profile onboarding write failed, retrying with core columns:',pErr);
+      // never lose the spending data — retry with only columns guaranteed to exist
+      const core={monthly_income:income,monthly_savings:savings,budget:QA.spend,onboarded:true,updated_at:new Date().toISOString()};
+      const r=await sb.from('profiles').update(core).eq('id',uid2);
+      if(r.error)console.error('[Goalify] core profile write also failed:',r.error);
+    }
+    // full onboarding answers (best-effort)
+    try{await sb.from('quiz_answers').upsert({user_id:uid2,income,country:QA.country,freq:QA.freq,spend:QA.spend,subs:QA.subs,frustrate:QA.frustrate,reduce:QA.reduce,bankcheck:QA.bankcheck,challenge:QA.challenge,personality:persona},{onConflict:'user_id'});}catch(e){}
+    try{await sb.from('quiz_answers').update({extras:{employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}}).eq('user_id',uid2);}catch(e){}
+    // seed spending entries from the quiz. Delete prior quiz rows first so
+    // re-taking onboarding UPDATES rather than DUPLICATES (spec: no dup rows).
+    try{
+      await sb.from('expenses').delete().eq('user_id',uid2).eq('source','quiz');
+      const rows=Object.entries(QA.spend).filter(([k,v])=>v>0).map(([k,v])=>({user_id:uid2,amount:v,category:k,source:'quiz',spent_at:todayISO()}));
+      if(rows.length){const {error:eErr}=await sb.from('expenses').insert(rows);if(eErr)console.error('[Goalify] quiz expenses insert failed:',eErr);}
+    }catch(e){console.error('[Goalify] quiz expenses seed failed:',e);}
   }
   await loadProfile();
   if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
