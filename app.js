@@ -1066,6 +1066,59 @@ function landingPreview(){
     </div>
   </div>`;
 }
+// ── Landing hero showcase: a rich, alive dashboard mockup. Token-driven so it
+// inherits the frame's premium dark surface; CSS animates fade/ring/bars,
+// startDashboardShowcase() counts the numbers up. Respects reduced motion. ──
+function dashboardShowcase(){
+  const stat=(l,v,sub,cls)=>`<div class="ds-stat"><span class="ds-stat-l">${l}</span><span class="ds-stat-v ${cls||''}" data-count="${v.replace(/[^0-9.]/g,'')}" data-pre="${/€/.test(v)?'€':''}" data-suf="${/%/.test(v)?'%':''}">${v}</span>${sub?`<span class="ds-stat-s ${cls||''}">${sub}</span>`:''}</div>`;
+  const tx=[['🛒','Groceries','2h ago','-28.40','out'],['☕','Coffee','5h ago','-4.20','out'],['🎮','Steam','Yesterday','-12.99','out'],['💰','Salary','2d ago','+1,250','in']];
+  const bars=[['Food',82],['Transport',45],['Fun',60],['Shop',38],['Bills',70],['Save',55]];
+  const ach=[['🏆','First Goal'],['🔥','7-Day Streak'],['💰','Saved €500'],['🎓','Student Pro']];
+  const mini=[['🛡️','Emergency Fund',74],['✈️','Vacation',42],['🎮','Gaming PC',19]];
+  const lb=[['1','Emma','183','E'],['2','Alex','151','A'],['3','You','148','Y']];
+  const R=26,C=(2*Math.PI*R).toFixed(1),off=(C*(1-0.74)).toFixed(1);
+  return `<div class="ds" style="--ds-C:${C}">
+    <div class="ds-head ds-fade">
+      <div><p class="ds-hi">Good morning, Alex 👋</p><p class="ds-sub">You're <b class="ds-ahead">€148 ahead</b> of your monthly budget.</p></div>
+      <span class="ds-streak">🔥 <b>8</b> day streak</span>
+    </div>
+    <div class="ds-stats ds-fade">
+      ${stat("Today's spending",'€28.40','● below budget','ok')}
+      ${stat('Monthly saved','€426','','')}
+      ${stat('Goal progress','74%','','')}
+      ${stat('Budget health','Excellent','','ok')}
+    </div>
+    <div class="ds-grid">
+      <div class="ds-col">
+        <div class="ds-card ds-goal ds-fade">
+          <div class="ds-ring"><svg viewBox="0 0 60 60"><circle class="ds-ring-bg" cx="30" cy="30" r="${R}"/><circle class="ds-ring-fg" cx="30" cy="30" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg><span class="ds-ring-c" data-count="74" data-suf="%">74%</span></div>
+          <div class="ds-goal-info"><p class="ds-goal-n">🛡️ Emergency Fund</p><p class="ds-goal-amt"><b data-count="1480" data-pre="€">€1,480</b> <span>/ €2,000</span></p><p class="ds-goal-eta">Est. completion <b>April 12</b> <span class="ds-badge-ok">Ahead of schedule</span></p></div>
+        </div>
+        <div class="ds-card ds-fade"><p class="ds-card-t">Monthly spending</p><div class="ds-bars">${bars.map(b=>`<div class="ds-bar-wrap"><div class="ds-bar" style="--h:${b[1]}%"></div><span>${b[0]}</span></div>`).join('')}</div></div>
+        <div class="ds-card ds-coach ds-fade"><div class="ds-coach-ic">✨</div><div><p class="ds-coach-t">Goalify AI</p><p class="ds-coach-b">You've spent <b>18% less</b> on food this week — keep it up and you'll hit your Emergency Fund <b>9 days earlier</b>.</p></div></div>
+      </div>
+      <div class="ds-col">
+        <div class="ds-card ds-fade"><p class="ds-card-t">Recent transactions</p>${tx.map(t=>`<div class="ds-tx"><span class="ds-tx-ic">${t[0]}</span><div class="ds-tx-mid"><span class="ds-tx-n">${t[1]}</span><span class="ds-tx-time">${t[2]}</span></div><span class="ds-tx-amt ${t[4]}">${t[4]==='in'?'+':'−'}€${t[3].replace('-','').replace('+','')}</span></div>`).join('')}</div>
+        <div class="ds-card ds-fade"><p class="ds-card-t">Your goals</p>${mini.map(m=>`<div class="ds-mini"><span>${m[0]} ${m[1]}</span><b>${m[2]}%</b><div class="ds-mini-bar"><i style="--w:${m[2]}%"></i></div></div>`).join('')}</div>
+        <div class="ds-card ds-fade"><p class="ds-card-t">Friends saving this month</p>${lb.map(r=>`<div class="ds-lb ${r[1]==='You'?'me':''}"><span class="ds-lb-r">${r[0]}</span><span class="ds-lb-av">${r[3]}</span><span class="ds-lb-n">${r[1]}</span><b class="ds-lb-v">€${r[2]}</b></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="ds-ach ds-fade">${ach.map(a=>`<span class="ds-badge" title="${a[1]}">${a[0]} ${a[1]}</span>`).join('')}</div>
+  </div>`;
+}
+let _dsRaf=[];
+function stopDashboardShowcase(){_dsRaf.forEach(id=>cancelAnimationFrame(id));_dsRaf=[];}
+function startDashboardShowcase(){
+  stopDashboardShowcase();
+  const ds=document.querySelector('.ds'); if(!ds) return;
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  ds.querySelectorAll('[data-count]').forEach(el=>{
+    const to=parseFloat(el.getAttribute('data-count'))||0,pre=el.getAttribute('data-pre')||'',suf=el.getAttribute('data-suf')||'',dec=(el.getAttribute('data-count')||'').includes('.');
+    const fmtN=v=>pre+(dec?v.toFixed(2):Math.round(v)).toLocaleString('en-IE')+suf;
+    if(reduce){el.textContent=fmtN(to);return;}
+    const t0=performance.now(),dur=1100;const step=now=>{const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtN(to*e);if(k<1)_dsRaf.push(requestAnimationFrame(step));};_dsRaf.push(requestAnimationFrame(step));
+  });
+}
 // ── Hero micro-demo: the core loop, alive. Euro logged → categorized →
 // goal ring ticks up → streak flame. Pure CSS transitions + one rAF counter;
 // respects reduced motion (renders a settled end-state, no loop). ──
@@ -1280,7 +1333,7 @@ function landing(){
         <div class="reveal" style="transition-delay:.08s">
           <div class="lp-frame lp-float">
             <div class="lp-frame-bar"><i></i><i></i><i></i></div>
-            ${heroDemo()}
+            ${dashboardShowcase()}
           </div>
         </div>
       </div>
@@ -3343,7 +3396,7 @@ async function render(){
   }
 
   // public routes (light premium theme)
-  if(hash==='home'){siteTheme();root.innerHTML=landing();window.scrollTo(0,0);requestAnimationFrame(()=>{startHeroDemo();initLandingTeaser();});return;}
+  if(hash==='home'){siteTheme();root.innerHTML=landing();window.scrollTo(0,0);requestAnimationFrame(()=>{startDashboardShowcase();initLandingTeaser();});return;}
   if(hash==='login'){siteTheme();root.innerHTML=loginView();return;}
   if(hash==='signup'){siteTheme();root.innerHTML=signupView();return;}
   if(hash==='forgot'){siteTheme();root.innerHTML=forgotView();return;}
