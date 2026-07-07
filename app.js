@@ -1106,18 +1106,41 @@ function dashboardShowcase(){
     <div class="ds-ach ds-fade">${ach.map(a=>`<span class="ds-badge" title="${a[1]}">${a[0]} ${a[1]}</span>`).join('')}</div>
   </div>`;
 }
+// Dedicated mobile mockup — a real phone frame with a banking-style app, NOT a
+// shrunk desktop dashboard. Shown only <768px via CSS.
+function phoneMockup(){
+  const tx=[['🛒','Groceries','−€28.40','out'],['☕','Coffee','−€4.20','out'],['💰','Salary','+€1,250','in']];
+  const bars=[70,42,58,35,80,50];
+  const R=30,C=(2*Math.PI*R).toFixed(1),off=(C*(1-0.74)).toFixed(1);
+  const nav=[['home','🏠'],['goals','🎯'],['scan','◎'],['stats','📊'],['you','🧑']];
+  return `<div class="pm">
+    <div class="pm-notch"></div>
+    <div class="pm-screen ds" style="--ds-C:${C}">
+      <div class="pm-top ds-fade"><div><p class="pm-hi">Good morning, Alex 👋</p><p class="pm-sub">You're <b class="ds-ahead">€148 ahead</b> this month</p></div><span class="ds-streak">🔥 8</span></div>
+      <div class="pm-budget ds-fade"><p class="pm-budget-l">Left to spend this month</p><p class="pm-budget-v"><b data-count="612" data-pre="€">€612</b> <span>/ €900</span></p><div class="pm-budget-bar"><i style="--w:68%"></i></div></div>
+      <div class="pm-row ds-fade">
+        <div class="pm-card pm-goal"><div class="ds-ring" style="width:66px;height:66px"><svg viewBox="0 0 66 66"><circle class="ds-ring-bg" cx="33" cy="33" r="${R}"/><circle class="ds-ring-fg" cx="33" cy="33" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg><span class="ds-ring-c" data-count="74" data-suf="%">74%</span></div><p class="pm-goal-n">🛡️ Emergency Fund</p><p class="pm-goal-a"><b data-count="1480" data-pre="€">€1,480</b> / €2,000</p></div>
+        <div class="pm-card"><p class="ds-card-t">This week</p><div class="pm-mini-bars">${bars.map(h=>`<span class="ds-bar" style="--h:${h}%"></span>`).join('')}</div><p class="pm-week">Spending down <b class="ds-ahead">18%</b></p></div>
+      </div>
+      <div class="pm-card pm-tx ds-fade"><p class="ds-card-t">Recent</p>${tx.map(t=>`<div class="ds-tx"><span class="ds-tx-ic">${t[0]}</span><span class="ds-tx-n" style="flex:1">${t[1]}</span><span class="ds-tx-amt ${t[3]}">${t[2]}</span></div>`).join('')}</div>
+      <div class="pm-nav">${nav.map((n,i)=>`<span class="pm-nav-i ${i===0?'on':''}">${n[1]}</span>`).join('')}</div>
+    </div>
+  </div>`;
+}
 let _dsRaf=[];
 function stopDashboardShowcase(){_dsRaf.forEach(id=>cancelAnimationFrame(id));_dsRaf=[];}
 function startDashboardShowcase(){
   stopDashboardShowcase();
-  const ds=document.querySelector('.ds'); if(!ds) return;
+  // only the visible showcase (desktop dashboard OR phone mockup) needs counting
+  const shells=[...document.querySelectorAll('.ds')].filter(el=>el.getClientRects().length);
+  if(!shells.length) return;
   const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  ds.querySelectorAll('[data-count]').forEach(el=>{
+  shells.forEach(ds=>ds.querySelectorAll('[data-count]').forEach(el=>{
     const to=parseFloat(el.getAttribute('data-count'))||0,pre=el.getAttribute('data-pre')||'',suf=el.getAttribute('data-suf')||'',dec=(el.getAttribute('data-count')||'').includes('.');
     const fmtN=v=>pre+(dec?v.toFixed(2):Math.round(v)).toLocaleString('en-IE')+suf;
     if(reduce){el.textContent=fmtN(to);return;}
     const t0=performance.now(),dur=1100;const step=now=>{const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtN(to*e);if(k<1)_dsRaf.push(requestAnimationFrame(step));};_dsRaf.push(requestAnimationFrame(step));
-  });
+  }));
 }
 // ── Hero micro-demo: the core loop, alive. Euro logged → categorized →
 // goal ring ticks up → streak flame. Pure CSS transitions + one rAF counter;
@@ -1330,11 +1353,14 @@ function landing(){
           <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--jade2)">${t[0]==='✓'?ICON('check','ic-sm'):t[0]}</span>${t[1]}</span>`).join('')}</div>
           <div class="lp-hero-trust"><span class="inline-flex items-center gap-1.5 text-sm" style="color:var(--muted)">${ICON('globe','ic-sm')} 6 languages · <span style="color:var(--jade2)">€0</span> to start · no card required</span></div>
         </div>
-        <div class="reveal" style="transition-delay:.08s">
-          <div class="lp-frame lp-float">
-            <div class="lp-frame-bar"><i></i><i></i><i></i></div>
-            ${dashboardShowcase()}
+        <div class="reveal lp-showcase" style="transition-delay:.08s">
+          <div class="lp-showcase-desktop">
+            <div class="lp-frame lp-float">
+              <div class="lp-frame-bar"><i></i><i></i><i></i></div>
+              ${dashboardShowcase()}
+            </div>
           </div>
+          <div class="lp-showcase-mobile">${phoneMockup()}</div>
         </div>
       </div>
     </section>
