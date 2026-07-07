@@ -1784,9 +1784,148 @@ function computeQuizSpend(){
   if(subTotal>0)spend.subscriptions=subTotal;
   return spend;
 }
+// ============================================================
+// ONBOARDING ANALYSIS EXPERIENCE — a premium multi-step reveal after the quiz.
+// loading → summary → personality → roast → motivation → achievement →
+// dashboard preview → premium (skippable) → final CTA → goal creation.
+// ============================================================
+const ANA_LOADING=['🧠 Analyzing your spending habits…','📈 Building your financial profile…','💸 Finding hidden money leaks…','🎯 Calculating your future…','✨ Generating personalized recommendations…'];
+const ANA_ROASTS=[
+  "Your bank account has requested emotional support.",
+  "Netflix knows you better than your savings account.",
+  "Those small purchases said “it’s only €3”… your yearly total disagrees.",
+  "Your wallet called — it would like weekends off.",
+  "You officially spend enough on snacks to finance a small vacation.",
+  "Your subscriptions are in a committed relationship with your salary.",
+  "Somewhere, a barista is naming a yacht after you. ☕",
+  "Your “just browsing” has a black belt in checkout.",
+  "Impulse buys: 1. Willpower: still loading…",
+  "Delivery apps see you as a VIP. Your goals? Not so much.",
+  "That cart didn’t abandon itself… oh wait, it never got abandoned.",
+  "Your future self just slid into your DMs. Maybe read it. 👀"
+];
+const ANA_MOTIV=[
+  ['🚀','If you save just €4/day…','you’ll reach your goal <b>7 months earlier</b>.'],
+  ['✨','Skip one unnecessary purchase each week…','future you will <b>definitely</b> notice.'],
+  ['🎯','You’re closer than you think.','Most people never even calculate this. You just did.']
+];
+// 20+ personality cards; best match by biggest category + savings behaviour, deterministic fallback for variety.
+const ANA_PERSONAS=[
+  ['gaming','🎮','The Gamer','Your biggest spend is gaming & subscriptions. Good news — you’re actually very close to funding your next setup.'],
+  ['coffee','☕','The Coffee Collector','That €4 coffee feels harmless… until your wallet starts crying every Friday. 😅'],
+  ['delivery','🍕','The Doorstep Diner','Delivery is your love language. Cooking twice a week could quietly fund a weekend away.'],
+  ['restaurants','🍽️','The Foodie','You eat well — no shame. A little planning turns great meals into a great savings streak.'],
+  ['fastfood','🍔','The Quick Bite','Small, fast, frequent. Those little orders add up to a surprisingly big yearly number.'],
+  ['shopping','🛍️','The Retail Explorer','“Add to cart” is your cardio. Channel that energy into a goal and it flies.'],
+  ['clothing','👕','The Trendsetter','Your closet is thriving. One skipped haul a month could bankroll something bigger.'],
+  ['nightlife','🍻','The Social Butterfly','Weekends are sacred — keep them. Even trimming one round funds real progress.'],
+  ['subscriptions','📱','The Subscription Hoarder','You’re paying for services you forgot you had. This is the easiest win on your list.'],
+  ['cigarettes','🚬','The Habit Holder','This one’s pricey in every sense. Cutting back here is the single biggest lever you have.'],
+  ['fuel','⛽','The Commuter','Fuel eats a chunk every month. Carpooling or combining trips adds up fast.'],
+  ['groceries','🛒','The Home Chef','Smart — most of your spend is essentials. A tighter list still frees up real money.'],
+  ['gym','🏋️','The Self-Improver','You invest in yourself. Let’s make your money as fit as you are.'],
+  ['travel','✈️','The Wanderer','Experiences over things — respect. A goal turns “someday” trips into booked ones.'],
+  ['beauty','💄','The Self-Care Star','Looking good isn’t cheap. A small monthly cap here still leaves plenty to save.'],
+  ['comfort','🦥','The Comfort Spender','You enjoy convenience and entertainment. Small weekly treats quietly become large yearly expenses.'],
+  ['saver','🐿️','The Natural Saver','You already keep more than most. A clear goal turns good habits into a finish line.'],
+  ['investor','🚀','The Future Investor','You’re already making smart decisions. A few small changes get you there months earlier.'],
+  ['paycheck','🌞','The Fresh Starter','It’s tight right now — that’s okay. Goalify is built to make the first €100 feel possible.'],
+  ['balanced','⚖️','The Balanced One','No wild leaks, no extremes. A dedicated goal is exactly what turns steady into unstoppable.'],
+  ['student','🎓','The Smart Student','Big plans, tight budget. You verified as a student — Pro is on us. Let’s make it count.'],
+  ['impulse','⚡','The Impulse Adventurer','Spontaneous and fun — but those “little” buys stack up. One goal gives them somewhere better to go.']
+];
+function grantOnceCoins(amount,reason,ref){try{if(coinHas(reason,ref))return 0;const l=coinLedger();l.push({delta:amount,reason,ref,at:new Date().toISOString()});setCoinLedger(l);return amount;}catch(e){return 0;}}
+let ANA=null,ANAi=0;
+function buildAnalysis(d){
+  const name=(ME&&ME.first_name)||(typeof DEMO_ME!=='undefined'&&DEMO_ME.first_name)||'there';
+  const sr=d.income>0?Math.max(0,(d.income-d.monthly)/d.income):0;
+  const topCat=d.top3&&d.top3[0]?d.top3[0][0]:null;
+  const leak=d.opp?d.opp[0]:(d.sorted.find(([k])=>k==='subscriptions'||k==='delivery'||k==='coffee')||[null])[0];
+  const potentialYr=d.opp?Math.round(d.opp[1]*0.5*12):Math.round(d.savings*0.3*12);
+  const readiness=Math.max(12,Math.min(99,Math.round(38+sr*55+(QA.motivation==='fire'?16:QA.motivation==='high'?9:QA.motivation==='mid'?3:0))));
+  const h=Math.abs((d.monthly*7+d.income*3+(topCat?topCat.length:0))|0);
+  // choose persona card
+  let card=null;
+  const byCat=ANA_PERSONAS.find(p=>p[0]===topCat);
+  if(QA.employment==='student') card=ANA_PERSONAS.find(p=>p[0]==='student');
+  else if(sr>=0.3&&(QA.invest==='regular'||QA.invest==='dabble')) card=ANA_PERSONAS.find(p=>p[0]==='investor');
+  else if(sr>=0.25||QA.savehabit==='auto') card=ANA_PERSONAS.find(p=>p[0]==='saver');
+  else if(sr<=0.02||QA.savehabit==='rarely') card=ANA_PERSONAS.find(p=>p[0]==='paycheck');
+  else if(byCat) card=byCat;
+  else card=ANA_PERSONAS[h%ANA_PERSONAS.length];
+  if(!card)card=ANA_PERSONAS.find(p=>p[0]==='balanced');
+  const roast=ANA_ROASTS[h%ANA_ROASTS.length];
+  const motiv=ANA_MOTIV[h%ANA_MOTIV.length];
+  return {...d,name,sr,topCat,leak,potentialYr,readiness,card,roast,motiv};
+}
+function anaDots(active,total){let s='<div class="ana-dots" aria-hidden="true">';for(let i=1;i<=total;i++)s+=`<span class="ana-dot ${i<=active?'on':''}"></span>`;return s+'</div>';}
+function anaWrap(inner,cta,skip){
+  return `${anaDots(ANAi,8)}<div class="ana-card glass-strong anim">${inner}${cta===false?'':`<div class="mt-6 flex flex-col gap-2">${cta||'<button class="btn btn-primary btn-lg w-full" data-action="anaNext">Continue →</button>'}${skip?`<button class="btn btn-ghost btn-sm w-full" data-action="anaNext">${skip}</button>`:''}</div>`}</div>`;
+}
+function animateAnaCounters(root){(root||document).querySelectorAll('[data-count-to]').forEach(el=>{const to=+el.getAttribute('data-count-to')||0,pre=el.getAttribute('data-pre')||'',suf=el.getAttribute('data-suf')||'',t0=performance.now(),dur=900;(function f(now){const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=pre+Math.round(to*e).toLocaleString('en-IE')+suf;if(k<1)requestAnimationFrame(f);})(performance.now());});}
+function renderAnalysis(){
+  const st=document.getElementById('anaStage'); if(!st||!ANA) return; qScrollTop();
+  const a=ANA,i=ANAi;
+  if(i===0){
+    st.innerHTML=`<div class="ana-loading"><div class="ana-orb"></div><p class="ana-load-msg" id="anaLoadMsg">${ANA_LOADING[0]}</p><div class="ana-load-bar"><div id="anaLoadFill"></div></div></div>`;
+    let k=0;const fill=st.querySelector('#anaLoadFill');if(fill)fill.style.width='8%';
+    const tick=setInterval(()=>{k++;const m=st.querySelector('#anaLoadMsg');if(!m){clearInterval(tick);return;}m.textContent=ANA_LOADING[k%ANA_LOADING.length];const f=st.querySelector('#anaLoadFill');if(f)f.style.width=Math.min(96,12+k*18)+'%';},1000);
+    setTimeout(()=>{clearInterval(tick);if(document.getElementById('anaStage')){ANAi=1;renderAnalysis();}},5200);
+    return;
+  }
+  if(i===1){
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-4xl">🎉</div><h2 class="t-h2 mt-2">Nice work, ${esc(a.name)}!</h2><p class="t-caption mt-1">Here’s what we learned about you.</p></div>
+      <div class="mt-5 grid grid-cols-2 gap-2.5">
+        <div class="ana-stat"><span class="ana-stat-l">💰 Monthly spending</span><span class="ana-stat-v gtext" data-count-to="${a.monthly}" data-pre="€">€0</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">📈 Biggest category</span><span class="ana-stat-v">${a.topCat?catEmoji(a.topCat)+' '+catLabel(a.topCat):'—'}</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">⚠️ Hidden money leak</span><span class="ana-stat-v">${a.leak?catEmoji(a.leak)+' '+catLabel(a.leak):'None spotted 👌'}</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">🔥 Savings potential</span><span class="ana-stat-v" style="color:var(--jade2)" data-count-to="${a.potentialYr}" data-pre="€" data-suf="/yr">€0</span></div>
+      </div>
+      <div class="mt-3 ana-readiness"><div class="flex items-center justify-between text-sm"><span>🎯 Goal readiness</span><b data-count-to="${a.readiness}" data-suf="%">0%</b></div><div class="ob-prog mt-1.5"><div style="width:${a.readiness}%"></div></div></div>
+      <div class="mt-3"><p class="label">Where it goes</p><div class="glass rounded-2xl p-2" style="height:180px"><canvas id="quizChart"></canvas></div></div>`);
+    drawQuizChart(QA.spend);animateAnaCounters(st);return;
+  }
+  if(i===2){
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl animate-float">${a.card[1]}</div><p class="t-label mt-3">Your money personality</p><h2 class="t-h2 mt-1">${a.card[2]}</h2><p class="mt-3 t-body" style="color:var(--muted)">${a.card[3]}</p></div>`);
+    return;
+  }
+  if(i===3){
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl">😂</div><p class="t-label mt-3">A gentle roast</p><p class="mt-4 ana-roast">“${a.roast}”</p><p class="mt-3 t-caption">(said with love — and a plan to fix it)</p></div>`);
+    return;
+  }
+  if(i===4){
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl">${a.motiv[0]}</div><h2 class="t-h2 mt-3">${a.motiv[1]}</h2><p class="mt-3 t-body-lg" style="color:var(--muted)">${a.motiv[2]}</p></div>`);
+    return;
+  }
+  if(i===5){
+    const got=grantOnceCoins(100,'first_analysis','onboarding');
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="ana-trophy">🏆</div><h2 class="t-h2 mt-3">Achievement unlocked</h2>
+      <div class="mt-4 flex flex-wrap justify-center gap-2">
+        <span class="ana-badge">🏆 First Analysis</span><span class="ana-badge">✨ Profile Created</span><span class="ana-badge">🔥 Ready to Save</span><span class="ana-badge">🎯 Goal Hunter</span>
+      </div>
+      <div class="ana-gc mt-4"><span class="coin-glyph" style="color:var(--gold2)">☉</span> <b data-count-to="100" data-pre="+">+0</b> GoalCoins</div>`);
+    try{launchConfetti();}catch(e){}animateAnaCounters(st);return;
+  }
+  if(i===6){
+    const feat=[['🔮','Future Simulator'],['📈','Analytics'],['✅','Missions'],['🏆','Challenges'],['🧾','Receipt Scanner'],['🛍️','Store'],['👥','Friends'],['📥','Inbox'],['📊','Spending Trends']];
+    st.innerHTML=anaWrap(`<div class="text-center"><h2 class="t-h2">Your dashboard is ready</h2><p class="t-caption mt-1">A peek at everything waiting inside.</p></div>
+      <div class="ana-preview mt-4"><div class="ana-preview-grid">${feat.map(f=>`<div class="ana-feat"><span class="ana-feat-e">${f[0]}</span><span class="ana-feat-t">${f[1]}</span></div>`).join('')}</div><div class="ana-preview-veil"><span>🔓 Unlocks now</span></div></div>`);
+    return;
+  }
+  if(i===7){
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-4xl">🚀</div><h2 class="t-h2 mt-2">Unlock Premium</h2><p class="t-caption mt-1">Optional — you can decide later.</p></div>
+      <ul class="ana-prem mt-4">${['AI spending insights','Unlimited receipt scans','Advanced analytics','Unlimited goals','Priority missions','Exclusive profile effects','Lifetime statistics'].map(x=>`<li>${ICON('check','ic-sm')} ${x}</li>`).join('')}</ul>
+      <p class="t-caption mt-3 text-center">You can upgrade anytime from Plans — no rush.</p>`,
+      `<button class="btn btn-primary btn-lg w-full" data-action="anaNext">Continue →</button>`,'Skip for now');
+    return;
+  }
+  // i===8 final CTA → goal creation
+  st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl animate-float">🎯</div><h2 class="t-display mt-3">You’re all set${a.name?', '+esc(a.name):''}!</h2><p class="mt-3 t-body-lg" style="color:var(--muted)">One last thing: pick the goal we’ll help you crush.</p></div>`,
+    `<button class="btn btn-primary btn-lg w-full" data-action="qgoal">🚀 Create my first goal →</button>`);
+}
 async function finishQuiz(inner){
   qScrollTop();
-  inner.innerHTML=`<div class="glass-strong rounded-3xl p-10 text-center anim"><div class="animate-float text-5xl">🧠</div><p class="mt-4 text-sm" style="color:var(--muted)">Building your money profile…</p></div>`;
+  inner.innerHTML=`<div id="anaStage" class="w-full"><div class="ana-loading"><div class="ana-orb"></div><p class="ana-load-msg">${ANA_LOADING[0]}</p><div class="ana-load-bar"><div style="width:8%"></div></div></div></div>`;
   QA.spend=computeQuizSpend();
   const income=QA.income||0,monthly=Object.values(QA.spend).reduce((a,b)=>a+(+b||0),0),weekly=Math.round(monthly/WK),yearly=monthly*12,savings=Math.max(0,income-monthly);
   const potential=savings<=0?'Low':savings<150?'Low':savings<400?'Medium':savings<800?'High':'Very High';
@@ -1809,28 +1948,10 @@ async function finishQuiz(inner){
   if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
   try{localStorage.setItem('goalify_quiz_extras_'+uid(),JSON.stringify({employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}));}catch(e){}
   localStorage.removeItem('goalify_quiz_draft'); // quiz complete — drop the resume draft
-  const p=PERSONAS[persona]||PERSONAS.goal_chaser;
-  const topRows=top3.length?top3.map(([k,v])=>`<div class="ob-result-card"><span class="text-2xl">${catEmoji(k)}</span><div class="flex-1 min-w-0"><p class="font-semibold truncate">${catLabel(k)}</p></div><span class="font-bold">${fmt(v)}/mo</span></div>`).join(''):`<p class="text-sm" style="color:var(--muted)">No spending entered.</p>`;
   const opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>k!=='groceries'&&k!=='fuel'&&k!=='subscriptions')||sorted[0]||null);
-  let oppHTML='';
-  if(opp){const yr=Math.round(opp[1]*0.5*12);oppHTML=`<div class="mt-4 rounded-2xl p-4 text-left" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent1) 16%,transparent),color-mix(in srgb,var(--accent2) 16%,transparent));border:1px solid var(--border)"><p class="text-sm"><b>💡 Biggest opportunity:</b> halving ${catEmoji(opp[0])} ${catLabel(opp[0]).toLowerCase()} could save <b class="gtext">${fmt(yr)}/year</b> — we'll turn that into goal progress next.</p></div>`;}
-  inner.innerHTML=`<div class="glass-strong rounded-3xl p-6 sm:p-7 anim">
-    <div class="text-center"><div class="text-5xl">${p.emoji}</div><p class="mt-2 text-xs font-semibold uppercase tracking-widest gtext">Your Money Profile</p><h2 class="mt-1 text-2xl font-bold">${p.name}</h2></div>
-    <div class="mt-5 grid grid-cols-3 gap-2 text-center">
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Weekly</p><p class="text-lg font-extrabold">${fmt(weekly)}</p></div>
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Monthly</p><p class="text-lg font-extrabold">${fmt(monthly)}</p></div>
-      <div class="glass rounded-2xl p-3"><p class="text-[11px]" style="color:var(--muted)">Yearly</p><p class="text-lg font-extrabold">${fmt(yearly)}</p></div>
-    </div>
-    <div class="mt-4 grid gap-4 lg:grid-cols-2">
-      <div><p class="label">Top spending categories</p><div class="space-y-2">${topRows}</div></div>
-      <div><p class="label">Spending breakdown</p><div class="glass rounded-2xl p-3" style="height:210px"><canvas id="quizChart"></canvas></div></div>
-    </div>
-    ${oppHTML}
-    ${premiumTeaserHTML()}
-    <button class="btn btn-primary mt-5 w-full" data-action="qgoal">Next: set your goal →</button>
-  </div>`;
-  drawQuizChart(QA.spend);
-  setTimeout(()=>{try{launchConfetti();}catch(e){}},250); // celebrate completing onboarding
+  // launch the premium multi-step analysis reveal (loading slide is already on screen)
+  ANA=buildAnalysis({income,monthly,weekly,yearly,savings,potential,persona,sorted,top3,opp});
+  ANAi=0; renderAnalysis();
 }
 // Mandatory goal — users must set a target before the dashboard unlocks.
 function stepGoalCreate(inner){
@@ -3783,6 +3904,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='qspendSkip'){const c=FREQ_CATS[SPENDIDX];if(c)QA.freq[c.key]=0;advanceSpend();}
     else if(act==='qInsightNext'){SHOWINSIGHT=false;if(SPENDIDX>=FREQ_CATS.length)QSTEP++;renderQuiz();}
     else if(act==='qpick'){QA[a.getAttribute('data-field')]=a.getAttribute('data-val');QSTEP++;renderQuiz();}
+    else if(act==='anaNext'){ANAi++;renderAnalysis();}
     else if(act==='qgoal'){const inner=$('#qInner');if(inner)stepGoalCreate(inner);}
     else if(act==='qgSuggest'){const n=a.getAttribute('data-n'),t=a.getAttribute('data-t'),e2=a.getAttribute('data-e');const nm=$('#qgName'),tg=$('#qgTarget');if(nm)nm.value=n;if(tg&&t)tg.value=t;QA._goalEmo=e2;const emoBox=$('#qgEmo');if(emoBox){emoBox.querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x.getAttribute('data-e')===e2));}document.querySelectorAll('.qg-sugg').forEach(x=>x.classList.toggle('on',x===a));updateQgSummary();}
     else if(act==='qcreategoal'){
@@ -3795,12 +3917,13 @@ document.addEventListener('click',async(e)=>{
       let monthly=0;if(dateM){const[y,m]=dateM.split('-').map(Number);if(y){const months=Math.max(1,(y-new Date().getFullYear())*12+(m-(new Date().getMonth()+1)));monthly=Math.ceil(target/months);}}
       const emo=QA._goalEmo||'🎯';
       window._goalSubmitting=true; if(err)err.textContent=''; if(a){a.textContent='Creating…';a.style.pointerEvents='none';}
-      if(DEMO_MODE){const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:dateM||null,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};DEMO_GOALS.unshift(g);}
+      const targetISO=dateM?dateM+'-01':null; // month input → first-of-month (goals never store an exact day)
+      if(DEMO_MODE){const g={id:'g'+Date.now(),user_id:uid(),name,emoji:emo,target_amount:target,saved_amount:0,monthly_contribution:monthly,target_date:targetISO,completed:false,status:'active',private:false,created_at:new Date().toISOString(),image_url:null,missions:[]};DEMO_GOALS.unshift(g);}
       else{
         // make sure we still hold a live session before writing
         if(!SESSION){try{const {data}=await sb.auth.getSession();SESSION=(data&&data.session)||null;}catch(_){}}
         if(!SESSION){resetBtn();if(err)err.textContent='Your session expired — please log in again.';setTimeout(()=>{location.hash='#login';},900);return;}
-        const payload={user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:dateM||null,private:false};
+        const payload={user_id:SESSION.user.id,name,emoji:emo,target_amount:target,monthly_contribution:monthly,target_date:targetISO,private:false};
         let {error}=await sb.from('goals').insert(payload);
         if(error){
           console.error('[Goalify] goal insert failed:',error);           // surface the REAL cause
@@ -4026,7 +4149,7 @@ function openGoalModal(){
   m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gmBack"><div class="w-full max-w-md glass-strong rounded-2xl p-6 anim" id="gmCard"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">New goal</h2><button id="gmX" class="text-slate-400">✕</button></div><div class="mt-5 space-y-4"><div><span class="label">Icon</span><div id="gmEmo" class="flex flex-wrap gap-2">${EMO.map((x,i)=>`<button data-e="${x}" class="flex h-9 w-9 items-center justify-center rounded-lg text-lg ${i===0?'ring-1 ring-accent-purple bg-accent-purple/20':'bg-white/5'}">${x}</button>`).join('')}</div></div><div><label class="label">Goal name</label><input id="gmName" class="input" placeholder="e.g. New MacBook"></div><div><label class="label">Target amount (€)</label><input id="gmTarget" type="number" inputmode="numeric" class="input" placeholder="1200"></div>
     <div><span class="label">Target date</span>
       <div id="gmQuick" class="grid grid-cols-3 gap-2 sm:grid-cols-5">${[['week','Next week'],['month','Next month'],['3m','3 months'],['6m','6 months'],['custom','Custom']].map((o,i)=>`<button type="button" data-q="${o[0]}" class="gm-qbtn rounded-xl px-2 py-2.5 text-xs font-medium ${i===1?'gm-qsel':''}" style="${i===1?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted)'}">${o[1]}</button>`).join('')}</div>
-      <input id="gmDate" type="date" class="input mt-2 hidden" min="${new Date(Date.now()+86400000).toISOString().slice(0,10)}">
+      <input id="gmDate" type="month" class="input mt-2 hidden" min="${new Date().toISOString().slice(0,7)}">
       <p id="gmDateHint" class="mt-2 text-xs" style="color:var(--muted)"></p>
     </div>
     <div><label class="label">Goal image (optional)</label><input id="gmImg" type="file" accept="image/*" class="input"></div><label class="flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer" style="background:var(--glass)"><input id="gmPrivate" type="checkbox" class="h-4 w-4"><span><span class="text-sm font-medium">🔒 Make this goal private</span><span class="block text-xs" style="color:var(--muted)">Private goals stay off your social profile and feed.</span></span></label><p id="gmErr" class="text-sm text-red-300"></p><button id="gmSave" class="btn btn-primary w-full">Create goal</button></div></div></div>`;
@@ -4045,24 +4168,24 @@ function openGoalModal(){
     if(!targetDate){hint.textContent='';return;}
     const now=new Date(),months=Math.max(1,Math.round((targetDate-now)/(1000*60*60*24*30.44)));
     const monthly=tgt>0?Math.ceil(tgt/months):0;
-    hint.innerHTML=`📅 ${targetDate.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})} · ${months} month${months===1?'':'s'} away${monthly>0?` · about <b style="color:var(--text)">${fmt(monthly)}/mo</b>`:''}`;
+    hint.innerHTML=`📅 ${targetDate.toLocaleDateString('en-US',{month:'long',year:'numeric'})} · ${months} month${months===1?'':'s'} away${monthly>0?` · about <b style="color:var(--text)">${fmt(monthly)}/mo</b>`:''}`;
   };
   $('#gmQuick').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;
     const q=b.getAttribute('data-q');
     m.querySelectorAll('.gm-qbtn').forEach(x=>{x.classList.remove('gm-qsel');x.style.background='var(--glass)';x.style.color='var(--muted)';});
     b.classList.add('gm-qsel');b.style.background='linear-gradient(135deg,var(--accent1),var(--accent2))';b.style.color='#fff';
     const dateInput=$('#gmDate');
-    if(q==='custom'){dateInput.classList.remove('hidden');dateInput.focus();targetDate=dateInput.value?new Date(dateInput.value+'T12:00:00'):null;}
+    if(q==='custom'){dateInput.classList.remove('hidden');dateInput.focus();targetDate=dateInput.value?new Date(dateInput.value+'-01T12:00:00'):null;}
     else{dateInput.classList.add('hidden');targetDate=QMAP[q]();}
     refreshHint();
   });
-  $('#gmDate').addEventListener('change',e=>{targetDate=e.target.value?new Date(e.target.value+'T12:00:00'):null;refreshHint();});
+  $('#gmDate').addEventListener('change',e=>{targetDate=e.target.value?new Date(e.target.value+'-01T12:00:00'):null;refreshHint();});
   $('#gmTarget').addEventListener('input',refreshHint);
   targetDate=addMonths(1); refreshHint(); // default: Next month (matches preselected chip)
   $('#gmSave').addEventListener('click',async()=>{
     const name=$('#gmName').value.trim(),target=+$('#gmTarget').value,priv=!!$('#gmPrivate')?.checked;
     let monthly=0,targetISO=null;
-    if(targetDate){const now=new Date(),months=Math.max(1,Math.round((targetDate-now)/(1000*60*60*24*30.44)));monthly=target>0?Math.ceil(target/months):0;targetISO=targetDate.toISOString().slice(0,10);}
+    if(targetDate){const now=new Date(),months=Math.max(1,Math.round((targetDate-now)/(1000*60*60*24*30.44)));monthly=target>0?Math.ceil(target/months):0;targetISO=targetDate.toISOString().slice(0,7)+'-01';/* store first-of-month, never a day */}
     const limit=PLANS[ME.plan].goalLimit,total=GOALS.length;
     if(!name||!target){$('#gmErr').textContent='Enter a name and target.';return;}
     if(limit!==-1&&total>=limit){$('#gmErr').innerHTML='Free plan allows '+limit+' goals (archived included). <a href="#app/plans" class="text-accent-purple underline">Upgrade</a> for unlimited.';return;}

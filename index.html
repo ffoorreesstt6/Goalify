@@ -1370,6 +1370,41 @@
       var(--bg)}
     .ob-shell>*{position:relative;z-index:1}
     /* ============================================================
+       ONBOARDING ANALYSIS EXPERIENCE — multi-step reveal
+       ============================================================ */
+    #anaStage{width:100%;max-width:34rem;margin:0 auto}
+    .ana-card{border-radius:1.5rem;padding:clamp(1.4rem,4vw,2rem)}
+    .ana-dots{display:flex;justify-content:center;gap:.35rem;margin-bottom:1rem}
+    .ana-dot{width:1.5rem;height:.28rem;border-radius:9999px;background:color-mix(in srgb,var(--text) 12%,transparent);transition:background .3s}
+    .ana-dot.on{background:linear-gradient(90deg,var(--accent1),var(--accent2))}
+    .ana-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;min-height:56vh;text-align:center}
+    .ana-orb{width:84px;height:84px;border-radius:50%;background:conic-gradient(from 0deg,var(--accent1),var(--accent2),var(--accent3),var(--jade2),var(--gold2),var(--accent1));animation:anaSpin 1.6s linear infinite;filter:blur(.5px);box-shadow:0 20px 60px -18px color-mix(in srgb,var(--accent2) 70%,transparent)}
+    .ana-orb::after{content:"";position:absolute;inset:12px;border-radius:50%;background:var(--bg)}
+    .ana-orb{position:relative;display:grid;place-items:center}
+    @keyframes anaSpin{to{transform:rotate(360deg)}}
+    .ana-load-msg{font-weight:700;font-size:1.05rem;min-height:1.5em;animation:fadeIn .4s ease}
+    .ana-load-bar{width:min(280px,70vw);height:.5rem;border-radius:9999px;background:var(--glass);overflow:hidden}
+    .ana-load-bar>div{height:100%;border-radius:9999px;background:linear-gradient(90deg,var(--accent1),var(--accent2));transition:width .8s ease}
+    @media(prefers-reduced-motion:reduce){.ana-orb{animation:none}}
+    .ana-stat{display:flex;flex-direction:column;gap:.2rem;border-radius:.9rem;padding:.75rem .85rem;background:color-mix(in srgb,var(--text) 3%,transparent);border:1px solid var(--border)}
+    .ana-stat-l{font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--muted)}
+    .ana-stat-v{font-size:1.15rem;font-weight:800;letter-spacing:-.01em}
+    .ana-readiness{border-radius:.9rem;padding:.7rem .85rem;background:color-mix(in srgb,var(--jade) 8%,transparent);border:1px solid color-mix(in srgb,var(--jade) 26%,var(--border))}
+    .ana-roast{font-size:1.15rem;font-weight:700;line-height:1.5;max-width:26ch;margin:0 auto}
+    .ana-trophy{font-size:4rem;animation:anaPop .5s var(--ease-spring) both}
+    @keyframes anaPop{0%{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+    .ana-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.74rem;font-weight:700;padding:.32rem .6rem;border-radius:9999px;background:var(--glass);border:1px solid var(--border);animation:fadeUp .4s ease both}
+    .ana-gc{font-size:1.3rem;font-weight:800;color:var(--gold2)}
+    .ana-prem{display:flex;flex-direction:column;gap:.55rem;font-size:.92rem}
+    .ana-prem li{display:flex;align-items:center;gap:.5rem}
+    .ana-prem .ic{color:var(--jade2);flex-shrink:0}
+    .ana-preview{position:relative;border-radius:1rem;overflow:hidden;border:1px solid var(--border)}
+    .ana-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;padding:.7rem;filter:blur(2.5px);opacity:.9}
+    .ana-feat{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.8rem .4rem;border-radius:.7rem;background:linear-gradient(180deg,var(--card-2),var(--card));border:1px solid var(--border)}
+    .ana-feat-e{font-size:1.4rem}.ana-feat-t{font-size:.62rem;font-weight:700;color:var(--muted);text-align:center}
+    .ana-preview-veil{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(60% 60% at 50% 50%,transparent,color-mix(in srgb,var(--bg) 70%,transparent))}
+    .ana-preview-veil span{font-weight:800;font-size:.9rem;padding:.4rem .9rem;border-radius:9999px;background:var(--glass-strong);border:1px solid var(--border);box-shadow:var(--shadow-md)}
+    /* ============================================================
        GOALCOINS — header pill · fly-to-wallet · store
        ============================================================ */
     .coin-pill{display:inline-flex;align-items:center;gap:.35rem;height:2rem;padding:0 .7rem;border-radius:9999px;font-weight:800;font-size:.82rem;line-height:1;color:var(--text);text-decoration:none;cursor:pointer;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 35%,var(--border));transition:transform .15s var(--ease-spring),border-color .15s,background .15s;white-space:nowrap}
@@ -1533,6 +1568,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=95"></script>
+  <script type="module" src="./app.js?v=97"></script>
 </body>
 </html>
