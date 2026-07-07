@@ -1831,7 +1831,7 @@ const ANA_PERSONAS=[
   ['investor','🚀','The Future Investor','You’re already making smart decisions. A few small changes get you there months earlier.'],
   ['paycheck','🌞','The Fresh Starter','It’s tight right now — that’s okay. Goalify is built to make the first €100 feel possible.'],
   ['balanced','⚖️','The Balanced One','No wild leaks, no extremes. A dedicated goal is exactly what turns steady into unstoppable.'],
-  ['student','🎓','The Smart Student','Big plans, tight budget. You verified as a student — Pro is on us. Let’s make it count.'],
+  ['student','🎓','The Smart Student','Big plans, tight budget — smart of you to start now. Verify your student status to unlock Pro free for 2 years.'],
   ['impulse','⚡','The Impulse Adventurer','Spontaneous and fun — but those “little” buys stack up. One goal gives them somewhere better to go.']
 ];
 function grantOnceCoins(amount,reason,ref){try{if(coinHas(reason,ref))return 0;const l=coinLedger();l.push({delta:amount,reason,ref,at:new Date().toISOString()});setCoinLedger(l);return amount;}catch(e){return 0;}}
