@@ -731,18 +731,23 @@ begin
   if not (p_reason='checkin' and p_amount=5
        or p_reason='streak7' and p_amount=25
        or p_reason='goal_complete' and p_amount=100
-       or p_reason='recap' and p_amount=20) then raise exception 'invalid earn'; end if;
+       or p_reason='recap' and p_amount=20
+       or p_reason='first_analysis' and p_amount=100) then raise exception 'invalid earn'; end if;
   select p.plan into plan from public.profiles p where p.id = uid;
-  mult := case when plan in ('premium','business') then 2 when plan='pro' then 1.5 else 1 end;
+  -- one-time bonuses pay flat and skip earn caps; recurring earns get the tier multiplier
+  mult := case when p_reason='first_analysis' then 1
+               when plan in ('premium','business') then 2 when plan='pro' then 1.5 else 1 end;
   amt  := round(p_amount * mult);
-  wcap := case when plan in ('pro','premium','business') then 1000000 else 80 end;
-  select coalesce(sum(delta),0) into today_total from public.coin_ledger
-    where user_id=uid and delta>0 and created_at::date = current_date;
-  if today_total + amt > 120 then return -1; end if;               -- daily cap
-  select coalesce(sum(delta),0) into week_total from public.coin_ledger
-    where user_id=uid and delta>0 and created_at >= date_trunc('week', now());
-  if week_total >= wcap then return -1; end if;                    -- weekly cap (Free=80)
-  if week_total + amt > wcap then amt := wcap - week_total; end if;
+  if p_reason <> 'first_analysis' then
+    wcap := case when plan in ('pro','premium','business') then 1000000 else 80 end;
+    select coalesce(sum(delta),0) into today_total from public.coin_ledger
+      where user_id=uid and delta>0 and created_at::date = current_date;
+    if today_total + amt > 120 then return -1; end if;             -- daily cap
+    select coalesce(sum(delta),0) into week_total from public.coin_ledger
+      where user_id=uid and delta>0 and created_at >= date_trunc('week', now());
+    if week_total >= wcap then return -1; end if;                  -- weekly cap (Free=80)
+    if week_total + amt > wcap then amt := wcap - week_total; end if;
+  end if;
   insert into public.coin_ledger(user_id, delta, reason, ref)
     values (uid, amt, p_reason, p_ref) on conflict do nothing;
   return (select balance from public.coin_balance where user_id = uid);

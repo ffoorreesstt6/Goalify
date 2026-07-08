@@ -484,18 +484,18 @@ function setLang(l){
 }
 function planNav(plan){
   const c=caps(plan);
-  const nav=[['dashboard','Dashboard','📊'],['goals','Goals','🎯']];
-  if(c.analytics){nav.push(['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['spendcalc','Impact Calculator','💸']);}
-  if(c.gamify)nav.push(['challenges','Challenges','🏆']);
-  if(c.social!=='none')nav.push(['social','Social','👥']);
-  nav.push(['inbox','Inbox','📥']);
-  nav.push(['profile','Profile','🪪']);
-  nav.push(['store','Store','🛍️']);
-  if(plan==='premium'||plan==='business')nav.push(['goalverse','GoalVerse','🌌']);
-  nav.push(['rewards','Rewards','🎁']);
-  nav.push(['plans','Plans','💳']);
-  if(plan==='free')nav.push(['student','Student Verify','🎓']);
-  nav.push(['settings','Settings','⚙️']);
+  const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal']];
+  if(c.analytics){nav.push(['analytics','Analytics','chart'],['simulator','Future Simulator','crystal'],['spendcalc','Impact Calculator','euro']);}
+  if(c.gamify)nav.push(['challenges','Challenges','trophy']);
+  if(c.social!=='none')nav.push(['social','Social','users']);
+  nav.push(['inbox','Inbox','inbox']);
+  nav.push(['profile','Profile','user']);
+  nav.push(['store','Store','store']);
+  if(plan==='premium'||plan==='business')nav.push(['goalverse','GoalVerse','globe']);
+  nav.push(['rewards','Rewards','gift']);
+  nav.push(['plans','Plans','wallet']);
+  if(plan==='free')nav.push(['student','Student Verify','student']);
+  nav.push(['settings','Settings','gear']);
   return nav;
 }
 
@@ -663,6 +663,7 @@ async function loadProfile(){
   if(data&&data.language){localStorage.setItem('goalify_lang',data.language);}
   // onboarding flag is set-only here (a lagging DB read must not undo a just-completed onboarding)
   if(data&&data.onboarded){localStorage.setItem('goalify_onboarded','1');}
+  syncCoinLedger(); // fire-and-forget: settle any pending coin earns/spends + pull server balance
   return ME;
 }
 // onboarding is "done" if the profile says so OR we set the local flag at the end of the quiz/goal step
@@ -785,14 +786,62 @@ function creditCoins(reason,ref){
   if(wk>=wcap)return 0;                                  // weekly cap (Free = 80)
   if(wk+amt>wcap)amt=wcap-wk;                            // partial credit up to cap
   if(amt<=0)return 0;
-  const l=coinLedger();l.push({delta:amt,reason,ref:ref||null,at:new Date().toISOString()});setCoinLedger(l);
+  const l=coinLedger();l.push({delta:amt,reason,ref:ref||null,at:new Date().toISOString(),sync:0});setCoinLedger(l);
+  refreshCoinPills();syncCoinLedger();
   return amt;
 }
 // SPEND — atomic balance check. Returns true on success.
 function spendCoins(reason,item,cost){
   if(coinBalance()<cost)return false;
-  const l=coinLedger();l.push({delta:-cost,reason,ref:item,at:new Date().toISOString()});setCoinLedger(l);
+  const l=coinLedger();l.push({delta:-cost,reason,ref:item,at:new Date().toISOString(),sync:0});setCoinLedger(l);
+  refreshCoinPills();syncCoinLedger();
   return true;
+}
+// Instantly repaint every visible balance (topbar, sidebar, store, profile) —
+// no render() needed, so an earn can never leave a stale pill on screen.
+function refreshCoinPills(){const b=coinBalance().toLocaleString('en-IE');document.querySelectorAll('.coin-bal').forEach(el=>{el.textContent=b;});}
+// Durable sync — localStorage is the instant cache, Supabase coin_ledger is the
+// source of truth (credit_coins/spend_coins RPCs enforce caps server-side).
+// Entries carry sync:0 until accepted; legacy entries (no flag) are replayed
+// only when idempotent (positive, whitelisted, with ref), then everything is
+// reconciled against the server balance so all devices agree.
+let _coinSyncBusy=false;
+async function syncCoinLedger(){
+  if(DEMO_MODE||!SESSION||_coinSyncBusy)return;
+  _coinSyncBusy=true;
+  try{
+    const l=coinLedger();let dirty=false;
+    for(const r of l){
+      if(r.sync===1)continue;
+      const legacy=!('sync' in r);
+      const bonus=r.reason==='first_analysis';
+      const earnable=r.delta>0&&r.ref&&(COIN_EARN[r.reason]||bonus);
+      if(legacy&&!earnable){r.sync=1;dirty=true;continue;}          // never replay legacy spends
+      let res;
+      if(r.delta>0){
+        if(!earnable){r.sync=1;dirty=true;continue;}
+        res=await sb.rpc('credit_coins',{p_reason:r.reason,p_ref:r.ref,p_amount:bonus?100:COIN_EARN[r.reason]});
+      }else{
+        res=await sb.rpc('spend_coins',{p_reason:r.reason,p_item:r.ref,p_cost:-r.delta});
+      }
+      if(!res.error){r.sync=1;dirty=true;}
+      else if(!/fetch|network/i.test(res.error.message||'')){r.sync=1;dirty=true;} // server rejected (cap/idempotent/locked) — settled
+      // network failure: leave unsynced, retry on next sync
+    }
+    if(dirty)setCoinLedger(l);
+    // reconcile: server balance wins once everything sent is settled
+    if(l.every(r=>r.sync===1||!('sync' in r))){
+      const {data}=await sb.from('coin_balance').select('balance').eq('user_id',SESSION.user.id).maybeSingle();
+      if(data&&typeof data.balance==='number'){
+        const local=coinBalance();
+        if(data.balance!==local){
+          const l2=coinLedger();l2.push({delta:data.balance-local,reason:'sync',ref:null,at:new Date().toISOString(),sync:1});setCoinLedger(l2);
+          refreshCoinPills();
+        }
+      }
+    }
+  }catch(e){/* offline — retry next time */}
+  finally{_coinSyncBusy=false;}
 }
 const COIN_REASON_LABEL={checkin:'Habit check-in',streak7:'7-day streak',goal_complete:'Goal completed',recap:'Weekly recap',cosmetic:'Store purchase'};
 // fly-to-wallet — coins are appended to <body> so they survive a render()
@@ -997,7 +1046,27 @@ const ICON_PATHS={
   euro:'<path d="M17 6a7 7 0 1 0 0 12M5 10h8M5 14h8"/>',
   flame:'<path d="M12 3c1 3-1.5 4-1.5 6.5A2.5 2.5 0 0 0 13 12c0-1 .7-1.8.7-1.8.9 1.2 1.8 2.7 1.8 4.6a5.5 5.5 0 1 1-11 0c0-3.6 3.5-5.2 3.5-9 0-1 .5-2 1.5-2.8z" stroke-linejoin="round"/>',
   spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/>',
-  timer:'<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/>'
+  timer:'<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-5.5h5V21"/>',
+  store:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.22.55.75.94 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  bell:'<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  receipt:'<path d="M5 3h14v18l-2.3-1.5-2.35 1.5L12 19.5 9.65 21 7.3 19.5 5 21V3z"/><path d="M9 8h6M9 12h6"/>',
+  wallet:'<path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M20 7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><circle cx="17" cy="13.5" r="1.1" fill="currentColor" stroke="none"/>',
+  gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8c-1.6 0-4.5-.6-4.5-2.8C7.5 3.5 10.5 3 12 8zM12 8c1.6 0 4.5-.6 4.5-2.8C16.5 3.5 13.5 3 12 8z"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  crystal:'<path d="M12 3 4 9l8 12 8-12-8-6z"/><path d="M4 9h16M12 3l-3 6 3 12 3-12-3-6z"/>',
+  medal:'<circle cx="12" cy="14" r="5.5"/><path d="M8.5 9.5 5 2h5l2 4 2-4h5l-3.5 7.5"/>',
+  question:'<circle cx="12" cy="12" r="9"/><path d="M9.3 9.3a2.8 2.8 0 0 1 5.45.9c0 1.87-2.75 2.3-2.75 3.8M12 17.2h.01"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>'
 };
 function ICON(name,cls){const p=ICON_PATHS[name]||'';return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;}
 const ICON_DATA="data:image/png;base64,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";
@@ -1533,10 +1602,10 @@ function signupView(){
       <div><label class="label">Confirm password</label><div class="relative"><input id="spw2" name="confirm" type="password" class="input !pr-10" autocomplete="new-password" required><button type="button" data-action="togglePw" data-target="spw2" class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" tabindex="-1" aria-label="Show or hide password">${EYE_ON}</button></div></div></div>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" autocomplete="bday" required></div>
       <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" autocomplete="country-name" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
-      <div><label class="label">Are you a student?</label><div class="grid grid-cols-2 gap-2">
-        <label class="su-stud"><input type="radio" name="is_student" value="yes" class="sr-only">🎓 Yes<span>Pro free for 2 years — verify after signup</span></label>
-        <label class="su-stud"><input type="radio" name="is_student" value="no" class="sr-only" checked>💼 No<span>Continue with the standard setup</span></label>
-      </div><p id="studHint" class="mt-1.5 hidden text-[11px]" style="color:var(--jade2)">Nice — after signup we'll point you straight to student verification.</p></div>
+      <div><label class="label">Student Verification <i style="color:var(--muted)">(optional)</i></label>
+        <label class="su-stud"><input type="checkbox" name="is_student" value="yes" class="sr-only"><b class="flex items-center gap-2">${ICON('student','ic-sm')} I'm a student</b><span>Verify your student email after signup — Pro free for 2 years</span></label>
+      <p id="studHint" class="mt-1.5 hidden text-[11px]" style="color:var(--jade2)">Nice — after signup we'll point you straight to student verification.</p></div>
+      <div><label class="label">Referral code <i style="color:var(--muted)">(optional)</i></label><input name="referral_code" class="input" placeholder="Friend's code — you both earn +500 GC" style="text-transform:uppercase" autocomplete="off" maxlength="12"></div>
       <div class="space-y-1.5">
         <label class="su-consent"><input type="checkbox" name="accept_privacy" required><span>I agree to the <a href="#privacy" class="text-accent-purple font-semibold hover:underline">Privacy Policy &amp; Terms</a> <b style="color:var(--danger)">*</b></span></label>
         <label class="su-consent"><input type="checkbox" name="accept_news"><span>Send me occasional product news &amp; saving tips <i style="color:var(--muted)">(optional)</i></span></label>
@@ -1913,7 +1982,7 @@ const ANA_PERSONAS=[
   ['student','🎓','The Smart Student','Big plans, tight budget — smart of you to start now. Verify your student status to unlock Pro free for 2 years.'],
   ['impulse','⚡','The Impulse Adventurer','Spontaneous and fun — but those “little” buys stack up. One goal gives them somewhere better to go.']
 ];
-function grantOnceCoins(amount,reason,ref){try{if(coinHas(reason,ref))return 0;const l=coinLedger();l.push({delta:amount,reason,ref,at:new Date().toISOString()});setCoinLedger(l);return amount;}catch(e){return 0;}}
+function grantOnceCoins(amount,reason,ref){try{if(coinHas(reason,ref))return 0;const l=coinLedger();l.push({delta:amount,reason,ref,at:new Date().toISOString(),sync:0});setCoinLedger(l);refreshCoinPills();syncCoinLedger();return amount;}catch(e){return 0;}}
 let ANA=null,ANAi=0;
 function buildAnalysis(d){
   const name=(ME&&ME.first_name)||(typeof DEMO_ME!=='undefined'&&DEMO_ME.first_name)||'there';
@@ -1982,7 +2051,7 @@ function renderAnalysis(){
       <div class="mt-4 flex flex-wrap justify-center gap-2">
         <span class="ana-badge">🏆 First Analysis</span><span class="ana-badge">✨ Profile Created</span><span class="ana-badge">🔥 Ready to Save</span><span class="ana-badge">🎯 Goal Hunter</span>
       </div>
-      <div class="ana-gc mt-4"><span class="coin-glyph" style="color:var(--gold2)">☉</span> <b data-count-to="100" data-pre="+">+0</b> GoalCoins</div>`);
+      <div class="ana-gc mt-4"><span class="coin-glyph" style="color:var(--gold2)">☉</span> ${got>0?`<b data-count-to="${got}" data-pre="+">+0</b> GoalCoins`:`<b>+100</b> GoalCoins <span class="t-caption">(already collected)</span>`}</div>`);
     try{launchConfetti();}catch(e){}animateAnaCounters(st);return;
   }
   if(i===6){
@@ -2094,53 +2163,20 @@ async function finishOnboarding(){
 // ============================================================
 // APP SHELL
 // ============================================================
-const NAV=[['dashboard','Dashboard','📊'],['goals','Goals','🎯'],['analytics','Analytics','📈'],['simulator','Future Simulator','🔮'],['ai','AI Coach','✨'],['challenges','Challenges','🏆'],['squad','Squad','👥'],['plans','Plans','💳'],['student','Student Verify','🎓'],['settings','Settings','⚙️']];
 // ── mobile-native chrome: minimal top bar · hamburger (support only) ·
-// two floating feature menus · 5-button bottom nav ──
-const MBOTTOM=[['dashboard','Home','🏠'],['settings','Settings','⚙️'],['profile','Profile','👤'],['store','Store','🛍'],['inbox','Inbox','📥']];
-function mfeatItem(label,route,icon,locked){
-  return `<a href="#app/${route}" class="mfeat-item${locked?' locked':''}" data-mclose><span class="mfeat-ic">${icon}</span><span>${label}</span>${locked?'<span class="mfeat-lock">🔒</span>':'<span class="mfeat-arr">›</span>'}</a>`;
-}
+// App Store-style chrome: minimal topbar (logo · coins · notifications) and a
+// 5-tab bottom nav with a raised center Home. Tools live on Home, Community
+// lives on Profile — nothing floats over content.
+const MBOTTOM=[['store','Store','store'],['inbox','Inbox','inbox'],['dashboard','Home','home'],['profile','Profile','user'],['settings','Settings','gear']];
 function mobileChrome(route){
-  const c=caps(ME?.plan||'free');const plan=ME?.plan||'free';
-  const premium=(plan==='premium'||plan==='business');
-  const LEFT=[
-    ['Future Simulator','simulator','🔮',!c.analytics],
-    ['Impact Calculator','spendcalc','💸',!c.analytics],
-    ['Analytics','analytics','📈',!c.analytics],
-    ['Challenges','challenges','🏆',!c.gamify],
-    ['Goals Timeline','goals','🎯',false],
-  ];
-  const RIGHT=[
-    ['Social','social','👥',c.social==='none'],
-    ['Rewards','rewards','🎁',false],
-    ['Referrals','rewards','🔗',false],
-    ['Leaderboards','social','🏅',c.social==='none'],
-    ['Student Verify','student','🎓',false],
-    ['GoalVerse','goalverse','🌌',!premium],
-  ];
-  const btn=(n)=>`<a href="#app/${n[0]}" class="mtab ${route===n[0]?'on':''}" aria-label="${n[1]}"><span class="mtab-ic">${n[2]}</span><span class="mtab-l">${n[1]}</span></a>`;
+  const btn=(n)=>n[0]==='dashboard'
+    ?`<a href="#app/dashboard" class="mtab mtab-home ${route==='dashboard'?'on':''}" aria-label="Home"${route==='dashboard'?' aria-current="page"':''}><span class="mtab-home-btn">${ICON('home','ic-nav')}</span><span class="mtab-l">Home</span></a>`
+    :`<a href="#app/${n[0]}" class="mtab ${route===n[0]?'on':''}" aria-label="${n[1]}"${route===n[0]?' aria-current="page"':''}><span class="mtab-ic">${ICON(n[2],'ic-nav')}</span><span class="mtab-l">${n[1]}</span></a>`;
   return `
   <header class="mtopbar lg:hidden">
     <a href="#app/dashboard" class="flex items-center gap-2"><img src="${ICON_DATA}" alt="" style="height:24px;width:auto"><span class="font-extrabold text-lg">Goal<span class="gtext">ify</span></span></a>
-    <div class="flex items-center gap-2">${coinPillHTML(true)}<button class="mnav-btn" data-action="mmenu" aria-label="Menu" aria-controls="mMenu">☰</button></div>
+    <div class="flex items-center gap-2">${coinPillHTML(true)}<a href="#app/inbox" class="mnav-btn" aria-label="Notifications">${ICON('bell','ic-sm')}</a></div>
   </header>
-  <div id="mMenuOv" class="msheet-ov hidden" data-action="mmenuClose"></div>
-  <nav id="mMenu" class="msheet hidden lg:hidden" aria-label="Support">
-    <div class="msheet-grip"></div>
-    <a href="#home" data-mmenu>❓ FAQ</a>
-    <a href="#privacy" data-mmenu>🛡️ Privacy Policy</a>
-    <a href="#privacy" data-mmenu>📄 Terms of Service</a>
-    <a href="mailto:support@goalify.online" data-mmenu>✉️ Contact Support</a>
-    <button data-action="logout">↩︎ Logout</button>
-  </nav>
-  <div class="mfeat-tabs lg:hidden">
-    <button class="mfeat-tab" data-action="mfeat" data-side="left" aria-label="Productivity tools">‹ Tools</button>
-    <button class="mfeat-tab" data-action="mfeat" data-side="right" aria-label="Community tools">Community ›</button>
-  </div>
-  <div id="mfeatOv" class="mfeat-ov hidden" data-action="mfeatClose"></div>
-  <div id="mfeatLeft" class="mfeat-panel left hidden"><p class="mfeat-h">⚡ Productivity</p>${LEFT.map(x=>mfeatItem(x[0],x[1],x[2],x[3])).join('')}</div>
-  <div id="mfeatRight" class="mfeat-panel right hidden"><p class="mfeat-h">🌐 Community</p>${RIGHT.map(x=>mfeatItem(x[0],x[1],x[2],x[3])).join('')}</div>
   <nav class="mbottom lg:hidden" aria-label="Primary">${MBOTTOM.map(btn).join('')}</nav>`;
 }
 function shell(route,inner){
@@ -2148,7 +2184,7 @@ function shell(route,inner){
   const themeBtn = (c.themes==='full'||c.themes==='red') ? `<a href="#app/settings" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5"><span>🎨</span>Theme<span class="ml-auto text-[10px]" style="color:var(--muted)">${c.themes==='full'?'customize':'red'}</span></a>` : '';
   return `<div class="min-h-screen"><aside class="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col lg:flex" style="background:var(--sidebar);border-right:1px solid var(--border)">
     <div class="px-5 py-6">${brand('#app/dashboard',{dark:true})}</div>
-    <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}"><span>${n[2]}</span>${n[1]}</a>`).join('')}
+    <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}">${ICON(n[2],'ic-sm')}${n[1]}</a>`).join('')}
     ${themeBtn}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
     ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
@@ -2300,13 +2336,13 @@ function behaviourCardHTML(){
 // ── Dashboard V3 — finance-first information hierarchy ──
 // 1 hero stats · 2 goals · 3 money health · insights · analytics(pro) · gamification(premium)
 function heroStatsHTML(s){
-  const cards=[['💰','Income',fmt(s.income),'var(--accent2)'],['💸','Spending',fmt(s.spending),'#f59e0b'],['🐷','Left Over',fmt(s.leftover),s.leftover>=0?'#22c55e':'#ef4444'],['📈','Savings Rate',s.savingsRate+'%','var(--accent3)']];
-  return `<div class="stat-grid grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">${cards.map(c=>`<div class="stat-card glass-strong rounded-2xl"><div class="flex items-center justify-between gap-2"><p class="stat-lbl font-semibold uppercase tracking-wide" style="color:var(--muted)">${c[1]}</p><span class="stat-ico text-xl">${c[0]}</span></div><p class="stat-num font-extrabold" style="color:${c[3]}">${c[2]}</p></div>`).join('')}</div>`;
+  const cards=[['wallet','Income',fmt(s.income),'var(--accent2)'],['euro','Spending',fmt(s.spending),'#f59e0b'],['goal','Left Over',fmt(s.leftover),s.leftover>=0?'#22c55e':'#ef4444'],['chart','Savings Rate',s.savingsRate+'%','var(--accent3)']];
+  return `<div class="stat-grid grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">${cards.map(c=>`<div class="stat-card glass-strong rounded-2xl"><div class="flex items-center justify-between gap-2"><p class="stat-lbl font-semibold uppercase tracking-wide" style="color:var(--muted)">${c[1]}</p><span class="stat-ico" style="color:${c[3]}">${ICON(c[0],'ic-sm')}</span></div><p class="stat-num font-extrabold" style="color:${c[3]}">${c[2]}</p></div>`).join('')}</div>`;
 }
 function goalsOverviewHTML(){
   const active=GOALS.filter(g=>!g.completed&&g.status!=='archived').slice(0,3);
   const rows=active.length?active.map(g=>{const p=pct(g.saved_amount,g.target_amount),remaining=Math.max(0,g.target_amount-g.saved_amount),base=Math.max(0,Number(g.monthly_contribution)||0),days=base>0?Math.ceil(remaining/base)*30:null;return `<div class="goal-mini rounded-2xl p-4" style="background:var(--glass)"><div class="flex items-center justify-between gap-2"><div class="flex min-w-0 items-center gap-2"><span class="text-xl">${g.emoji||'🎯'}</span><p class="truncate font-semibold">${esc(g.name)}</p></div><span class="shrink-0 text-sm font-bold gtext">${p}%</span></div><div class="mt-2 h-2 overflow-hidden rounded-full" style="background:var(--bg)"><div class="progress-fill h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div><div class="mt-1.5 flex items-center justify-between text-[11px]" style="color:var(--muted)"><span>${fmt(g.saved_amount)} / ${fmt(g.target_amount)}</span><span class="shrink-0">${days!=null?days+'d left':'set a plan'}</span></div><div class="mt-1 flex items-center justify-between text-[11px]"><span style="color:var(--muted)">Still need <b style="color:var(--text)">${fmt(remaining)}</b></span>${base>0?`<span style="color:var(--muted)">${fmt(base)}/mo</span>`:''}</div></div>`;}).join(''):`<div class="goal-mini rounded-2xl p-6 text-center sm:col-span-2 lg:col-span-3" style="background:var(--glass)"><p class="text-sm" style="color:var(--muted)">No active goals yet — set one and Goalify shows exactly what to cut to reach it.</p><a href="#app/goals" class="btn btn-primary mt-3 !py-2 text-sm">+ Create a goal</a></div>`;
-  return `<div class="goals-ov glass rounded-2xl p-5 sm:p-6"><div class="goals-ov-head mb-4 flex items-center justify-between"><h3 class="font-semibold">🎯 Your goals</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div><div class="goals-ov-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">${rows}</div></div>`;
+  return `<div class="goals-ov glass rounded-2xl p-5 sm:p-6"><div class="goals-ov-head mb-4 flex items-center justify-between"><h3 class="font-semibold flex items-center gap-2">${ICON('goal','ic-sm')} Your goals</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all</a></div><div class="goals-ov-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">${rows}</div></div>`;
 }
 function moneyHealthHTML(h){
   const col=h.v>=80?'#22c55e':h.v>=60?'var(--accent2)':h.v>=40?'#f59e0b':'#ef4444';
@@ -2321,23 +2357,23 @@ function smartInsightsHTML(){
   const g=topGoal();if(g)ins.push(`Your <b>${esc(g.name)}</b> goal is <b>${pct(g.saved_amount,g.target_amount)}%</b> complete.`);
   if(ins.length<3){const wr=whatToReduce();if(wr[0]){const m=CATS[wr[0].cat]||CATS.other;ins.push(`Trim <b>${m.l}</b> to save about <b>${fmt(wr[0].save)}/mo</b>.`);}}
   const list=ins.slice(0,3);
-  return `<div class="glass rounded-2xl p-5 sm:p-6"><h3 class="mb-3 font-semibold">💡 Smart Insights</h3><ul class="space-y-2.5 text-sm">${list.map(t=>`<li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style="background:var(--accent2)"></span><span>${t}</span></li>`).join('')}</ul></div>`;
+  return `<div class="glass rounded-2xl p-5 sm:p-6"><h3 class="mb-3 font-semibold flex items-center gap-2">${ICON('spark','ic-sm')} Smart Insights</h3><ul class="space-y-2.5 text-sm">${list.map(t=>`<li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style="background:var(--accent2)"></span><span>${t}</span></li>`).join('')}</ul></div>`;
 }
 function missionsCompactHTML(){
   const due=allMissions().filter(missionDueToday).slice(0,4);
-  return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold">✅ Missions</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all missions</a></div>${due.length?`<div class="space-y-2.5">${due.map(m=>{const d=DIFF[m.difficulty]||DIFF.easy,done=isDoneToday(m.id);return `<div class="flex items-center gap-3"><button data-action="checkin" data-id="${m.id}" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-bold transition" title="Check in" style="${done?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted);border:1px solid var(--border)'}">${done?'✓':''}</button><span class="flex-1 truncate text-sm ${done?'line-through opacity-60':''}">${esc(m.title)}</span><span class="shrink-0 text-xs font-semibold" style="color:var(--accent2)">+${d.xp} XP</span></div>`;}).join('')}</div>`:`<p class="py-3 text-center text-sm" style="color:var(--muted)">🎉 All caught up today!</p>`}</div>`;
+  return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold flex items-center gap-2">${ICON('check','ic-sm')} Missions</h3><a href="#app/goals" class="text-sm text-accent-purple hover:underline">View all missions</a></div>${due.length?`<div class="space-y-2.5">${due.map(m=>{const d=DIFF[m.difficulty]||DIFF.easy,done=isDoneToday(m.id);return `<div class="flex items-center gap-3"><button data-action="checkin" data-id="${m.id}" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-bold transition" title="Check in" style="${done?'background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff':'background:var(--glass);color:var(--muted);border:1px solid var(--border)'}">${done?'✓':''}</button><span class="flex-1 truncate text-sm ${done?'line-through opacity-60':''}">${esc(m.title)}</span><span class="shrink-0 text-xs font-semibold" style="color:var(--accent2)">+${d.xp} XP</span></div>`;}).join('')}</div>`:`<p class="py-3 text-center text-sm" style="color:var(--muted)">🎉 All caught up today!</p>`}</div>`;
 }
 function levelXpHTML(){
   const lvl=levelFromXp(ME.xp),tier=profileTier(lvl.level),nxt=nextTier(lvl.level);
-  return `<div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-semibold">⭐ Level ${lvl.level}</h3><span class="text-xs" style="color:var(--muted)">${ME.xp||0} XP</span></div><div class="mt-3 mb-1 flex justify-between text-[11px]" style="color:var(--muted)"><span>${lvl.inLvl} / 100 XP</span><span>${tierEmoji(tier)} ${esc(tier.title)}</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${lvl.inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div><p class="mt-2 text-[11px]" style="color:var(--muted)">Next unlock: <b class="text-white">${nxt?esc(nxt.title)+' · '+esc(nxt.unlock):'Max tier 👑'}</b></p></div>`;
+  return `<div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-semibold flex items-center gap-2">${ICON('bolt','ic-sm')} Level ${lvl.level}</h3><span class="text-xs" style="color:var(--muted)">${ME.xp||0} XP</span></div><div class="mt-3 mb-1 flex justify-between text-[11px]" style="color:var(--muted)"><span>${lvl.inLvl} / 100 XP</span><span>${tierEmoji(tier)} ${esc(tier.title)}</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${lvl.inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div><p class="mt-2 text-[11px]" style="color:var(--muted)">Next unlock: <b class="text-white">${nxt?esc(nxt.title)+' · '+esc(nxt.unlock):'Max tier 👑'}</b></p></div>`;
 }
 function weeklyCompactHTML(){
   const wk=weekCheckins(),us=userStreak(),ga=GOALS.filter(g=>!g.completed).length;
-  return `<div class="glass rounded-2xl p-5"><h3 class="mb-3 font-semibold">📅 This week</h3><div class="grid grid-cols-3 gap-2 text-center">${[[wk,'check-ins'],[us,'best streak'],[ga,'active goals']].map(x=>`<div class="rounded-xl p-2.5" style="background:var(--glass)"><p class="text-xl font-extrabold">${x[0]}</p><p class="text-[10px]" style="color:var(--muted)">${x[1]}</p></div>`).join('')}</div></div>`;
+  return `<div class="glass rounded-2xl p-5"><h3 class="mb-3 font-semibold flex items-center gap-2">${ICON('calendar','ic-sm')} This week</h3><div class="grid grid-cols-3 gap-2 text-center">${[[wk,'check-ins'],[us,'best streak'],[ga,'active goals']].map(x=>`<div class="rounded-xl p-2.5" style="background:var(--glass)"><p class="text-xl font-extrabold">${x[0]}</p><p class="text-[10px]" style="color:var(--muted)">${x[1]}</p></div>`).join('')}</div></div>`;
 }
 function achievementsLatestHTML(){
   const got=[...earnedBadges()],latest=got.slice(-3).map(k=>BADGES.find(b=>b.key===k)).filter(Boolean);
-  return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold">🏆 Achievements</h3><a href="#app/profile" class="text-sm text-accent-purple hover:underline">View all</a></div>${latest.length?`<div class="grid grid-cols-3 gap-2">${latest.map(b=>`<div class="flex flex-col items-center rounded-xl p-3 text-center" style="background:var(--glass)"><span class="text-2xl badge-pop">${b.emoji}</span><p class="mt-1 text-[10px] font-semibold">${esc(b.name)}</p></div>`).join('')}</div>`:`<p class="py-2 text-center text-sm" style="color:var(--muted)">Earn your first badge by creating a goal.</p>`}</div>`;
+  return `<div class="glass rounded-2xl p-5"><div class="mb-3 flex items-center justify-between"><h3 class="font-semibold flex items-center gap-2">${ICON('trophy','ic-sm')} Achievements</h3><a href="#app/profile" class="text-sm text-accent-purple hover:underline">View all</a></div>${latest.length?`<div class="grid grid-cols-3 gap-2">${latest.map(b=>`<div class="flex flex-col items-center rounded-xl p-3 text-center" style="background:var(--glass)"><span class="text-2xl badge-pop">${b.emoji}</span><p class="mt-1 text-[10px] font-semibold">${esc(b.name)}</p></div>`).join('')}</div>`:`<p class="py-2 text-center text-sm" style="color:var(--muted)">Earn your first badge by creating a goal.</p>`}</div>`;
 }
 // ══════════════════════════════════════════════════════════════════
 // REACH YOUR GOAL FASTER — Goalify's core savings engine.
@@ -2469,11 +2505,37 @@ function savingsOpportunitiesHTML(){
     <p class="mt-4 text-center text-[11px]" style="color:var(--muted)">Estimates use average ${esc(ME.country||'local')} prices · adjust your spending anytime in Analytics</p>
   </section>`;
 }
+// Quick-access rows — replace the old floating Tools/Community panels.
+// Tools live on Home, Community on Profile (mobile only; the desktop
+// sidebar already links to every one of these).
+function quickRow(title,items){
+  return `<div class="lg:hidden"><p class="t-label mb-2">${title}</p><div class="tool-row">${items.map(([label,route,icon,locked])=>`<a href="#app/${route}" class="tool-chip${locked?' locked':''}" aria-label="${label}${locked?' (locked)':''}"><span class="tool-chip-ic">${ICON(locked?'lock':icon,'ic-sm')}</span><span class="tool-chip-l">${label}</span></a>`).join('')}</div></div>`;
+}
+function toolsRowHTML(){
+  const c=caps(ME?.plan||'free');
+  return quickRow('Tools',[
+    ['Simulator','simulator','crystal',!c.analytics],
+    ['Impact','spendcalc','euro',!c.analytics],
+    ['Analytics','analytics','chart',!c.analytics],
+    ['Challenges','challenges','trophy',!c.gamify],
+    ['Goals','goals','goal',false],
+  ]);
+}
+function communityRowHTML(){
+  const c=caps(ME?.plan||'free');const premium=ME?.plan==='premium'||ME?.plan==='business';
+  return quickRow('Community',[
+    ['Social','social','users',c.social==='none'],
+    ['Rewards','rewards','gift',false],
+    ['Ranks','social','medal',c.social==='none'],
+    ['Student','student','student',false],
+    ['GoalVerse','goalverse','globe',!premium],
+  ]);
+}
 function dashboardView(){
   const plan=ME.plan,s=snapshot(ME,EXPENSES),h=healthScore(s),c=caps(plan);
   const persona=ME.personality?PERSONAS[ME.personality]:null;
   const active=GOALS.filter(x=>!x.completed).slice(0,3);
-  const header=`<div class="dash-head flex items-center justify-between gap-3"><div class="min-w-0"><h1 class="dash-h1 text-2xl font-bold sm:text-3xl truncate">Welcome back${ME.first_name?', <span class="gtext">'+esc(ME.first_name)+'</span>':''} 👋</h1><p class="dash-sub mt-0.5 text-sm truncate" style="color:var(--muted)">${PLANS[plan].name}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary dash-newgoal shrink-0">+ New goal</a></div>`;
+  const header=`<div class="dash-head flex items-center justify-between gap-3"><div class="min-w-0"><h1 class="dash-h1 text-2xl font-bold sm:text-3xl truncate">Welcome back${ME.first_name?', <span class="gtext">'+esc(ME.first_name)+'</span>':''}</h1><p class="dash-sub mt-0.5 text-sm truncate" style="color:var(--muted)">${PLANS[plan].name}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary dash-newgoal shrink-0">+ New goal</a></div>`;
   let analytics='';
   if(c.analytics){
     analytics=`<div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending trend</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
@@ -2483,7 +2545,7 @@ function dashboardView(){
   const gamify=c.gamify?`<div class="grid gap-4 lg:grid-cols-2">${missionsCompactHTML()}${levelXpHTML()}</div><div class="grid gap-4 lg:grid-cols-2">${weeklyCompactHTML()}${achievementsLatestHTML()}</div>`:'';
   const studentPerk=(plan==='free'&&localStorage.getItem('goalify_is_student')==='1')?`<a href="#app/student" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid color-mix(in srgb,var(--gold) 50%,var(--border))"><div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-2xl">🎓</span><div><h3 class="font-semibold">You said you're a student — claim free Pro</h3><p class="mt-0.5 text-sm" style="color:var(--muted)">Verify your student status once and get Pro free for 2 years.</p></div></div><span class="btn btn-primary !py-2 text-sm shrink-0">Verify now →</span></div></a>`:'';
   const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🚀 Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro adds advanced analytics, category breakdowns & trends. Premium adds XP, levels, achievements & challenges.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
-  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${studentPerk}${freePerk}</div>`;
+  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${studentPerk}${freePerk}</div>`;
 }
 
 function missionRow(m){
@@ -2948,7 +3010,7 @@ function profileView(){
   const tiersCard=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🎖️ All progression tiers</h3><div class="grid gap-2 sm:grid-cols-2">${LEVEL_TIERS.map(t=>{const on=level>=t.lvl;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${on?'box-shadow:0 0 0 1px var(--accent2)':'opacity:.55'}"><span class="pf-frame ${t.frame} pf-mini" style="width:40px;height:40px">${t.crown?'<span class="pf-crown" aria-hidden="true">👑</span>':''}<span class="pf-frame-inner"><span class="flex h-full w-full items-center justify-center rounded-full text-xs font-bold text-white" style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${t.lvl}</span></span></span><div class="flex-1 min-w-0"><p class="text-sm font-semibold">Lvl ${t.lvl} · ${esc(t.title)}</p><p class="text-[11px]" ${M}>${esc(t.unlock)}</p></div>${on?'<span class="text-xs font-semibold text-emerald-400">✓</span>':'<span class="text-xs" '+M+'>🔒</span>'}</div>`;}).join('')}</div></div>`;
 
   return `<div class="dash-stack space-y-5 sm:space-y-6"><div class="page-head"><div><h1 class="page-h1">Profile</h1><p class="page-sub">Your public profile, level progression and achievements.</p></div></div>
-    ${visBar}${hero}${stats}${featured}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${leaderboard}${tiersCard}
+    ${visBar}${hero}${communityRowHTML()}${stats}${featured}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${leaderboard}${tiersCard}
     <p class="text-xs text-slate-500">Other people's profiles open here once accounts go live — no placeholder users in demo.</p></div>`;
 }
 
@@ -3212,7 +3274,7 @@ function settingsView(){
     <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition hover:scale-110" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Background design</p><div class="grid grid-cols-3 gap-3 sm:grid-cols-6">${BGS.map(b=>{const on=curBg===b[0];return `<button data-action="setBg" data-bg="${b[0]}" class="flex flex-col items-center gap-1 rounded-xl p-3 text-xs transition" style="background:var(--glass);border:1px solid ${on?'transparent':'var(--border)'};${on?'box-shadow:0 0 0 2px var(--accent2)':''}"><span class="text-xl">${b[2].startsWith('#')?'⬛':b[2]}</span><span class="${on?'font-semibold':''}" style="${on?'':'color:var(--muted)'}">${b[1]}</span></button>`;}).join('')}</div></div>
   </div>`;
-  const SEC=[['set-appearance','🎨','Appearance'],['set-profile','👤','Profile'],['set-public','🪪','Public profile'],['set-strategy','💪','Strategy'],['set-security','🔐','Security'],['set-notifications','🔔','Notifications'],['set-billing','💳','Billing'],['set-privacy','🛟','Privacy & data'],['set-admin','🛡️','Admin'],['set-danger','⚠️','Danger zone']];
+  const SEC=[['set-appearance','🎨','Appearance'],['set-profile','👤','Profile'],['set-public','🪪','Public profile'],['set-strategy','💪','Strategy'],['set-security','🔐','Security'],['set-notifications','🔔','Notifications'],['set-billing','💳','Billing'],['set-privacy','🛟','Privacy & data'],['set-support','💬','Support'],['set-admin','🛡️','Admin'],['set-danger','⚠️','Danger zone']];
   return `<div class="space-y-5 sm:space-y-6">
   <div class="page-head"><div><h1 class="page-h1">Settings</h1><p class="page-sub">Manage your account, appearance and preferences.</p></div></div>
   <div class="set-wrap">
@@ -3244,6 +3306,16 @@ function settingsView(){
   <div id="set-privacy" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🛟 Privacy & data</h2><p class="mt-1 text-sm" style="color:var(--muted)">Your data belongs to you — export it anytime.</p><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
   <div id="set-admin" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🛡️ Admin access</h2>${isDemoAdmin()?'<span class="chip gold">Signed in</span>':''}</div>${isDemoAdmin()?`<p class="mt-1 text-sm" style="color:var(--muted)">You're signed in as admin.</p><div class="mt-3 flex gap-2"><a href="#admin" class="btn btn-primary text-sm">Open admin dashboard</a><button class="btn btn-ghost text-sm" data-action="adminLogout">Sign out admin</button></div>`:`<p class="mt-1 text-sm" style="color:var(--muted)">Enter the admin access code to open the admin dashboard.</p><div class="mt-3 flex gap-2"><input id="adminInput" type="password" class="input" placeholder="Access code"><button class="btn btn-primary text-sm shrink-0" data-action="adminLogin">Enter</button></div>`}</div>
   <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">🔄 Restart onboarding quiz</h2><p class="mt-1 text-sm" style="color:var(--muted)">Retake the spending quiz and rebuild your money profile. This resets only your onboarding answers and spending preferences — your account, goals and progress stay intact.</p><button class="btn btn-ghost mt-4 text-sm" data-action="restartQuiz">Restart Quiz</button></div>
+  <div id="set-support" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🛟 Support</h2>
+    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+      <a href="#home" class="btn btn-ghost justify-start text-sm">${ICON('question','ic-sm')} FAQ</a>
+      <a href="#privacy" class="btn btn-ghost justify-start text-sm">${ICON('shield','ic-sm')} Privacy Policy</a>
+      <a href="#privacy" class="btn btn-ghost justify-start text-sm">${ICON('doc','ic-sm')} Terms of Service</a>
+      <a href="mailto:support@goalify.online" class="btn btn-ghost justify-start text-sm">${ICON('mail','ic-sm')} Contact Support</a>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3" style="background:var(--glass);border:1px solid var(--border)"><span class="text-sm font-medium">Language</span>${langSelect()}</div>
+    <button class="btn btn-ghost mt-4 w-full text-sm" data-action="logout">${ICON('logout','ic-sm')} Log out</button>
+  </div>
   <div id="set-danger" class="set-card rounded-2xl p-6" style="background:linear-gradient(180deg,color-mix(in srgb,var(--danger) 7%,transparent),transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)"><h2 class="text-lg font-bold" style="color:var(--danger)">⚠️ Delete account</h2><p class="mt-1 text-sm" style="color:var(--muted)">Permanently delete your data. This cannot be undone.</p><button class="btn mt-4 text-sm" style="background:var(--danger);color:#fff" data-action="delAcct">Delete my data</button></div>
   </div></div></div>`;
 }
@@ -3881,10 +3953,6 @@ document.addEventListener('click',async(e)=>{
       }
     }
     else if(act==='faq'){const i=a.getAttribute('data-i');$('#fa-'+i).classList.toggle('hidden');$('#fi-'+i).textContent=$('#fa-'+i).classList.contains('hidden')?'+':'−';}
-    else if(act==='mmenu'){const m=$('#mMenu'),o=$('#mMenuOv');const open=m.classList.contains('hidden');m.classList.toggle('hidden',!open);o.classList.toggle('hidden',!open);}
-    else if(act==='mmenuClose'){$('#mMenu')?.classList.add('hidden');$('#mMenuOv')?.classList.add('hidden');}
-    else if(act==='mfeat'){const side=a.getAttribute('data-side');const L=$('#mfeatLeft'),R=$('#mfeatRight'),o=$('#mfeatOv');const panel=side==='left'?L:R,other=side==='left'?R:L;const open=panel.classList.contains('hidden');other.classList.add('hidden');panel.classList.toggle('hidden',!open);o.classList.toggle('hidden',!open);}
-    else if(act==='mfeatClose'){$('#mfeatLeft')?.classList.add('hidden');$('#mfeatRight')?.classList.add('hidden');$('#mfeatOv')?.classList.add('hidden');}
     else if(act==='storeLock'){toast('🔒 Upgrade to Pro to spend GoalCoins & equip items');location.hash='#app/plans';}
     else if(act==='featHelp'){const h=FEAT_HELP[a.getAttribute('data-help')];if(h)openFeatHelp(a.getAttribute('data-help'),h);}
     else if(act==='gvBuy'){const cost=+a.getAttribute('data-cost'),name=a.getAttribute('data-name');if(!spendCoins('goalverse',name,cost)){toast('Not enough GoalCoins for '+name,'err');return;}const b=coinBalance();toast('🌌 '+name+' applied to your GoalVerse');render();requestAnimationFrame(()=>pulseCoinPill(b+cost,b));}
@@ -4044,7 +4112,7 @@ document.addEventListener('input',(e)=>{
 });
 document.addEventListener('change',async(e)=>{
   if(e.target.id==='langSel'){setLang(e.target.value);return;}
-  if(e.target.name==='is_student'){localStorage.setItem('goalify_is_student',e.target.value==='yes'?'1':'0');const h=document.getElementById('studHint');if(h)h.classList.toggle('hidden',e.target.value!=='yes');return;}
+  if(e.target.name==='is_student'){localStorage.setItem('goalify_is_student',e.target.checked?'1':'0');const h=document.getElementById('studHint');if(h)h.classList.toggle('hidden',!e.target.checked);return;}
   if(e.target.matches&&e.target.matches('[data-action="setShowGoals"]')){const on=e.target.checked;localStorage.setItem('goalify_show_goals',on?'1':'0');if(ME)ME.show_active_goals=on;if(!DEMO_MODE){await sb.from('profiles').update({show_active_goals:on}).eq('id',SESSION.user.id).catch(()=>{});}toast(on?'Active goals shown on profile':'Active goals hidden from profile');return;}
   if(e.target.id==='bizSwitch'){bizSwitchTo(e.target.value);return;}
   const a=e.target.closest('[data-action="setPlan"]'); if(a){try{await sb.rpc('admin_set_plan',{p_user:a.getAttribute('data-id'),p_plan:a.value});toast('Plan updated');}catch(err){toast(err.message,'err');}}
@@ -4081,6 +4149,9 @@ document.addEventListener('submit',async(e)=>{
       if(score<3)return toast('Password too weak — needs 8+ chars, a number, and a letter','err');
       if(!fd.get('accept_privacy'))return toast('Please accept the Privacy Policy & Terms to continue','err');
       const newsOptIn=!!fd.get('accept_news');
+      // referral: stash the friend's code so the rewards backend can credit both sides
+      const refCode=(fd.get('referral_code')||'').toString().trim().toUpperCase();
+      if(refCode)localStorage.setItem('goalify_ref_entered',refCode);
       const bd=fd.get('birthdate')||'',ctry=fd.get('country')||'',lng=fd.get('language')||'en';
       if(lng){localStorage.setItem('goalify_lang',lng);}
       // seed onboarding state so the quiz can skip language & country (already collected here)
