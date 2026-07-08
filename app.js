@@ -98,6 +98,7 @@ function caps(plan){
     social: plan==='premium'?'full':(plan==='free'||plan==='pro')?'follow':'none',
     gamify: plan==='premium',                   // XP, streaks, missions, challenges, badges
     analytics: PLAN_ORDER.indexOf(plan)>=PLAN_ORDER.indexOf('pro'),
+    engage: true,   // Analytics, Future Simulator, Impact, Challenges — free on every plan (V3)
     ai: plan==='premium',
     reports: plan==='premium',
   };
@@ -485,8 +486,7 @@ function setLang(l){
 function planNav(plan){
   const c=caps(plan);
   const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal']];
-  if(c.analytics){nav.push(['analytics','Analytics','chart'],['simulator','Future Simulator','crystal'],['spendcalc','Impact Calculator','euro']);}
-  if(c.gamify)nav.push(['challenges','Challenges','trophy']);
+  nav.push(['analytics','Analytics','chart'],['simulator','Future Simulator','crystal'],['spendcalc','Impact Calculator','euro'],['challenges','Challenges','trophy']);
   if(c.social!=='none')nav.push(['social','Social','users']);
   nav.push(['inbox','Inbox','inbox']);
   nav.push(['profile','Profile','user']);
@@ -2543,10 +2543,10 @@ function quickRow(title,items){
 function toolsRowHTML(){
   const c=caps(ME?.plan||'free');
   return quickRow('Tools',[
-    ['Simulator','simulator','crystal',!c.analytics],
-    ['Impact','spendcalc','euro',!c.analytics],
-    ['Analytics','analytics','chart',!c.analytics],
-    ['Challenges','challenges','trophy',!c.gamify],
+    ['Simulator','simulator','crystal',false],
+    ['Impact','spendcalc','euro',false],
+    ['Analytics','analytics','chart',false],
+    ['Challenges','challenges','trophy',false],
     ['Goals','goals','goal',false],
   ]);
 }
@@ -2566,14 +2566,14 @@ function dashboardView(){
   const active=GOALS.filter(x=>!x.completed).slice(0,3);
   const header=`<div class="dash-head flex items-center justify-between gap-3"><div class="min-w-0"><h1 class="dash-h1 text-2xl font-bold sm:text-3xl truncate">Welcome back${ME.first_name?', <span class="gtext">'+esc(ME.first_name)+'</span>':''}</h1><p class="dash-sub mt-0.5 text-sm truncate" style="color:var(--muted)">${PLANS[plan].name}${persona?` · ${persona.name} ${persona.emoji}`:''}</p></div><a href="#app/goals" class="btn btn-primary dash-newgoal shrink-0">+ New goal</a></div>`;
   let analytics='';
-  if(c.analytics){
+  if(c.engage){
     analytics=`<div class="glass rounded-2xl p-4 sm:p-6"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Spending trend</h3><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:200px;max-height:40vh"><canvas id="spendChart"></canvas></div></div>
     <div class="grid gap-6 lg:grid-cols-2"><div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Category breakdown</h3><canvas id="catChart" height="180"></canvas></div>
     <div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Goal forecast</div><p class="text-sm" style="color:var(--muted)">At this pace you'll spend about <b class="text-white">${fmt(s.spending*12)}</b> and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b> this year.${s.savingsRate<20?` Lifting your savings rate to 20% adds <b class="text-white">${fmt(Math.max(0,(s.income*0.2-s.leftover)*12))}/yr</b>.`:' Strong savings rate — keep going!'}</p><a href="#app/simulator" class="mt-3 inline-block text-sm font-medium text-accent-purple hover:underline">Open Simulator →</a></div></div>`;
   }
   const gamify=c.gamify?`<div class="grid gap-4 lg:grid-cols-2">${missionsCompactHTML()}${levelXpHTML()}</div><div class="grid gap-4 lg:grid-cols-2">${weeklyCompactHTML()}${achievementsLatestHTML()}</div>`:'';
   const studentPerk=(plan==='free'&&localStorage.getItem('goalify_is_student')==='1')?`<a href="#app/student" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid color-mix(in srgb,var(--gold) 50%,var(--border))"><div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-2xl">🎓</span><div><h3 class="font-semibold">You said you're a student — claim free Pro</h3><p class="mt-0.5 text-sm" style="color:var(--muted)">Verify your student status once and get Pro free for 2 years.</p></div></div><span class="btn btn-primary !py-2 text-sm shrink-0">Verify now →</span></div></a>`:'';
-  const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🚀 Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro adds advanced analytics, category breakdowns & trends. Premium adds XP, levels, achievements & challenges.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
+  const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🚀 Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro removes the goal limit and adds goal deletion. Premium adds the social feed, XP & levels, badges, themes and smart AI insights.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
   return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${studentPerk}${freePerk}</div>`;
 }
 
@@ -3565,7 +3565,7 @@ async function render(){
     const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
-    if(route2==='dashboard'&&c.analytics){drawSpend('year');drawCat();}
+    if(route2==='dashboard'&&c.engage){drawSpend('year');drawCat();}
     if(route2==='analytics'){drawSpend('year');drawCat();}
     if(route2==='simulator'){runSim();}
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}

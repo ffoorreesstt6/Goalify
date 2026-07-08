@@ -17,6 +17,10 @@
 .DS_Store
 *.pem
 
+# local preview/test artifacts (DEMO_MODE copies used for browser QA)
+__demo*.html
+__demo*.app.js
+
 # debug
 npm-debug.log*
 yarn-debug.log*
