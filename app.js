@@ -668,8 +668,10 @@ async function loadProfile(){
 }
 // onboarding is "done" if the profile says so OR we set the local flag at the end of the quiz/goal step
 function isOnboarded(){return !!((ME&&ME.onboarded)||localStorage.getItem('goalify_onboarded')==='1');}
-const getGoals=async()=>DEMO_MODE?DEMO_GOALS:(await sb.from('goals').select('*').order('created_at',{ascending:false})).data||[];
-const getExpenses=async()=>DEMO_MODE?DEMO_EXPENSES:(await sb.from('expenses').select('*').order('spent_at',{ascending:false}).limit(1000)).data||[];
+// Explicit owner filters: RLS is the enforcement layer, but never rely on it alone —
+// a permissive policy (e.g. public-profile reads) must not widen these lists.
+const getGoals=async()=>{if(DEMO_MODE)return DEMO_GOALS;const u=SESSION?.user?.id;if(!u)return[];return (await sb.from('goals').select('*').eq('user_id',u).order('created_at',{ascending:false})).data||[];};
+const getExpenses=async()=>{if(DEMO_MODE)return DEMO_EXPENSES;const u=SESSION?.user?.id;if(!u)return[];return (await sb.from('expenses').select('*').eq('user_id',u).order('spent_at',{ascending:false}).limit(1000)).data||[];};
 
 // -------------------- scoring --------------------
 function snapshot(profile,expenses){
@@ -4057,7 +4059,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='proofChal'){openProofModal(a.getAttribute('data-key'));}
     else if(act==='reviewChal'){const k=a.getAttribute('data-key');const arr=chalState();const c=arr.find(x=>x.key===k);if(c){c.status='pending';setChalState(arr);}toast('Submitted for review — XP is granted after approval ⏳');render();}
     else if(act==='leaveChal'){const k=a.getAttribute('data-key');setChalState(chalState().filter(c=>c.key!==k));toast('Left challenge');render();}
-    else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*'),sb.from('expenses').select('*')]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
+    else if(act==='export'){let g=GOALS,x=EXPENSES;if(!DEMO_MODE){const u=SESSION?.user?.id;[{data:g},{data:x}]=await Promise.all([sb.from('goals').select('*').eq('user_id',u),sb.from('expenses').select('*').eq('user_id',u)]);}const blob=new Blob([JSON.stringify({profile:ME,goals:g,expenses:x},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const el=document.createElement('a');el.href=u;el.download='goalify-data.json';el.click();URL.revokeObjectURL(u);}
     else if(act==='rmAvatar'){ME.avatar_url=null;localStorage.removeItem('goalify_avatar_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({avatar_url:null}).eq('id',SESSION.user.id);}toast('Photo removed');render();}
     else if(act==='rmBanner'){ME.banner_url=null;localStorage.removeItem('goalify_banner_'+uid());if(!DEMO_MODE){await sb.from('profiles').update({banner_url:null}).eq('id',SESSION.user.id).catch(()=>{});}toast('Banner removed');render();}
     else if(act==='saveNotif'){const prefs={};document.querySelectorAll('[data-notif]').forEach(i=>prefs[i.getAttribute('data-notif')]=i.checked);if(DEMO_MODE){DEMO_ME.notification_prefs=prefs;toast('Preferences saved (demo)');}else{await sb.from('profiles').update({notification_prefs:prefs}).eq('id',SESSION.user.id);toast('Preferences saved');}}

@@ -239,13 +239,29 @@ alter table public.goals enable row level security;
 drop policy if exists goals_own_or_admin on public.goals;
 create policy goals_own_or_admin on public.goals for all
   using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id);
--- friends/public can read non-private goals of public profiles
+-- SECURITY: goals are strictly owner-only at the table level. The old
+-- goals_public_read policy let any signed-in user read any non-private goal
+-- of any public profile — combined with an unfiltered select in the app it
+-- leaked goals across accounts. Public display goes through the
+-- public.public_goals view below (safe columns, opt-in via show_active_goals).
 drop policy if exists goals_public_read on public.goals;
-create policy goals_public_read on public.goals for select
-  using (not private and public.is_public_profile(user_id));
 create index if not exists goals_user_idx on public.goals(user_id, status);
 create index if not exists goals_category_idx on public.goals(category_id);
 select public._attach_updated_at('public.goals');
+
+-- public projection of goals (future public profile pages). security_invoker
+-- (set below) means the caller's RLS applies — cross-account exposure is zero
+-- today; widening this when profiles launch must be a deliberate decision.
+create or replace view public.public_goals as
+  select g.id, g.user_id, g.name, g.emoji, g.target_amount, g.saved_amount, g.completed
+  from public.goals g
+  join public.profiles p on p.id = g.user_id
+  where p.profile_visibility = 'public'
+    and p.show_active_goals
+    and not coalesce(g.private, false)
+    and coalesce(g.status, 'active') <> 'archived';
+alter view public.public_goals set (security_invoker = on);
+grant select on public.public_goals to anon, authenticated;
 
 create table if not exists public.goal_milestones (
   id         uuid primary key default gen_random_uuid(),
