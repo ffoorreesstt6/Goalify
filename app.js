@@ -34,7 +34,7 @@ const DEMO_ME = {
   plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
   monthly_income:3500, monthly_savings:700, xp:0, currency:'EUR',
   budget:{coffee:61,delivery:78,fastfood:52,restaurants:70,taxi:26,nightlife:65,gaming:26,shopping:109,beauty:17,clothing:39,groceries:435,fuel:252,subscriptions:60},
-  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
+  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'light', language:'en',
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null,
   profile_visibility:'public', show_active_goals:true, prestige:0,
   country:'Kosovo', spend_freq:{coffee:14,delivery:3,fastfood:3,restaurants:2,taxi:2,nightlife:1,gaming:1,shopping:1,beauty:1,clothing:1,groceries:5,fuel:1}, created_at:'2025-08-01T00:00:00Z'
@@ -981,15 +981,17 @@ function seedDemoMissions(){
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
-function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
 // Landing, quiz and auth always use the light premium theme.
 function siteTheme(){const r=document.documentElement;r.removeAttribute('data-biz');r.classList.add('light');r.setAttribute('data-accent','blue');r.setAttribute('data-bg','none');}
 // Enforce per-plan theme rules without overwriting Premium's saved prefs.
 function enforcePlanTheme(plan){
   const r=document.documentElement,c=caps(plan);
   if(plan==='business')return; // gold executive handled via data-biz
-  r.classList.remove('light'); // dashboard is dark premium by default
-  if(c.themes==='full'){ const m=localStorage.getItem('goalify_theme')||'dark'; r.classList.toggle('light',m==='light'); r.setAttribute('data-accent',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
+  // porcelain light is the default appearance for every plan; dark is an explicit choice
+  const mode=localStorage.getItem('goalify_theme')||'light';
+  r.classList.toggle('light',mode==='light');
+  if(c.themes==='full'){ r.setAttribute('data-accent',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
   else if(c.themes==='red'){ r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
   else { r.setAttribute('data-accent','blue'); r.setAttribute('data-bg','none'); }
 }
@@ -2353,12 +2355,36 @@ function moneyHealthHTML(h){
   return `<div class="sec-pad glass-strong rounded-2xl p-6 sm:p-8"><div class="flex flex-col items-center gap-6 sm:flex-row sm:gap-8"><div class="shrink-0">${ring(h.v,'Money Health',h.r)}</div><div class="text-center sm:text-left"><h3 class="text-lg font-semibold">Money Health Score</h3><p class="mt-1 text-4xl font-extrabold gtext">${h.v} / 100</p><p class="mt-0.5 text-sm font-semibold" style="color:${col}">${h.r}</p><p class="mt-2 max-w-md text-sm" style="color:var(--muted)">${expl}</p></div></div></div>`;
 }
 function smartInsightsHTML(){
-  const s=snapshot(ME,EXPENSES),map=monthCatSpend(),ins=[];
-  const ent=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-  if(ent[0]){const m=CATS[ent[0][0]]||CATS.other;ins.push(`Your biggest spending category is <b>${m.l}</b> at ${fmt(ent[0][1])} this month.`);}
-  ins.push(`You're saving <b>${s.savingsRate}%</b> of your income${s.savingsRate>=20?' — great pace! 🎉':' this month.'}`);
-  const g=topGoal();if(g)ins.push(`Your <b>${esc(g.name)}</b> goal is <b>${pct(g.saved_amount,g.target_amount)}%</b> complete.`);
-  if(ins.length<3){const wr=whatToReduce();if(wr[0]){const m=CATS[wr[0].cat]||CATS.other;ins.push(`Trim <b>${m.l}</b> to save about <b>${fmt(wr[0].save)}/mo</b>.`);}}
+  // every insight below is derived from the user's real expenses/goals — no canned AI lines
+  const ins=[],now=Date.now(),MS=86400000,ts=e=>new Date(e.spent_at||e.created_at||0).getTime();
+  const spentIn=(f,t)=>EXPENSES.reduce((s,e)=>{const x=ts(e);return x>=f&&x<t&&Number(e.amount)>0?s+Number(e.amount):s;},0);
+  // 1 · pace vs the same point last month
+  const d0=new Date();const m0=new Date(d0.getFullYear(),d0.getMonth(),1).getTime();const m1=new Date(d0.getFullYear(),d0.getMonth()-1,1).getTime();
+  const elapsed=now-m0,cur=spentIn(m0,now),prev=spentIn(m1,m1+elapsed);
+  if(prev>50&&cur>0){const d=Math.round((cur-prev)/prev*100);
+    if(d>=8)ins.push(`Spending is up <b>${d}%</b> vs this point last month (${fmt(cur)} vs ${fmt(prev)}).`);
+    else if(d<=-8)ins.push(`Spending is down <b>${Math.abs(d)}%</b> vs this point last month — keep it up.`);}
+  // 2 · fastest-growing category, last 3 weeks vs the 3 before
+  const catIn=(f,t)=>{const m={};EXPENSES.forEach(e=>{const x=ts(e);if(x>=f&&x<t&&Number(e.amount)>0){const c=e.category||'other';m[c]=(m[c]||0)+Number(e.amount);}});return m;};
+  const rec=catIn(now-21*MS,now),base=catIn(now-42*MS,now-21*MS);let worst=null;
+  Object.keys(rec).forEach(c=>{if((base[c]||0)>25){const g=(rec[c]-base[c])/base[c];if(g>=.25&&(!worst||g>worst.g))worst={c,g};}});
+  if(worst){const m=CATS[worst.c]||CATS.other;ins.push(`<b>${m.l}</b> spending is up <b>${Math.round(worst.g*100)}%</b> over the last three weeks.`);}
+  // 3 · goal pace projection from monthly contribution vs target date
+  const g=topGoal();
+  if(g&&g.target_amount>0&&!g.completed){
+    const left=Math.max(0,g.target_amount-(g.saved_amount||0)),mc=Number(g.monthly_contribution||0);
+    const monthsLeft=g.target_date?(new Date(g.target_date).getTime()-now)/(30.44*MS):0;
+    if(mc>0&&monthsLeft>0.5){
+      const diff=monthsLeft-left/mc;
+      if(diff>=1)ins.push(`At ${fmt(mc)}/mo you'd finish <b>${esc(g.name)}</b> about <b>${Math.round(diff)} month${Math.round(diff)>1?'s':''} sooner</b> than planned.`);
+      else if(diff<=-1)ins.push(`<b>${esc(g.name)}</b> needs ~<b>${fmt(Math.ceil(left/monthsLeft))}/mo</b> to hit its date — you're at ${fmt(mc)}/mo.`);
+      else ins.push(`You're on schedule for <b>${esc(g.name)}</b> — ${pct(g.saved_amount,g.target_amount)}% saved.`);
+    } else ins.push(`Your <b>${esc(g.name)}</b> goal is <b>${pct(g.saved_amount,g.target_amount)}%</b> complete.`);
+  }
+  // 4 · fillers only when real trends are thin
+  if(ins.length<3){const wr=whatToReduce();if(wr[0]){const m=CATS[wr[0].cat]||CATS.other;ins.push(`Cutting <b>${m.l}</b> by a third would save about <b>${fmt(Math.round(wr[0].save*12))}/year</b>.`);}}
+  if(ins.length<3){const s=snapshot(ME,EXPENSES);if(s.income>0)ins.push(`You're saving <b>${s.savingsRate}%</b> of your income this month.`);}
+  if(!ins.length)ins.push('Log a few expenses and Insights will start reading your real patterns here.');
   const list=ins.slice(0,3);
   return `<div class="glass rounded-2xl p-5 sm:p-6"><h3 class="mb-3 font-semibold flex items-center gap-2">${ICON('spark','ic-sm')} Smart Insights</h3><ul class="space-y-2.5 text-sm">${list.map(t=>`<li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style="background:var(--accent2)"></span><span>${t}</span></li>`).join('')}</ul></div>`;
 }
@@ -2807,7 +2833,7 @@ function socialView(){
   let body='';
   if(SOTAB==='overview'){
     const search=`<div class="glass rounded-2xl p-5"><h3 class="font-bold">Find people</h3><p class="text-xs" ${M}>Search members by name or username.</p>
-      <div class="so-search mt-3"><span class="so-ic">🔍</span><input id="soSearch" class="input" placeholder="Search savers…" autocomplete="off" aria-label="Search members"></div>
+      <div class="so-search mt-3"><span class="so-ic">${ICON('search','ic-sm')}</span><input id="soSearch" class="input" placeholder="Search savers…" autocomplete="off" aria-label="Search members"></div>
       <div id="soResults" class="hidden mt-2 rounded-xl" style="background:var(--glass);border:1px solid var(--border)"></div></div>`;
     const stat=(v,l,e)=>`<div class="kpi text-center"><p class="k-v" style="margin-top:0">${e?e+' ':''}${v}</p><p class="k-s">${l}</p></div>`;
     const stats=`<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">${stat(0,'Followers','👥')}${stat(0,'Following','➕')}${stat(curStreak,'day streak','🔥')}${stat('Lvl '+level,(ME.xp||0)+' XP','⭐')}</div>`;
@@ -2986,7 +3012,7 @@ function profileView(){
     ${statCard('Longest streak',best+' days','your record','🏅')}
     ${statCard('Badges earned',got.size+' / '+totalB,'achievements','🎖️')}
     ${statCard('Member since',joinTxt,'thanks for being here 💜','📅')}
-    ${statCard('Leaderboard',isPublic?'#'+pos:'—',isPublic?'global rank':'private','🏆')}
+    ${statCard('Level','Lv. '+level,(ME.xp||0)+' XP','⭐')}
   </div>`;
 
   const fav=featuredBadge(got);
@@ -3260,16 +3286,20 @@ function settingsView(){
   const p=ME;
   const vis=profVisibility();
   const pm=getPM();
-  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
+  const curMode=localStorage.getItem('goalify_theme')||'light',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Plum','#6D45D8'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
   const themes=caps(p.plan).themes;
   const appearance = themes==='business'
    ? `<div id="set-appearance" class="set-card biz-card p-6"><h2 class="text-lg font-bold">🎨 Appearance</h2><p class="mt-1 text-sm" style="color:var(--muted)">Business uses a fixed executive gold theme — no customization, by design.</p></div>`
    : themes==='red'
-   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">Pro</span></div><div class="mt-4 flex items-center gap-3"><span class="h-10 w-10 shrink-0 rounded-full" style="background:#ef4444;box-shadow:0 0 0 3px var(--bg),0 0 0 5px #ef4444"></span><div><p class="text-sm font-bold">Signature Red</p><p class="text-sm" style="color:var(--muted)">Pro ships with one focused theme. Full theme + wallpaper customization is a Premium feature.</p></div></div><a href="#app/plans" class="btn btn-ghost mt-4 text-sm">Compare with Premium</a></div>`
+   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">Pro</span></div>
+    <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['light','☀️ Light'],['dark','🌙 Dark']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
+    <div class="mt-4 flex items-center gap-3"><span class="h-10 w-10 shrink-0 rounded-full" style="background:#ef4444;box-shadow:0 0 0 3px var(--bg),0 0 0 5px #ef4444"></span><div><p class="text-sm font-bold">Signature Red</p><p class="text-sm" style="color:var(--muted)">Pro ships with one focused accent. Full color + wallpaper customization is a Premium feature.</p></div></div><a href="#app/plans" class="btn btn-ghost mt-4 text-sm">Compare with Premium</a></div>`
    : themes==='none'
-   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div><h2 class="text-lg font-bold">🎨 Appearance <span class="ml-1 align-middle text-base">🔒</span></h2><p class="mt-1 text-sm" style="color:var(--muted)">Free keeps things simple — themes, wallpapers and customization start on Pro & Premium.</p></div><a href="#app/plans" class="btn btn-primary text-sm shrink-0">See plans</a></div>`
+   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">Free</span></div>
+    <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['light','☀️ Light'],['dark','🌙 Dark']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3"><p class="text-sm" style="color:var(--muted)">🔒 Accent colors and wallpapers start on Pro & Premium.</p><a href="#app/plans" class="btn btn-primary btn-sm text-sm shrink-0">See plans</a></div></div>`
    : `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">${PLANS[p.plan].name}</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['dark','🌙 Dark'],['light','☀️ Light']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition hover:scale-110" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
