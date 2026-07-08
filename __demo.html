@@ -64,10 +64,10 @@
     /* ---- theme tokens ---- */
     :root{
       color-scheme:dark;
-      /* base surfaces */
-      --bg:#07080b; --text:#F4F5F7; --muted:#9aa3b2;
-      --card:#0f1219; --card-2:#141823; --sidebar:#0b0e15;
-      --glass:#0f1219; --glass-strong:#141823; --border:#212634; --hair:rgba(255,255,255,.07);
+      /* base surfaces — near-black Apple palette, neutral (no blue tint) */
+      --bg:#0B0B0C; --text:#F5F5F7; --muted:#8E8E93;
+      --card:#161618; --card-2:#1C1C1E; --sidebar:#0E0E10;
+      --glass:#161618; --glass-strong:#1C1C1E; --border:rgba(255,255,255,.10); --hair:rgba(255,255,255,.06);
       /* brand accents (kept: violet) */
       --accent1:#5B2BBF; --accent2:#6D45D8; --accent3:#8A63E6;
       --jade:#2F9E75; --jade2:#4FBF8F; --gold:#C8A45D; --gold2:#E5C879;
@@ -81,7 +81,7 @@
       --shadow-glass:0 18px 50px -16px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
       /* liquid-glass material */
       --glass-blur:22px; --glass-sat:160%;
-      --glass-bg:rgba(18,22,32,.62); --glass-bd:rgba(255,255,255,.10); --glass-hi:rgba(255,255,255,.16);
+      --glass-bg:rgba(28,28,30,.66); --glass-bd:rgba(255,255,255,.10); --glass-hi:rgba(255,255,255,.14);
       /* focus + motion + type */
       --ring:var(--accent2);
       --ease-spring:cubic-bezier(.2,.8,.2,1); --ease-out:cubic-bezier(.22,1,.36,1);
@@ -176,10 +176,13 @@
     .btn:active{transform:scale(.97);transition-duration:.06s}
     .btn-sm{padding:.5rem 1rem;font-size:.82rem;border-radius:var(--r-sm)}
     .btn-lg{padding:.95rem 1.7rem;font-size:1rem;border-radius:var(--r-lg)}
-    .btn-primary{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent2) 90%,#fff),var(--accent1));box-shadow:0 8px 22px -8px color-mix(in srgb,var(--accent2) 75%,transparent),inset 0 1px 0 rgba(255,255,255,.22)}
+    /* dark (default): white primary with black text — Apple HIG, no glow/gradient */
+    .btn-primary{color:#0B0B0C;background:#F5F5F7;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+    .btn-primary:hover{background:#fff}
     .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px color-mix(in srgb,var(--accent2) 85%,transparent),inset 0 1px 0 rgba(255,255,255,.25);filter:saturate(1.05)}
     .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;filter:saturate(.7)}
-    .btn-ghost{color:var(--text);background:color-mix(in srgb,var(--text) 5%,transparent);border-color:var(--border)}
+    .btn-ghost{color:var(--text);background:#1C1C1E;border-color:rgba(255,255,255,.12)}
+    .btn-ghost:hover{background:#242426}
     .btn-danger{color:#fff;background:#D9605C;box-shadow:0 8px 20px -12px rgba(217,96,92,.6)}
     .btn-danger:hover{filter:brightness(1.06)}
     .btn-success{color:#fff;background:#3E9C7A;box-shadow:0 8px 20px -12px rgba(62,156,122,.6)}
@@ -1219,7 +1222,7 @@
     .mtab{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;flex:1;min-height:3rem;padding:.3rem 0;border-radius:.7rem;color:var(--muted);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .18s var(--ease-out)}
     .mtab-ic{display:flex;align-items:center;justify-content:center;transition:transform .18s var(--ease-spring)}
     .mtab-l{font-size:.6rem;font-weight:700;letter-spacing:.01em}
-    .mtab.on{color:var(--accent3)}
+    .mtab.on{color:#F5F5F7}
     /* porcelain mode: black dock (Apple-style) — tabs go light-on-dark */
     html.light .mbottom{background:rgba(19,19,22,.94);border-top-color:rgba(255,255,255,.08)}
     html.light .mtab{color:#98989E}
@@ -1230,10 +1233,21 @@
     .mtab:active .mtab-ic{transform:scale(.88);transition-duration:.06s}
     /* raised center Home — the primary action of the tab bar */
     .mtab-home{overflow:visible}
-    .mtab-home-btn{display:flex;align-items:center;justify-content:center;width:3.1rem;height:3.1rem;margin-top:-1.5rem;border-radius:9999px;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent2) 92%,#fff),var(--accent1));border:3px solid var(--bg);box-shadow:0 10px 24px -8px color-mix(in srgb,var(--accent2) 80%,transparent),0 2px 6px rgba(0,0,0,.3);transition:transform .18s var(--ease-spring),box-shadow .18s var(--ease-out)}
+    .mtab-home-btn{display:flex;align-items:center;justify-content:center;width:3.1rem;height:3.1rem;margin-top:-1.5rem;border-radius:9999px;color:#0B0B0C;background:#F5F5F7;border:3px solid var(--bg);box-shadow:0 6px 18px -6px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);transition:transform .18s var(--ease-spring),box-shadow .18s var(--ease-out)}
     .mtab-home svg{stroke-width:2}
-    .mtab-home.on .mtab-home-btn{box-shadow:0 12px 28px -8px color-mix(in srgb,var(--accent2) 95%,transparent),0 2px 6px rgba(0,0,0,.3)}
+    .mtab-home.on .mtab-home-btn{box-shadow:0 8px 22px -6px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.4)}
     .mtab-home:active .mtab-home-btn{transform:scale(.92)}
+    /* topbar "More" sheet — iOS-style bottom sheet for secondary destinations */
+    .sheet-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);opacity:0;visibility:hidden;transition:opacity .25s var(--ease-out),visibility .25s}
+    .sheet-scrim.open{opacity:1;visibility:visible}
+    .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--card-2);border-top-left-radius:1.4rem;border-top-right-radius:1.4rem;border-top:1px solid var(--border);box-shadow:0 -18px 50px -12px rgba(0,0,0,.6);padding:.5rem 1rem calc(1rem + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s var(--ease-out)}
+    .sheet-scrim.open .sheet{transform:translateY(0)}
+    .sheet-grip{width:38px;height:4px;border-radius:9999px;background:var(--border);margin:.5rem auto .75rem}
+    .sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+    .sheet-item{display:flex;flex-direction:column;align-items:center;gap:.45rem;padding:.9rem .4rem;border-radius:1rem;background:var(--card);border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.72rem;font-weight:600;text-align:center;-webkit-tap-highlight-color:transparent;transition:transform .15s var(--ease-spring),background .15s}
+    .sheet-item:active{transform:scale(.95);transition-duration:.06s}
+    .sheet-item svg{width:22px;height:22px;stroke-width:1.8}
+    @media (prefers-reduced-motion:reduce){.sheet,.sheet-scrim{transition:none}}
     /* quick-access rows (Tools on Home · Community on Profile) */
     .tool-row{display:flex;gap:.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:.15rem}
     .tool-row::-webkit-scrollbar{display:none}
