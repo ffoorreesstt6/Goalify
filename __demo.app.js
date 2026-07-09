@@ -485,7 +485,7 @@ function setLang(l){
 }
 function planNav(plan){
   const c=caps(plan);
-  const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal'],['groups','Group Goals','users']];
+  const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal'],['groups','Group Goals','users'],['friends','Friends','users']];
   nav.push(['analytics','Analytics','chart'],['simulator','Future Simulator','crystal'],['spendcalc','Impact Calculator','euro'],['challenges','Challenges','trophy']);
   if(c.social!=='none')nav.push(['social','Social','users']);
   nav.push(['inbox','Inbox','inbox']);
@@ -1492,7 +1492,7 @@ function landing(){
       </div>
     </section>
 
-    ${landingTestimonials()}
+    ${/* testimonials removed — fake/generic, no trust value. Replace later with real screenshots/reviews. */''}
 
     <section id="sec-privacy" class="mx-auto max-w-7xl px-4" style="padding-bottom:clamp(3.5rem,7.5vw,5.75rem)">
       <div class="mx-auto max-w-2xl text-center reveal">
@@ -2214,7 +2214,7 @@ function mobileChrome(route){
   return `
   <header class="mtopbar lg:hidden">
     <a href="#app/dashboard" class="flex items-center gap-2"><img src="${ICON_DATA}" alt="" style="height:24px;width:auto"><span class="font-extrabold text-lg">Goal<span class="gtext">ify</span></span></a>
-    <div class="flex items-center gap-2">${coinPillHTML(true)}<button class="mnav-btn" data-action="appMenu" aria-label="Open menu" aria-controls="appMenuScrim">${ICON('menu','ic-sm')}</button></div>
+    <div class="flex items-center gap-2">${coinPillHTML(true)}<a href="#app/friends" class="mnav-btn" aria-label="Friends">${ICON('users','ic-sm')}</a><button class="mnav-btn" data-action="appMenu" aria-label="Open menu" aria-controls="appMenuScrim">${ICON('menu','ic-sm')}</button></div>
   </header>
   <nav class="mbottom lg:hidden" aria-label="Primary">${MBOTTOM.map(btn).join('')}</nav>
   ${appMenuSheet()}`;
@@ -3701,11 +3701,11 @@ async function render(){
     const c=caps(ME.plan);
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
-    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store'||route==='groups')?route:'dashboard';
+    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store'||route==='groups'||route==='friends')?route:'dashboard';
     // Onboarding already requires a goal. Never force completed users back to goal creation —
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
-    const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,friends:friendsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.engage){drawSpend('year');drawCat();}
@@ -3714,6 +3714,7 @@ async function render(){
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
     if(route2==='student'){renderSVStatus();}
     if(route2==='groups'){gEnsureLoaded();}else{GROUP_OPEN=null;GROUP_NEW=false;}
+    if(route2==='friends'){fEnsureLoaded();}
     if(_coinPulse){const p=_coinPulse;_coinPulse=null;requestAnimationFrame(()=>pulseCoinPill(p.from,p.to));}
     if(window._focusSoSearch){window._focusSoSearch=false;setTimeout(()=>document.getElementById('soSearch')?.focus(),60);}
     return;
@@ -4147,6 +4148,10 @@ document.addEventListener('click',async(e)=>{
     else if(act==='gContribute'){gContribute(a.getAttribute('data-id'),document.getElementById('gAmt')?.value);}
     else if(act==='gCopy'){const l=a.getAttribute('data-link');if(navigator.clipboard)navigator.clipboard.writeText(l).then(()=>toast('Invite link copied'),()=>toast('Copy failed','err'));else toast('Copy not supported','err');}
     else if(act==='gLeave'){gLeave(a.getAttribute('data-id'));}
+    else if(act==='fAdd'){fAdd(a.getAttribute('data-id'));}
+    else if(act==='fAccept'){fRespond(a.getAttribute('data-id'),true);}
+    else if(act==='fDecline'){fRespond(a.getAttribute('data-id'),false);}
+    else if(act==='fUnfriend'){fUnfriend(a.getAttribute('data-id'));}
     else if(act==='appMenu'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.add('open');}
     else if(act==='appMenuClose'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.remove('open');}
     else if(act==='noop'){/* swallow clicks inside the sheet so the scrim doesn't close it */}
@@ -4307,6 +4312,7 @@ document.addEventListener('click',async(e)=>{
   }catch(err){toast(err.message||'Something went wrong','err');}
 });
 document.addEventListener('input',(e)=>{
+  if(e.target&&e.target.id==='fSearch'){fSearchInput(e.target.value);return;}
   if(e.target&&e.target.id==='spendSlider'){const cat=e.target.getAttribute('data-cat'),v=+e.target.value||0;QA.spend[cat]=v;const lbl=document.getElementById('spendVal');if(lbl)lbl.textContent=spendLabel(v);}
   if(e.target&&(e.target.id==='qgTarget'||e.target.id==='qgDate')){updateQgSummary();}
 });
@@ -5041,4 +5047,93 @@ async function gLeave(gid){
   if(!confirm('Leave this group?'))return;
   if(!DEMO_MODE){try{await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',SESSION.user.id);}catch(e){}}
   GROUPS=GROUPS.filter(x=>x.id!==gid);GROUP_OPEN=null;render();toast('Left group');
+}
+
+
+// ============================================================
+// FRIENDS — follow + friend-requests + friends list (TikTok-style, finance-clean)
+// Backend: follows / friend_requests / friendships + respond_friend_request/unfriend RPCs.
+// Messaging is intentionally NOT here yet (separate build).
+// ============================================================
+let FRIENDS=[],FR_IN=[],FR_OUT=[],FRIENDS_LOADED=false;
+let _fSearchT=null;
+
+async function fEnsureLoaded(){
+  if(FRIENDS_LOADED)return;
+  FRIENDS_LOADED=true;
+  if(DEMO_MODE){render();return;}
+  try{const u=SESSION.user.id;
+    const [{data:fr},{data:reqs}]=await Promise.all([
+      sb.from('friendships').select('user_low,user_high').or(`user_low.eq.${u},user_high.eq.${u}`),
+      sb.from('friend_requests').select('id,sender_id,receiver_id,status,created_at').or(`sender_id.eq.${u},receiver_id.eq.${u}`).eq('status','pending')
+    ]);
+    const ids=[...new Set((fr||[]).map(x=>x.user_low===u?x.user_high:x.user_low)
+      .concat((reqs||[]).map(r=>r.sender_id===u?r.receiver_id:r.sender_id)))];
+    let profs={};
+    if(ids.length){const {data:p}=await sb.from('public_profiles').select('id,username,first_name,avatar_url,plan,level').in('id',ids);(p||[]).forEach(x=>profs[x.id]=x);}
+    const nm=id=>{const p=profs[id];return p?{name:p.first_name||p.username||'Saver',un:p.username||'',plan:p.plan,lvl:p.level,av:p.avatar_url}:{name:'Saver',un:'',plan:'free',lvl:1};};
+    FRIENDS=(fr||[]).map(x=>{const id=x.user_low===u?x.user_high:x.user_low;return {id,...nm(id)};});
+    FR_IN=(reqs||[]).filter(r=>r.receiver_id===u).map(r=>({id:r.id,uid:r.sender_id,...nm(r.sender_id)}));
+    FR_OUT=(reqs||[]).filter(r=>r.sender_id===u).map(r=>({id:r.id,uid:r.receiver_id,...nm(r.receiver_id)}));
+  }catch(e){console.warn('[Goalify] friends load failed',e);}
+  render();
+}
+function fAvatar(f,size){size=size||40;return `<span class="flex items-center justify-center overflow-hidden rounded-full text-white font-bold shrink-0" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${f.av?`<img src="${esc(f.av)}" class="h-full w-full object-cover" alt="">`:esc((f.name||'?').slice(0,1).toUpperCase())}</span>`;}
+function fRow(f,actions){const M='style="color:var(--muted)"';return `<div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--hair)">${fAvatar(f)}<div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">${esc(f.name)} ${planBadge(f.plan)}</p><p class="truncate text-[11px]" ${M}>@${esc(f.un||(f.name||'').toLowerCase())}${f.lvl?' · Lv.'+f.lvl:''}</p></div>${actions}</div>`;}
+function friendsView(){
+  const M='style="color:var(--muted)"';
+  const reqSection=(FR_IN.length||FR_OUT.length)?`<div class="glass rounded-2xl p-4">
+    <h3 class="font-bold mb-1">Friend requests</h3>
+    ${FR_IN.length?`<p class="t-label mt-2">Incoming</p>${FR_IN.map(f=>fRow(f,`<div class="flex gap-1.5"><button class="btn btn-primary btn-sm" data-action="fAccept" data-id="${f.id}">Accept</button><button class="btn btn-ghost btn-sm" data-action="fDecline" data-id="${f.id}">Decline</button></div>`)).join('')}`:''}
+    ${FR_OUT.length?`<p class="t-label mt-3">Sent</p>${FR_OUT.map(f=>fRow(f,`<span class="chip">Pending</span>`)).join('')}`:''}
+  </div>`:'';
+  const friendsSection=`<div class="glass rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-1"><h3 class="font-bold">Friends</h3><span class="chip">${FRIENDS.length}</span></div>
+    ${FRIENDS.length?FRIENDS.map(f=>fRow(f,`<button class="btn btn-ghost btn-sm" data-action="fUnfriend" data-id="${f.id}">Remove</button>`)).join('')
+      :`<div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;margin:0 auto">${ICON('users')}</div><p class="mt-2 text-sm font-semibold">No friends yet</p><p class="mt-1 text-xs" ${M}>Search savers below and send a request.</p></div>`}
+  </div>`;
+  return `<div class="dash-stack space-y-5">
+    <div class="page-head"><div><h1 class="page-h1">Friends</h1><p class="page-sub">Follow savers, add friends, save together.</p></div>
+      <button class="btn btn-primary shrink-0" data-action="gNew">${ICON('users','ic-sm')} Create Group Goal</button></div>
+    <div class="glass rounded-2xl p-4"><label class="t-label">Find savers</label>
+      <div class="so-search mt-2"><span class="so-ic">${ICON('search','ic-sm')}</span><input id="fSearch" class="input" placeholder="Search by name or username…" autocomplete="off"></div>
+      <div id="fResults" class="mt-2"></div></div>
+    ${reqSection}
+    ${friendsSection}
+  </div>`;
+}
+function fSearchInput(q){
+  const box=document.getElementById('fResults');if(!box)return;
+  if(!q||!q.trim()){box.innerHTML='';return;}
+  clearTimeout(_fSearchT);
+  _fSearchT=setTimeout(async()=>{
+    let rows=[];
+    if(!DEMO_MODE){try{const safe=q.trim().replace(/[%_,()]/g,'').slice(0,40);const u=SESSION.user.id;
+      if(safe){const {data}=await sb.from('public_profiles').select('id,username,first_name,avatar_url,plan,level').or(`username.ilike.%${safe}%,first_name.ilike.%${safe}%`).neq('id',u).limit(8);rows=data||[];}
+    }catch(e){}}
+    const b=document.getElementById('fResults');if(!b)return;
+    if((document.getElementById('fSearch')?.value||'').trim()!==q.trim())return;
+    const friendIds=new Set(FRIENDS.map(f=>f.id)),outIds=new Set(FR_OUT.map(f=>f.uid));
+    b.innerHTML=rows.length?rows.map(u=>{const f={id:u.id,name:u.first_name||u.username||'Saver',un:u.username,plan:u.plan,lvl:u.level,av:u.avatar_url};
+      const act=friendIds.has(u.id)?`<span class="chip">Friends</span>`:outIds.has(u.id)?`<span class="chip">Requested</span>`:`<button class="btn btn-primary btn-sm" data-action="fAdd" data-id="${u.id}">Add</button>`;
+      return fRow(f,act);}).join('')
+      :`<p class="p-3 text-center text-sm" style="color:var(--muted)">${DEMO_MODE?'Member search activates once accounts go live.':'No savers found for “'+esc(q)+'”.'}</p>`;
+  },350);
+}
+async function fAdd(id){
+  if(DEMO_MODE){toast('Friend requests activate once accounts go live');return;}
+  try{const {error}=await sb.from('friend_requests').insert({sender_id:SESSION.user.id,receiver_id:id,status:'pending'});
+    if(error)throw error;toast('Friend request sent');FRIENDS_LOADED=false;await fEnsureLoaded();
+  }catch(e){toast(/duplicate/i.test(e.message||'')?'Request already sent':'Could not send request','err');}
+}
+async function fRespond(rid,accept){
+  if(DEMO_MODE)return;
+  try{const {error}=await sb.rpc('respond_friend_request',{p_id:rid,p_accept:accept});if(error)throw error;
+    toast(accept?'Friend added 🎉':'Request declined');FRIENDS_LOADED=false;await fEnsureLoaded();
+  }catch(e){toast('Could not update request','err');}
+}
+async function fUnfriend(id){
+  if(!confirm('Remove this friend?'))return;
+  if(!DEMO_MODE){try{await sb.rpc('unfriend',{p_other:id});}catch(e){}}
+  FRIENDS=FRIENDS.filter(f=>f.id!==id);render();toast('Friend removed');
 }
