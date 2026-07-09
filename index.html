@@ -56,7 +56,7 @@
        phone, every hidden/grid/spacing class vanishes and the layout collapses.
        Rebuild after adding new utility classes:
        npx -y tailwindcss@3.4.14 -c tw.config.cjs --content "./index.html,./app.js" -o assets/tw.css -m -->
-  <link rel="stylesheet" href="./assets/tw.css?v=1" />
+  <link rel="stylesheet" href="./assets/tw.css?v=3" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -1220,6 +1220,10 @@
     @media(max-width:1023px){.app-main{padding-top:1.1rem!important}}
     .ic-nav{width:1.45rem;height:1.45rem}
     .mbottom{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;align-items:stretch;padding:.4rem .5rem calc(.4rem + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 80%,transparent);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border-top:1px solid var(--glass-bd)}
+    /* mobile chrome is desktop-hidden explicitly — the static tw.css loads BEFORE this
+       inline sheet, so the equal-specificity `lg:hidden` utility loses the source-order
+       tiebreak; this rule guarantees the sidebar (not the mobile dock) owns desktop nav. */
+    @media(min-width:1024px){.mtopbar,.mbottom{display:none!important}}
     .mtab{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;flex:1;min-height:3rem;padding:.3rem 0;border-radius:.7rem;color:var(--muted);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .18s var(--ease-out)}
     .mtab-ic{display:flex;align-items:center;justify-content:center;transition:transform .18s var(--ease-spring)}
     .mtab-l{font-size:.6rem;font-weight:700;letter-spacing:.01em}
@@ -1767,6 +1771,6 @@
       window.addEventListener('load',scan);
     })();
   </script>
-  <script type="module" src="./app.js?v=110"></script>
+  <script type="module" src="./app.js?v=111"></script>
 </body>
 </html>

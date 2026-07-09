@@ -4106,7 +4106,6 @@ document.addEventListener('click',async(e)=>{
       const em=a.getAttribute('data-email')||localStorage.getItem('goalify_pending_email')||'';
       if(!em){toast('No email on file — please sign up again','err');return;}
       const oldTxt=a.textContent; a.textContent='Sending…'; a.style.pointerEvents='none';
-      console.log('[Goalify] resend OTP →',{email:em,type:'signup'});
       try{
         const {error}=await Promise.race([
           sb.auth.resend({type:'signup',email:em}),
@@ -4119,7 +4118,6 @@ document.addEventListener('click',async(e)=>{
           toast(error.message||'Could not resend code','err'); // REAL Supabase message (e.g. rate limit)
           return;
         }
-        console.log('[Goalify] resend success — new email requested');
         toast('New code sent — check your inbox 📨');
         startOtpCooldown(60); // disable + count down only AFTER a successful resend (respects the 60s rate limit)
       }catch(err){
@@ -4380,7 +4378,6 @@ document.addEventListener('submit',async(e)=>{
       window._verifying=true;if(btn){btn.disabled=true;btn.textContent='Verifying…';}
       const TIMEOUT=20000; // real network-timeout guard only (lock is disabled so this rarely fires)
       const race=(p)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),TIMEOUT))]);
-      console.log('[Goalify] verifyOtp →',{email,tokenLength:code.length,type:'signup'});
       try{
         // signUp() confirmation OTP is type 'signup'. Supabase returns the SAME "invalid/expired"
         // message for a wrong type, so if 'signup' fails we try the generic 'email' type once.
@@ -4392,7 +4389,6 @@ document.addEventListener('submit',async(e)=>{
           if(error)console.error('[Goalify] verifyOtp(type:email) error:',{message:error.message,status:error.status,name:error.name,code:error.code,error});
         }
         if(error){ setMsg(error.message||'Verification failed'); reset(); return; } // REAL Supabase message
-        console.log('[Goalify] verifyOtp success — session present:',!!(data&&data.session));
         setMsg('✓ Verified! Signing you in…',true);
         localStorage.removeItem('goalify_pending_email');
         if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null;}_otpCooldown=0;
