@@ -1254,3 +1254,87 @@ create index if not exists transactions_receipt_idx on public.transactions(recei
 create index if not exists user_achievements_ach_idx on public.user_achievements(achievement_id);
 create index if not exists user_badges_badge_idx on public.user_badges(badge_id);
 create index if not exists user_inventory_product_idx on public.user_inventory(product_id);
+
+-- ============================================================
+-- GROUP GOALS — collaborative savings (added 2026-07-08)
+-- RBAC (owner/admin/contributor/viewer) via SECURITY DEFINER helpers + RLS.
+-- Applied live as migrations group_goals_feature + group_goals_harden_grants.
+-- ============================================================
+create table if not exists public.group_goals (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  name text not null, emoji text default '🎯',
+  target_amount numeric not null check (target_amount > 0),
+  saved_amount numeric not null default 0,
+  currency text not null default 'EUR', target_date date,
+  privacy text not null default 'invite' check (privacy in ('invite','friends','public')),
+  invite_code text unique not null default encode(gen_random_bytes(5),'hex'),
+  status text not null default 'active' check (status in ('active','completed','archived')),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table if not exists public.group_members (
+  group_id uuid not null references public.group_goals(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null default 'contributor' check (role in ('owner','admin','contributor','viewer')),
+  joined_at timestamptz not null default now(), primary key (group_id, user_id)
+);
+create table if not exists public.group_contributions (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.group_goals(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  amount numeric not null check (amount <> 0), note text,
+  created_at timestamptz not null default now()
+);
+create index if not exists group_members_user_idx on public.group_members(user_id);
+create index if not exists group_contrib_group_idx on public.group_contributions(group_id, created_at desc);
+create index if not exists group_goals_code_idx on public.group_goals(invite_code);
+-- SECURITY DEFINER helpers avoid RLS recursion; grants restricted to authenticated (see harden migration)
+create or replace function public.is_group_member(gid uuid) returns boolean language sql stable security definer set search_path=public as $$
+  select exists(select 1 from public.group_members where group_id=gid and user_id=auth.uid()); $$;
+create or replace function public.group_role(gid uuid) returns text language sql stable security definer set search_path=public as $$
+  select role from public.group_members where group_id=gid and user_id=auth.uid(); $$;
+alter table public.group_goals enable row level security;
+alter table public.group_members enable row level security;
+alter table public.group_contributions enable row level security;
+create policy gg_select on public.group_goals for select using (privacy='public' or public.is_group_member(id));
+create policy gg_insert on public.group_goals for insert with check (owner_id=auth.uid());
+create policy gg_update on public.group_goals for update using (public.group_role(id) in ('owner','admin')) with check (public.group_role(id) in ('owner','admin'));
+create policy gg_delete on public.group_goals for delete using (owner_id=auth.uid());
+create policy gm_select on public.group_members for select using (public.is_group_member(group_id));
+create policy gm_delete on public.group_members for delete using (user_id=auth.uid() or public.group_role(group_id) in ('owner','admin'));
+create policy gc_select on public.group_contributions for select using (public.is_group_member(group_id));
+create policy gc_insert on public.group_contributions for insert with check (user_id=auth.uid() and public.group_role(group_id) in ('owner','admin','contributor'));
+create policy gc_delete on public.group_contributions for delete using (user_id=auth.uid() or public.group_role(group_id) in ('owner','admin'));
+-- saved_amount + completion kept in sync from contributions (trigger fn: not REST-exposed)
+create or replace function public.recompute_group_saved() returns trigger language plpgsql security definer set search_path=public as $$
+declare gid uuid; tot numeric; begin
+  gid := coalesce(new.group_id, old.group_id);
+  select coalesce(sum(amount),0) into tot from public.group_contributions where group_id=gid;
+  update public.group_goals set saved_amount=tot, status=case when tot>=target_amount then 'completed' else 'active' end, updated_at=now() where id=gid and status<>'archived';
+  return null; end $$;
+create trigger trg_group_saved after insert or delete or update on public.group_contributions for each row execute function public.recompute_group_saved();
+-- RPCs (create + server-validated join). Grants: authenticated only.
+create or replace function public.create_group_goal(p_name text, p_emoji text, p_target numeric, p_currency text, p_target_date date, p_privacy text)
+returns public.group_goals language plpgsql security definer set search_path=public as $$
+declare g public.group_goals; begin
+  if auth.uid() is null then raise exception 'auth required'; end if;
+  if coalesce(p_target,0) <= 0 then raise exception 'target must be positive'; end if;
+  insert into public.group_goals(owner_id,name,emoji,target_amount,currency,target_date,privacy)
+    values (auth.uid(), left(coalesce(nullif(p_name,''),'Group goal'),80), coalesce(nullif(p_emoji,''),'🎯'), p_target,
+            coalesce(nullif(p_currency,''),'EUR'), p_target_date, case when p_privacy in ('invite','friends','public') then p_privacy else 'invite' end)
+    returning * into g;
+  insert into public.group_members(group_id,user_id,role) values (g.id, auth.uid(), 'owner');
+  return g; end $$;
+create or replace function public.join_group_by_code(p_code text)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare g public.group_goals; begin
+  if auth.uid() is null then raise exception 'auth required'; end if;
+  select * into g from public.group_goals where invite_code=lower(trim(p_code)) and status<>'archived';
+  if g.id is null then raise exception 'Invalid or expired invite code'; end if;
+  insert into public.group_members(group_id,user_id,role) values (g.id, auth.uid(), 'contributor') on conflict do nothing;
+  return g.id; end $$;
+revoke all on function public.recompute_group_saved() from anon, authenticated, public;
+grant execute on function public.create_group_goal(text,text,numeric,text,date,text) to authenticated;
+grant execute on function public.join_group_by_code(text) to authenticated;
+grant execute on function public.is_group_member(uuid) to authenticated;
+grant execute on function public.group_role(uuid) to authenticated;

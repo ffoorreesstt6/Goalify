@@ -485,7 +485,7 @@ function setLang(l){
 }
 function planNav(plan){
   const c=caps(plan);
-  const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal']];
+  const nav=[['dashboard','Dashboard','home'],['goals','Goals','goal'],['groups','Group Goals','users']];
   nav.push(['analytics','Analytics','chart'],['simulator','Future Simulator','crystal'],['spendcalc','Impact Calculator','euro'],['challenges','Challenges','trophy']);
   if(c.social!=='none')nav.push(['social','Social','users']);
   nav.push(['inbox','Inbox','inbox']);
@@ -1072,7 +1072,10 @@ const ICON_PATHS={
   mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>'
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-4.5-4.5L5 21"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'
 };
 function ICON(name,cls){const p=ICON_PATHS[name]||'';return `<svg class="ic ${cls||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;}
 const ICON_DATA="data:image/png;base64,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";
@@ -1958,6 +1961,22 @@ const ANA_ROASTS=[
   "That cart didn’t abandon itself… oh wait, it never got abandoned.",
   "Your future self just slid into your DMs. Maybe read it. 👀"
 ];
+// personalized roasts — keyed to the user's actual biggest money leak (kind, shareable, never shaming)
+const ANA_ROAST_BY_CAT={
+  coffee:'Your coffee budget deserves its own rewards program. ☕',
+  delivery:'Your delivery apps see you as a VIP — your savings account, less so. 🛵',
+  restaurants:'You dine like a food critic on a mission. Delicious… and quietly expensive. 🍽️',
+  fastfood:'“It’s only a few euros” — said forty times this month. 🍔',
+  shopping:'Your cart has never known the meaning of “abandoned”. 🛍️',
+  clothing:'Your closet is thriving while your goals wait patiently. 👕',
+  nightlife:'Your weekends are living their best life — your wallet needs a nap. 🍻',
+  subscriptions:'Your subscriptions are collecting rent while you aren’t looking. 📱',
+  cigarettes:'This little habit has expensive taste in every sense. 🚬',
+  fuel:'Your tank drinks better than you do. ⛽',
+  gaming:'Your game library is bigger than your emergency fund — for now. 🎮',
+  beauty:'Looking this good clearly isn’t free. 💄',
+  groceries:'Even your grocery runs have main-character energy. 🛒'
+};
 const ANA_MOTIV=[
   ['🚀','If you save just €4/day…','you’ll reach your goal <b>7 months earlier</b>.'],
   ['✨','Skip one unnecessary purchase each week…','future you will <b>definitely</b> notice.'],
@@ -2008,9 +2027,14 @@ function buildAnalysis(d){
   else if(byCat) card=byCat;
   else card=ANA_PERSONAS[h%ANA_PERSONAS.length];
   if(!card)card=ANA_PERSONAS.find(p=>p[0]==='balanced');
-  const roast=ANA_ROASTS[h%ANA_ROASTS.length];
+  // roast the user's real biggest leak (falls back to a generic kind one)
+  const roast=ANA_ROAST_BY_CAT[leak]||ANA_ROAST_BY_CAT[topCat]||ANA_ROASTS[h%ANA_ROASTS.length];
   const motiv=ANA_MOTIV[h%ANA_MOTIV.length];
-  return {...d,name,sr,topCat,leak,potentialYr,readiness,card,roast,motiv};
+  // multi-horizon savings projection for the reveal (modest 4%/yr growth on the monthly amount)
+  const potMonthly=Math.max(0,Math.round(potentialYr/12));
+  const fv=(m,yrs)=>{const r=0.04/12,n=yrs*12;return r>0?Math.round(m*((Math.pow(1+r,n)-1)/r)):m*n;};
+  const proj={monthly:potMonthly,year:potentialYr,y5:fv(potMonthly,5),y10:fv(potMonthly,10)};
+  return {...d,name,sr,topCat,leak,potentialYr,readiness,card,roast,motiv,proj};
 }
 function anaDots(active,total){let s='<div class="ana-dots" aria-hidden="true">';for(let i=1;i<=total;i++)s+=`<span class="ana-dot ${i<=active?'on':''}"></span>`;return s+'</div>';}
 function anaWrap(inner,cta,skip){
@@ -2048,8 +2072,17 @@ function renderAnalysis(){
     return;
   }
   if(i===4){
-    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl">${a.motiv[0]}</div><h2 class="t-h2 mt-3">${a.motiv[1]}</h2><p class="mt-3 t-body-lg" style="color:var(--muted)">${a.motiv[2]}</p></div>`);
-    return;
+    const pj=a.proj||{monthly:0,year:0,y5:0,y10:0};
+    st.innerHTML=anaWrap(`<div class="text-center"><div class="text-5xl">💰</div><p class="t-label mt-3">Your savings potential</p><h2 class="t-h2 mt-1">This could be you</h2><p class="t-caption mt-1">If you redirect what you could save…</p></div>
+      <div class="mt-5 grid grid-cols-2 gap-2.5">
+        <div class="ana-stat"><span class="ana-stat-l">Per month</span><span class="ana-stat-v gtext" data-count-to="${pj.monthly}" data-pre="€">€0</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">First year</span><span class="ana-stat-v gtext" data-count-to="${pj.year}" data-pre="€">€0</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">In 5 years</span><span class="ana-stat-v" style="color:var(--jade2)" data-count-to="${pj.y5}" data-pre="€">€0</span></div>
+        <div class="ana-stat"><span class="ana-stat-l">In 10 years</span><span class="ana-stat-v" style="color:var(--jade2)" data-count-to="${pj.y10}" data-pre="€">€0</span></div>
+      </div>
+      <div class="mt-4 rcp-ins"><span>${a.motiv[0]}</span><span><b>${a.motiv[1]}</b> ${a.motiv[2]}</span></div>
+      <p class="t-caption mt-2 text-center">Projections assume a modest 4%/yr growth — not financial advice.</p>`);
+    animateAnaCounters(st);return;
   }
   if(i===5){
     const got=grantOnceCoins(100,'first_analysis','onboarding');
@@ -2193,7 +2226,7 @@ function appMenuSheet(){
     <div class="sheet" data-action="noop" role="dialog" aria-label="More">
       <div class="sheet-grip"></div>
       <div class="sheet-grid">
-        ${item('Goals','goals','goal')}${item('Analytics','analytics','chart')}${item('Simulator','simulator','crystal')}
+        ${item('Goals','goals','goal')}${item('Groups','groups','users')}${item('Analytics','analytics','chart')}${item('Simulator','simulator','crystal')}
         ${item('Impact','spendcalc','euro')}${item('Challenges','challenges','trophy')}${item('Social','social','users')}
         ${item('Rewards','rewards','gift')}${item('Student','student','student')}
         <button class="sheet-item" data-action="searchSavers">${ICON('search')}<span>Find savers</span></button>
@@ -2213,7 +2246,8 @@ function shell(route,inner){
     <div class="mx-3 mb-2">${coinPillHTML()}</div>
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><div class="px-1 pb-2">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
-  <div class="lg:pl-64">${mobileChrome(route)}<main class="app-main mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">${inner}</main></div></div>`;
+  <div class="lg:pl-64">${mobileChrome(route)}<main class="app-main mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">${inner}</main>
+  <button class="scan-fab lg:hidden" data-action="openScan" aria-label="Scan receipt">${ICON('camera')}</button></div></div>`;
 }
 function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
 function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid='g'+label.replace(/\W/g,'');return `<div class="flex flex-col items-center"><div class="relative" style="width:140px;height:140px"><svg width="140" height="140" style="transform:rotate(-90deg)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="70" cy="70" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle cx="70" cy="70" r="${r}" stroke="url(#${gid})" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s ease"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold">${score}</span><span class="text-xs text-slate-400">${sub||''}</span></div></div><p class="mt-2 text-sm font-medium text-slate-400">${label}</p></div>`;}
@@ -2555,11 +2589,14 @@ function savingsOpportunitiesHTML(){
 // Tools live on Home, Community on Profile (mobile only; the desktop
 // sidebar already links to every one of these).
 function quickRow(title,items){
-  return `<div class="lg:hidden"><p class="t-label mb-2">${title}</p><div class="tool-row">${items.map(([label,route,icon,locked])=>`<a href="#app/${route}" class="tool-chip${locked?' locked':''}" aria-label="${label}${locked?' (locked)':''}"><span class="tool-chip-ic">${ICON(locked?'lock':icon,'ic-sm')}</span><span class="tool-chip-l">${label}</span></a>`).join('')}</div></div>`;
+  return `<div class="lg:hidden"><p class="t-label mb-2">${title}</p><div class="tool-row">${items.map(([label,route,icon,locked,action])=>action
+    ?`<button data-action="${action}" class="tool-chip" aria-label="${label}"><span class="tool-chip-ic">${ICON(icon,'ic-sm')}</span><span class="tool-chip-l">${label}</span></button>`
+    :`<a href="#app/${route}" class="tool-chip${locked?' locked':''}" aria-label="${label}${locked?' (locked)':''}"><span class="tool-chip-ic">${ICON(locked?'lock':icon,'ic-sm')}</span><span class="tool-chip-l">${label}</span></a>`).join('')}</div></div>`;
 }
 function toolsRowHTML(){
   const c=caps(ME?.plan||'free');
   return quickRow('Tools',[
+    ['Scan','','camera',false,'openScan'],
     ['Simulator','simulator','crystal',false],
     ['Impact','spendcalc','euro',false],
     ['Analytics','analytics','chart',false],
@@ -2662,34 +2699,118 @@ function goalsView(){
   `<div class="grid gap-5 lg:grid-cols-2">${GOALS.map(goalCard).join('')}</div>`}</div>`;
 }
 
+// ── Analytics 2.0 helpers (pure functions of EXPENSES / GOALS) ──
+function _daySpend(days){ // map YYYY-MM-DD -> total spend, last N days
+  const map={},cut=Date.now()-days*864e5;
+  EXPENSES.forEach(e=>{if(!isSpend(e))return;const t=new Date(e.spent_at).getTime();if(isNaN(t)||t<cut)return;const k=(e.spent_at||'').slice(0,10);map[k]=(map[k]||0)+Number(e.amount);});
+  return map;
+}
+function spendingHeatmapHTML(){
+  const WEEKS=14, days=WEEKS*7;
+  const map=_daySpend(days);
+  const vals=Object.values(map).filter(v=>v>0).sort((a,b)=>a-b);
+  const q=p=>vals.length?vals[Math.min(vals.length-1,Math.floor(p*vals.length))]:0;
+  const t1=q(.25),t2=q(.5),t3=q(.75); // quantile thresholds
+  const lvl=v=>v<=0?0:v<=t1?1:v<=t2?2:v<=t3?3:4;
+  const bg=l=>l===0?'var(--card-2)':`color-mix(in srgb,var(--accent2) ${[0,22,42,66,92][l]}%,var(--card-2))`;
+  const today=new Date();today.setHours(0,0,0,0);
+  const start=new Date(today);start.setDate(start.getDate()-(days-1));
+  // align start to the Monday of its week for clean columns
+  const off=(start.getDay()+6)%7; start.setDate(start.getDate()-off);
+  let cells='';const d=new Date(start);
+  while(d<=today){const k=d.toISOString().slice(0,10);const v=map[k]||0;const l=lvl(v);
+    cells+=`<div class="heat-cell" style="background:${bg(l)}" title="${k}: ${v>0?fmt(v):'no spend'}"></div>`;
+    d.setDate(d.getDate()+1);}
+  const noSpendDays=(()=>{let c=0;const dd=new Date(start);while(dd<=today){if(!(map[dd.toISOString().slice(0,10)]>0))c++;dd.setDate(dd.getDate()+1);}return c;})();
+  const M='style="color:var(--muted)"';
+  return `<div class="glass rounded-2xl p-4 sm:p-5">
+    <div class="mb-3 flex items-center justify-between"><div><h3 class="font-bold">Spending consistency</h3><p class="text-xs" ${M}>${noSpendDays} no-spend days in the last ${WEEKS} weeks</p></div>
+      <div class="heat-legend">Less ${[0,1,2,3,4].map(l=>`<i style="background:${bg(l)}"></i>`).join('')} More</div></div>
+    <div class="heat-wrap"><div class="heat">${cells}</div></div></div>`;
+}
+function habitsHTML(){
+  const M='style="color:var(--muted)"';const now=Date.now();const in30=e=>now-new Date(e.spent_at).getTime()<=30*864e5;
+  const cards=[];
+  // weekend vs weekday share (last 60d)
+  let we=0,wd=0;EXPENSES.forEach(e=>{if(!isSpend(e))return;const dt=new Date(e.spent_at);if(isNaN(dt)||now-dt.getTime()>60*864e5)return;const day=dt.getDay();(day===0||day===6?()=>we+=Number(e.amount):()=>wd+=Number(e.amount))();});
+  if(we+wd>0){const share=Math.round(we/(we+wd)*100);cards.push(['Weekend spending',share+'%',share>40?`You spend more on weekends — a Sat/Sun cap could help.`:`Nicely balanced across the week.`]);}
+  // coffee/cafe habit by merchant
+  const coffee=EXPENSES.filter(e=>in30(e)&&/coffee|cafe|café|starbucks|costa|espresso/i.test(e.merchant||''));
+  if(coffee.length>=2){const tot=coffee.reduce((s,e)=>s+Number(e.amount),0);cards.push(['Coffee habit',fmt(tot),`${coffee.length} visits this month — about ${fmt(tot*12)}/year.`]);}
+  // subscriptions this month
+  const subs=EXPENSES.filter(e=>in30(e)&&e.category==='subscriptions').reduce((s,e)=>s+Number(e.amount),0);
+  if(subs>0)cards.push(['Subscriptions',fmt(subs),`Recurring monthly — ${fmt(subs*12)}/year. Review the ones you don't use.`]);
+  // biggest reducible category
+  const wr=whatToReduce()[0];
+  if(wr){const c=CATS[wr.cat]||CATS.other;cards.push([`Cut ${c.l} 20%`,fmt(Math.round(wr.save*12))+'/yr',`Trimming ${c.l} a little frees up real money over a year.`]);}
+  if(!cards.length)return '';
+  return `<div class="glass rounded-2xl p-4 sm:p-5"><h3 class="font-bold mb-3">Habits &amp; opportunities</h3>
+    <div class="grid grid-cols-2 gap-3">${cards.slice(0,4).map(c=>`<div class="a-metric"><p class="l">${c[0]}</p><p class="v gtext">${c[1]}</p><p class="i" ${M}>${c[2]}</p></div>`).join('')}</div></div>`;
+}
+function goalAnalyticsHTML(){
+  const M='style="color:var(--muted)"';const now=Date.now();
+  const active=(GOALS||[]).filter(g=>!g.completed&&g.target_amount>0).slice(0,4);
+  if(!active.length)return '';
+  const rows=active.map(g=>{
+    const p=Math.min(100,Math.round((g.saved_amount/g.target_amount)*100||0));
+    const left=Math.max(0,g.target_amount-(g.saved_amount||0));
+    const mc=Number(g.monthly_contribution||0);
+    const monthsLeft=g.target_date?(new Date(g.target_date).getTime()-now)/(30.44*864e5):null;
+    const needPace=monthsLeft&&monthsLeft>0?Math.ceil(left/monthsLeft):null;
+    let verdict,cls;
+    if(!mc){verdict='Set a monthly amount to forecast';cls='';}
+    else if(needPace==null){const m=Math.ceil(left/mc);verdict=`~${m} month${m===1?'':'s'} at ${fmt(mc)}/mo`;cls='';}
+    else if(mc>=needPace){verdict=`On track — ${fmt(mc)}/mo ≥ ${fmt(needPace)}/mo needed`;cls='text-emerald-400';}
+    else {verdict=`Behind — needs ${fmt(needPace)}/mo (you're at ${fmt(mc)}/mo)`;cls='text-amber-400';}
+    return `<div class="py-2.5" style="border-bottom:1px solid var(--hair)">
+      <div class="flex items-center justify-between gap-2"><p class="font-semibold text-sm truncate">${g.emoji||'🎯'} ${esc(g.name)}</p><span class="text-sm font-bold">${p}%</span></div>
+      <div class="mt-1.5 h-1.5 rounded-full" style="background:var(--card-2)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent3))"></div></div>
+      <p class="mt-1.5 text-xs ${cls}" ${cls?'':M}>${verdict} · ${fmt(left)} to go</p></div>`;
+  }).join('');
+  return `<div class="glass rounded-2xl p-4 sm:p-5"><h3 class="font-bold mb-1">Goal forecasts</h3>${rows}</div>`;
+}
+
 function analyticsView(){
   const now=new Date(),mStart=new Date(now.getFullYear(),now.getMonth(),1),lastStart=new Date(now.getFullYear(),now.getMonth()-1,1);
   const spend=EXPENSES.filter(isSpend);
   const thisM=spend.filter(e=>new Date(e.spent_at)>=mStart).reduce((s,e)=>s+Number(e.amount),0);
   const lastM=spend.filter(e=>{const d=new Date(e.spent_at);return d>=lastStart&&d<mStart;}).reduce((s,e)=>s+Number(e.amount),0);
   const delta=lastM>0?Math.round((thisM-lastM)/lastM*100):null;
-  const avgDay=thisM/Math.max(1,now.getDate());
-  const map=monthCatSpend(),top=Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
-  const topCat=top?(CATS[top[0]]||CATS.other):null;
-  const deltaCol=delta==null?'var(--text)':delta<=0?'var(--jade2)':'var(--coral)';
-  const kpis=[
-    ['💸','Spent this month',fmt(thisM),now.toLocaleDateString('en-US',{month:'long'}),'var(--text)'],
-    ['📅','Average per day',fmt(avgDay),'so far this month','var(--text)'],
-    ['🏷️','Top category',topCat?`${topCat.e} ${topCat.l}`:'—',top?fmt(top[1])+' this month':'no spending yet','var(--text)'],
-    ['📈','vs last month',delta==null?'—':(delta>0?'+':'')+delta+'%',delta==null?'needs two months of data':delta<=0?'trending down — nice':'higher than last month',deltaCol]];
-  return `<div class="dash-stack space-y-5 sm:space-y-6">
-  <div class="page-head"><div><h1 class="page-h1">Analytics</h1><p class="page-sub">Track expenses and explore your spending across every timeframe.</p></div></div>
-  <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">${kpis.map(k=>`<div class="kpi"><div class="flex items-center justify-between gap-2"><span class="k-l">${k[1]}</span><span class="text-lg">${k[0]}</span></div><p class="k-v" style="color:${k[4]}">${k[2]}</p><p class="k-s">${k[3]}</p></div>`).join('')}</div>
-  <div class="grid gap-5 lg:grid-cols-5">
-    <div class="glass rounded-2xl p-4 sm:p-5 lg:col-span-3"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-bold">Spending trend</h3><p class="text-xs" style="color:var(--muted)">All logged expenses over time</p></div><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','1 Month'],['year','1 Year'],['five','5 Years']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center font-semibold ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:220px;max-height:42vh"><canvas id="spendChart"></canvas></div></div>
-    <div class="glass rounded-2xl p-4 sm:p-5 lg:col-span-2"><h3 class="font-bold">Category breakdown</h3><p class="text-xs" style="color:var(--muted)">This month</p><div class="mt-3" style="height:200px"><canvas id="catChart"></canvas></div></div>
-  </div>
-  <div class="grid gap-5 lg:grid-cols-3">
-    <div class="glass rounded-2xl p-5 h-fit"><h3 class="font-bold">Add expense</h3><p class="text-xs" style="color:var(--muted)">Log it in seconds — analytics update instantly.</p><form id="expForm" class="mt-4 space-y-3"><div><label class="label">Amount (€)</label><input name="amount" type="number" step="0.01" min="0" class="input" placeholder="0.00" required></div><div><label class="label">Category</label><select name="category" class="input">${Object.keys(CATS).map(c=>`<option value="${c}">${CATS[c].e} ${CATS[c].l}</option>`).join('')}</select></div><div><label class="label">Merchant</label><input name="merchant" class="input" placeholder="optional"></div><div><label class="label">Date</label><input name="date" type="date" class="input" value="${todayISO()}"></div><button class="btn btn-primary w-full text-sm">+ Add expense</button></form></div>
-    <div class="glass rounded-2xl p-5 lg:col-span-2"><div class="flex items-center justify-between"><h3 class="font-bold">Recent transactions</h3>${EXPENSES.length?`<span class="chip">${EXPENSES.length} total</span>`:''}</div>
+  const s=snapshot(ME,EXPENSES),h=healthScore(s),income=s.income||0;
+  const thisRate=income>0?Math.round((income-thisM)/income*100):0;
+  const lastRate=income>0?Math.round((income-lastM)/income*100):0;
+  const rateDiff=lastM>0?thisRate-lastRate:null;
+  const flow=income-thisM;
+  const M='style="color:var(--muted)"';
+  const hlabel=h>=75?'Excellent':h>=60?'Healthy':h>=40?'Getting there':'Needs care';
+  const hero=`<div class="glass-strong rounded-2xl p-5 sm:p-6">
+    <div class="flex flex-col sm:flex-row items-center gap-5">
+      <div class="shrink-0">${ring(h,'Financial health',hlabel)}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 w-full">
+        <div class="a-metric"><p class="l">Savings rate</p><p class="v" style="color:var(--jade2)">${Math.max(0,thisRate)}%</p><p class="i" ${M}>${rateDiff==null?'this month':rateDiff>0?'▲ '+rateDiff+'% vs last month':rateDiff<0?'▼ '+Math.abs(rateDiff)+'% vs last month':'same as last month'}</p></div>
+        <div class="a-metric"><p class="l">Cash flow</p><p class="v" style="color:${flow>=0?'var(--jade2)':'var(--coral)'}">${flow>=0?'+':''}${fmt(flow)}</p><p class="i" ${M}>income minus spend</p></div>
+        <div class="a-metric"><p class="l">Spent this month</p><p class="v">${fmt(thisM)}</p><p class="i" ${M}>${delta==null?'—':delta<=0?'▼ '+Math.abs(delta)+'% — trending down':'▲ '+delta+'% vs last month'}</p></div>
+      </div>
+    </div>
+    <p class="mt-4 text-sm" ${M}>${h>=75?'Strong position — keep automating savings and you’ll hit goals early.':h>=60?'Healthy money habits. Trimming your top category would push this higher.':h>=40?'You’re on your way — lifting your savings rate above 20% is the fastest win.':'Focus on a small buffer first — even €50/week builds momentum.'}</p>
+  </div>`;
+  const chartsRow=`<div class="grid gap-5 lg:grid-cols-5">
+    <div class="glass rounded-2xl p-4 sm:p-5 lg:col-span-3"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-bold">Spending trend</h3><p class="text-xs" ${M}>All logged expenses over time</p></div><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','Month'],['year','Year'],['five','5Y']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center font-semibold ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:220px;max-height:42vh"><canvas id="spendChart"></canvas></div></div>
+    <div class="glass rounded-2xl p-4 sm:p-5 lg:col-span-2"><h3 class="font-bold">Category breakdown</h3><p class="text-xs" ${M}>This month</p><div class="mt-3" style="height:200px"><canvas id="catChart"></canvas></div></div>
+  </div>`;
+  const addForm=`<div class="glass rounded-2xl p-5 h-fit"><h3 class="font-bold">Add expense</h3><p class="text-xs" style="color:var(--muted)">Log it in seconds — analytics update instantly.</p><form id="expForm" class="mt-4 space-y-3"><div><label class="label">Amount (€)</label><input name="amount" type="number" step="0.01" min="0" class="input" placeholder="0.00" required></div><div><label class="label">Category</label><select name="category" class="input">${Object.keys(CATS).map(c=>`<option value="${c}">${CATS[c].e} ${CATS[c].l}</option>`).join('')}</select></div><div><label class="label">Merchant</label><input name="merchant" class="input" placeholder="optional"></div><div><label class="label">Date</label><input name="date" type="date" class="input" value="${todayISO()}"></div><button class="btn btn-primary w-full text-sm">+ Add expense</button></form></div>`;
+  const txList=`<div class="glass rounded-2xl p-5 lg:col-span-2"><div class="flex items-center justify-between"><h3 class="font-bold">Recent transactions</h3>${EXPENSES.length?`<span class="chip">${EXPENSES.length} total</span>`:''}</div>
     ${EXPENSES.length===0?`<div class="empty-wrap mt-4 !py-10"><div class="empty-orb" style="height:3.2rem;width:3.2rem;font-size:1.5rem">🧾</div><p class="mt-3 text-sm font-bold">No transactions yet</p><p class="mt-1 text-xs" style="color:var(--muted)">Add your first expense and your analytics come alive.</p></div>`
-    :`<div class="mt-3 max-h-[400px] space-y-1 overflow-y-auto pr-1">${EXPENSES.slice(0,50).map(e=>{const m=CATS[e.category]||CATS.other,inc=e.category==='income';return `<div class="tx-row"><span class="tx-ico">${m.e}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">${esc(e.merchant||m.l)}</p><p class="text-xs" style="color:var(--muted)">${m.l} · ${e.spent_at}</p></div><span class="text-sm font-bold ${inc?'text-emerald-400':''}">${inc?'+':'-'}${fmt(e.amount)}</span><button data-action="delExp" data-id="${e.id}" class="icon-btn danger" title="Delete">🗑</button></div>`;}).join('')}</div>`}</div>
-  </div></div>`;
+    :`<div class="mt-3 max-h-[400px] space-y-1 overflow-y-auto pr-1">${EXPENSES.slice(0,50).map(e=>{const m=CATS[e.category]||CATS.other,inc=e.category==='income';return `<div class="tx-row"><span class="tx-ico">${m.e}</span><div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">${esc(e.merchant||m.l)}</p><p class="text-xs" style="color:var(--muted)">${m.l} · ${e.spent_at}</p></div><span class="text-sm font-bold ${inc?'text-emerald-400':''}">${inc?'+':'-'}${fmt(e.amount)}</span><button data-action="delExp" data-id="${e.id}" class="icon-btn danger" title="Delete">🗑</button></div>`;}).join('')}</div>`}</div>`;
+  return `<div class="dash-stack space-y-5 sm:space-y-6">
+    <div class="page-head"><div><h1 class="page-h1">Analytics</h1><p class="page-sub">Your money, understood — health, habits and what to do next.</p></div></div>
+    ${hero}
+    ${spendingHeatmapHTML()}
+    ${chartsRow}
+    <div class="grid gap-5 lg:grid-cols-2">${habitsHTML()}${goalAnalyticsHTML()}</div>
+    ${smartInsightsHTML()}
+    <div class="grid gap-5 lg:grid-cols-3">${addForm}${txList}</div>
+  </div>`;
 }
 
 function simulatorView(){
@@ -3494,6 +3615,11 @@ async function render(){
   document.documentElement.removeAttribute('data-biz');
   const root=$('#root');
   const hash=location.hash.replace(/^#/,'')||'home';
+  // invite deep-link: origin#join/<code> → join then open Group Goals (stash for post-signup if logged out)
+  if(hash.startsWith('join/')){const code=hash.slice(5).trim();
+    if(SESSION){location.hash='#app/groups';if(code)setTimeout(()=>gJoinByCode(code),200);}
+    else{if(code)localStorage.setItem('goalify_pending_join',code);location.hash='#signup';}
+    return;}
   // per-screen ambient identity — drives html[data-route] backdrop CSS
   {const rk=hash.startsWith('app/')?'app-'+((hash.split('/')[1]||'dashboard').split('?')[0]):hash.startsWith('payment-success')?'success':(hash.split(/[?&=]/)[0]||'home');
    document.documentElement.setAttribute('data-route',(rk.replace(/[^a-zA-Z0-9-]/g,'')||'home'));}
@@ -3575,11 +3701,11 @@ async function render(){
     const c=caps(ME.plan);
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
-    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store')?route:'dashboard';
+    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store'||route==='groups')?route:'dashboard';
     // Onboarding already requires a goal. Never force completed users back to goal creation —
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
-    const views={dashboard:dashboardView,goals:goalsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.engage){drawSpend('year');drawCat();}
@@ -3587,6 +3713,7 @@ async function render(){
     if(route2==='simulator'){runSim();}
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
     if(route2==='student'){renderSVStatus();}
+    if(route2==='groups'){gEnsureLoaded();}else{GROUP_OPEN=null;GROUP_NEW=false;}
     if(_coinPulse){const p=_coinPulse;_coinPulse=null;requestAnimationFrame(()=>pulseCoinPill(p.from,p.to));}
     if(window._focusSoSearch){window._focusSoSearch=false;setTimeout(()=>document.getElementById('soSearch')?.focus(),60);}
     return;
@@ -4011,6 +4138,17 @@ document.addEventListener('click',async(e)=>{
     else if(act==='ltStart'){try{localStorage.setItem('goalify_teaser',JSON.stringify({income:LT.income,goal:LT.goal,ts:Date.now()}));}catch(_){}if(typeof QA!=='undefined'&&QA&&LT.income)QA.income=LT.income;/* anchor navigates to #signup */}
     else if(act==='mnav'){const p=document.getElementById('mnavPanel');if(p)p.classList.toggle('hidden');}
     else if(act==='soTab'){SOTAB=a.getAttribute('data-tab');render();}
+    else if(act==='openScan'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.remove('open');openScan();}
+    else if(act==='gNew'){GROUP_NEW=true;render();}
+    else if(act==='gCancelNew'){GROUP_NEW=false;render();}
+    else if(act==='gnEmo'){document.querySelectorAll('#gnEmo .sel').forEach(x=>x.classList.remove('sel'));a.classList.add('sel');}
+    else if(act==='gCreateSubmit'){const nm=document.getElementById('gnName')?.value;const emo=document.querySelector('#gnEmo .sel')?.getAttribute('data-e')||'🎯';const t=document.getElementById('gnTarget')?.value;GROUP_NEW=false;gCreate(nm,emo,t);}
+    else if(act==='gOpen'){GROUP_OPEN=a.getAttribute('data-id');render();const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(g&&!DEMO_MODE&&!g._members)gLoadDetail(g);}
+    else if(act==='gBack'){GROUP_OPEN=null;render();}
+    else if(act==='gJoin'){gJoinByCode(document.getElementById('gJoinCode')?.value);}
+    else if(act==='gContribute'){gContribute(a.getAttribute('data-id'),document.getElementById('gAmt')?.value);}
+    else if(act==='gCopy'){const l=a.getAttribute('data-link');if(navigator.clipboard)navigator.clipboard.writeText(l).then(()=>toast('Invite link copied'),()=>toast('Copy failed','err'));else toast('Copy not supported','err');}
+    else if(act==='gLeave'){gLeave(a.getAttribute('data-id'));}
     else if(act==='appMenu'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.add('open');}
     else if(act==='appMenuClose'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.remove('open');}
     else if(act==='noop'){/* swallow clicks inside the sheet so the scrim doesn't close it */}
@@ -4470,3 +4608,441 @@ loadTheme();
   render();
 })();
 startI18n(); // begin live translation of the UI based on saved language
+
+
+// ============================================================
+// RECEIPT SCANNER — flagship feature (client-side Tesseract OCR)
+// Self-contained: persistent #rcpRoot overlay (survives render()),
+// lazy OCR, heuristic parser, lightweight real-data AI, optimistic save.
+// ============================================================
+let RCP={open:false,step:'capture',img:null,busy:false,data:null,cancel:false};
+const RCP_LIMITS={free:5,pro:30,premium:Infinity,business:Infinity};
+
+function scanLimit(){return RCP_LIMITS[ME?.plan||'free']??5;}
+function scansThisMonthKey(){return 'goalify_scans_'+(uid&&uid())+'_'+todayISO().slice(0,7);}
+function scansThisMonth(){try{return parseInt(localStorage.getItem(scansThisMonthKey())||'0',10)||0;}catch(e){return 0;}}
+function bumpScanCount(){try{localStorage.setItem(scansThisMonthKey(),String(scansThisMonth()+1));}catch(e){}}
+
+function ensureRcpRoot(){
+  let r=document.getElementById('rcpRoot');
+  if(r)return r;
+  r=document.createElement('div');r.id='rcpRoot';document.body.appendChild(r);
+  // internal delegated listeners (isolated from the app's main handlers)
+  r.addEventListener('click',onRcpClick);
+  r.addEventListener('input',onRcpInput);
+  r.addEventListener('change',onRcpChange);
+  r.addEventListener('dragover',e=>{if(e.target.closest('.rcp-drop')){e.preventDefault();e.target.closest('.rcp-drop').classList.add('drag');}});
+  r.addEventListener('dragleave',e=>{const d=e.target.closest('.rcp-drop');if(d)d.classList.remove('drag');});
+  r.addEventListener('drop',e=>{const d=e.target.closest('.rcp-drop');if(!d)return;e.preventDefault();d.classList.remove('drag');const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(f)handleReceiptFile(f);});
+  return r;
+}
+
+function openScan(){
+  if(scansThisMonth()>=scanLimit()){
+    ensureRcpRoot();RCP={open:true,step:'limit',img:null,busy:false,data:null,cancel:false};renderRcp();return;
+  }
+  ensureRcpRoot();RCP={open:true,step:'capture',img:null,busy:false,data:null,cancel:false};renderRcp();
+  requestAnimationFrame(()=>document.getElementById('rcpRoot').querySelector('.rcp')?.classList.add('open'));
+}
+function closeScan(){RCP.cancel=true;const el=document.getElementById('rcpRoot');const o=el&&el.querySelector('.rcp');if(o){o.classList.remove('open');setTimeout(()=>{RCP.open=false;el.innerHTML='';},280);}else{RCP.open=false;if(el)el.innerHTML='';}}
+
+// ---- image compression (downscale + jpeg) ----
+function compressImage(file){return new Promise((res,rej)=>{
+  const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{URL.revokeObjectURL(url);
+    const max=1600;let{width:w,height:h}=img;if(w>max||h>max){const s=Math.min(max/w,max/h);w=Math.round(w*s);h=Math.round(h*s);}
+    const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);
+    res(c.toDataURL('image/jpeg',0.82));};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'));};
+  img.src=url;
+});}
+
+async function handleReceiptFile(file){
+  if(!file||!/^image\//.test(file.type)){toast('Please choose an image file','err');return;}
+  if(file.size>12*1024*1024){toast('Image is too large (max 12MB)','err');return;}
+  try{RCP.img=await compressImage(file);}catch(e){toast('Could not read that image','err');return;}
+  runReceiptOCR();
+}
+
+// ---- lazy Tesseract loader (graceful fallback to manual entry) ----
+let _tessPromise=null;
+function loadTesseract(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(_tessPromise)return _tessPromise;
+  _tessPromise=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js';
+    s.async=true;s.onload=()=>window.Tesseract?res(window.Tesseract):rej(new Error('no tesseract'));
+    s.onerror=()=>rej(new Error('tesseract cdn failed'));
+    document.head.appendChild(s);
+    setTimeout(()=>{if(!window.Tesseract)rej(new Error('tesseract timeout'));},20000);
+  });
+  return _tessPromise;
+}
+
+const RCP_STAGES=['Improving image quality','Correcting perspective','Reading text','Extracting merchant','Understanding items','Calculating totals','Detecting taxes','Categorizing purchase'];
+async function runReceiptOCR(){
+  RCP.step='processing';RCP.busy=true;RCP.cancel=false;RCP.pct=0;RCP.stage=RCP_STAGES[0];renderRcp();
+  let text='',conf=0,ok=false;
+  try{
+    const T=await loadTesseract();
+    if(RCP.cancel)return;
+    const {data}=await T.recognize(RCP.img,'eng',{logger:m=>{
+      if(RCP.cancel)return;
+      if(m.status==='recognizing text'){RCP.pct=Math.min(99,Math.round(m.progress*100));
+        RCP.stage=RCP_STAGES[Math.min(RCP_STAGES.length-1,2+Math.floor(m.progress*(RCP_STAGES.length-2)))];
+        updateRcpProgress();}
+    }});
+    text=data.text||'';conf=Math.round(data.confidence||0);ok=true;
+  }catch(e){
+    console.warn('[Goalify] OCR unavailable:',e.message);
+  }
+  if(RCP.cancel)return;
+  RCP.pct=100;RCP.stage='Complete';updateRcpProgress();
+  const parsed=parseReceipt(text);parsed.confidence=ok?Math.max(parsed.confidence,conf):0;parsed.ocrText=text;parsed.ocrOk=ok;
+  RCP.data=parsed;RCP.busy=false;
+  setTimeout(()=>{if(!RCP.cancel){RCP.step='review';renderRcp();}},350);
+}
+
+// ---- heuristic receipt parser ----
+const CUR_SIGNS={'€':'EUR','$':'USD','£':'GBP','₺':'TRY','zł':'PLN','CHF':'CHF','kr':'SEK'};
+function parseReceipt(text){
+  const lines=(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const out={merchant:'',total:0,tax:0,currency:'EUR',country:'',date:'',items:[],category:'other',confidence:0};
+  // merchant: first line with letters, not a number/date/address keyword
+  for(const l of lines.slice(0,6)){if(/[A-Za-zÀ-ÿ]{3,}/.test(l)&&!/receipt|invoice|tel|vat|www|\.com|street|straße|rruga/i.test(l)){out.merchant=l.replace(/[*#|]/g,'').trim().slice(0,40);break;}}
+  // currency
+  const cm=(text||'').match(/€|\$|£|₺|zł|CHF|kr/);if(cm)out.currency=CUR_SIGNS[cm[0]]||out.currency;
+  // amounts helper
+  const num=s=>{s=s.replace(/[^\d.,]/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');const n=parseFloat(s);return isNaN(n)?null:n;};
+  // total: prefer a line containing total/amount/summe/totale/gjithsej
+  let total=null;
+  for(const l of lines){if(/total|amount due|summe|totale|importo|gjithsej|zu zahlen/i.test(l)&&!/subtotal|sub-total|zwischensumme/i.test(l)){const m=l.match(/(\d[\d.,]*\d|\d)/g);if(m){const v=num(m[m.length-1]);if(v!=null)total=v;}}}
+  if(total==null){// fallback: largest money-looking number
+    let mx=0;for(const l of lines){const m=l.match(/\d+[.,]\d{2}\b/g);if(m)m.forEach(x=>{const v=num(x);if(v!=null&&v>mx)mx=v;});}total=mx;}
+  out.total=total||0;
+  // tax / VAT
+  for(const l of lines){if(/vat|tax|mwst|iva|tva|tvsh|ust/i.test(l)){const m=l.match(/\d+[.,]\d{2}/);if(m){const v=num(m[0]);if(v!=null)out.tax=v;}}}
+  // date dd.mm.yyyy / yyyy-mm-dd / dd/mm/yy
+  const dm=(text||'').match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})|(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  if(dm){try{let d;if(dm[1]){d=new Date(+dm[1],+dm[2]-1,+dm[3]);}else{let y=+dm[6];if(y<100)y+=2000;d=new Date(y,+dm[5]-1,+dm[4]);}if(!isNaN(d)&&d.getFullYear()>2000&&d<=new Date(Date.now()+864e5))out.date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}catch(e){}}
+  if(!out.date)out.date=todayISO();
+  // line items: "name .... 12.34"
+  for(const l of lines){const m=l.match(/^(.{2,40}?)\s+(\d+[.,]\d{2})\s*$/);if(m){const price=num(m[2]);const name=m[1].replace(/[.*|]+$/,'').trim();if(price!=null&&name&&!/total|vat|tax|subtotal|change|cash|card|summe/i.test(name)&&price<(out.total||1e9)*1.1){out.items.push({name:name.slice(0,40),qty:1,price});}}}
+  if(out.items.length>25)out.items=out.items.slice(0,25);
+  // category via merchant/keyword memory
+  out.category=suggestCategory(out.merchant,text);
+  // confidence heuristic when OCR conf missing
+  let c=0;if(out.merchant)c+=25;if(out.total>0)c+=40;if(out.date)c+=15;if(out.items.length)c+=20;out.confidence=Math.min(99,c);
+  return out;
+}
+
+// ---- lightweight AI layer (real data) ----
+const MERCHANT_CATS=[[/lidl|aldi|tesco|kaufland|carrefour|spar|rewe|edeka|migros|albert|conad|esselunga|super|market|grocer/i,'groceries'],
+  [/shell|bp|esso|omv|petrol|fuel|gas|benzin|tank/i,'gas'],
+  [/mcdonald|kfc|burger|pizza|kebab|subway|domino|taco/i,'fastfood'],
+  [/restaur|trattoria|osteria|bistro|sushi|grill|cafe|coffee|starbucks|costa/i,'restaurants'],
+  [/zara|h&m|nike|adidas|zalando|primark|mango|clothes|fashion|store/i,'shopping'],
+  [/netflix|spotify|disney|hbo|prime|youtube|apple\.com\/bill|icloud/i,'subscriptions'],
+  [/uber|bolt|taxi|train|bus|metro|flixbus|ryanair|wizz/i,'transportation'],
+  [/pharmacy|apotheke|farmacia|dm |rossmann|beauty/i,'shopping'],
+  [/vodafone|orange|telekom|at&t|verizon|internet|electric|water|energy/i,'utilities']];
+function merchantMemGet(m){try{return (JSON.parse(localStorage.getItem('goalify_merchant_cats')||'{}'))[(m||'').toLowerCase().trim()];}catch(e){return null;}}
+function merchantMemSet(m,cat){if(!m)return;try{const o=JSON.parse(localStorage.getItem('goalify_merchant_cats')||'{}');o[m.toLowerCase().trim()]=cat;localStorage.setItem('goalify_merchant_cats',JSON.stringify(o));}catch(e){}}
+function suggestCategory(merchant,text){
+  const mem=merchantMemGet(merchant);if(mem)return mem;
+  const hay=((merchant||'')+' '+(text||'')).toLowerCase();
+  for(const [re,cat] of MERCHANT_CATS)if(re.test(hay))return cat;
+  return 'other';
+}
+function budgetImpactMsg(cat,amount){
+  try{const b=ME&&ME.budget&&ME.budget[cat];if(!b||!amount)return null;const pct=Math.round(amount/b*100);
+    if(pct>=5)return `This is <b>${pct}%</b> of your monthly ${(CATS[cat]||CATS.other).l} budget (${fmt(b)}).`;}catch(e){}
+  return null;
+}
+function duplicateMsg(d){
+  try{const dup=(EXPENSES||[]).find(e=>e.merchant&&d.merchant&&e.merchant.toLowerCase()===d.merchant.toLowerCase()&&Math.abs(Number(e.amount)-d.total)<0.01&&(e.spent_at||'').slice(0,10)===d.date);
+    if(dup)return 'Looks like a possible duplicate — you already logged this merchant, amount and date.';}catch(e){}
+  return null;
+}
+function recurringMsg(d){if(/netflix|spotify|disney|hbo|prime|youtube|icloud|gym|insurance|vodafone|telekom|orange/i.test(d.merchant||''))return `${esc(d.merchant)} looks like a subscription — want to track it as recurring?`;return null;}
+
+// ---- render ----
+function confClass(c){return c>=75?'hi':c>=45?'mid':'lo';}
+function rcpOptCats(sel){return Object.keys(CATS).filter(k=>k!=='income'&&k!=='savings').map(k=>`<option value="${k}"${k===sel?' selected':''}>${CATS[k].l}</option>`).join('');}
+function renderRcp(){
+  const root=ensureRcpRoot();
+  let body='',foot='',title='Scan receipt';
+  if(RCP.step==='limit'){
+    title='Scan limit reached';
+    body=`<div class="rcp-proc"><div class="empty-orb" style="height:3.4rem;width:3.4rem">${ICON('camera')}</div>
+      <p class="mt-3 font-bold">You've used all ${scanLimit()} scans this month</p>
+      <p class="mt-1 text-sm" style="color:var(--muted)">Your ${PLANS[ME?.plan||'free'].name} plan includes ${scanLimit()} receipt scans per month. Upgrade for more.</p></div>`;
+    foot=`<a href="#app/plans" class="btn btn-primary w-full" data-rcp="close">See plans</a>`;
+  }else if(RCP.step==='capture'){
+    const left=scanLimit()===Infinity?'Unlimited scans':`${Math.max(0,scanLimit()-scansThisMonth())} of ${scanLimit()} scans left this month`;
+    body=`<div class="rcp-drop" id="rcpDrop">
+        <div class="empty-orb" style="height:3.2rem;width:3.2rem;margin:0 auto">${ICON('camera')}</div>
+        <p class="mt-3 font-bold">Snap or drop a receipt</p>
+        <p class="mt-1 text-sm" style="color:var(--muted)">We read the merchant, total, tax and items for you.</p>
+        <div class="rcp-choice">
+          <button class="rcp-cbtn" data-rcp="takePhoto">${ICON('camera')}<span>Take Photo</span></button>
+          <button class="rcp-cbtn" data-rcp="pickGallery">${ICON('image')}<span>Choose Photo</span></button>
+        </div>
+      </div>
+      <p class="rcp-usage">${left}</p>
+      <input id="rcpCam" type="file" accept="image/*" capture="environment" class="hidden">
+      <input id="rcpGal" type="file" accept="image/*" class="hidden">`;
+  }else if(RCP.step==='processing'){
+    const r=52,c=2*Math.PI*r;
+    body=`<div class="rcp-proc">
+      <div class="rcp-ring"><svg width="120" height="120"><circle cx="60" cy="60" r="${r}" stroke="var(--border)" stroke-width="7" fill="none"/>
+        <circle id="rcpArc" cx="60" cy="60" r="${r}" stroke="var(--accent2)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" style="transition:stroke-dashoffset .3s ease"/></svg>
+        <div class="rcp-ring-pct" id="rcpPct">0%</div></div>
+      <p class="rcp-stage" id="rcpStage">Improving image quality</p>
+      <div class="rcp-scanline"><i></i></div>
+      <div class="rcp-meta"><span class="rcp-chip">Reading on-device</span><span class="rcp-chip">Private — never uploaded to read</span></div>
+    </div>`;
+    foot=`<button class="btn btn-ghost w-full" data-rcp="cancel">Cancel</button>`;
+  }else if(RCP.step==='review'){
+    const d=RCP.data;title='Review receipt';
+    const ins=[];
+    if(!d.ocrOk)ins.push(['warn','info',"Couldn't read the text automatically — fill the details in below."]);
+    const bi=budgetImpactMsg(d.category,d.total);if(bi)ins.push(['','spark',bi]);
+    const du=duplicateMsg(d);if(du)ins.push(['warn','info',du]);
+    const rc=recurringMsg(d);if(rc)ins.push(['','spark',rc]);
+    const items=d.items.map((it,i)=>`<div class="rcp-item"><input data-rcp-item="${i}" data-k="name" value="${esc(it.name)}" aria-label="Item name"><input data-rcp-item="${i}" data-k="qty" value="${it.qty}" inputmode="numeric" style="width:34px;text-align:center" aria-label="Quantity"><input data-rcp-item="${i}" data-k="price" value="${it.price}" inputmode="decimal" style="width:64px;text-align:right" aria-label="Price"></div>`).join('');
+    body=`
+      ${RCP.img?`<div class="rcp-frame" style="max-height:34vh;margin-bottom:1rem"><img src="${RCP.img}" alt="Receipt"></div>`:''}
+      <div class="flex items-center justify-between mb-3"><span class="rcp-conf ${confClass(d.confidence)}">${ICON('spark','ic-xs')} ${d.confidence}% confidence</span><span class="rcp-chip">${d.currency}${d.country?' · '+esc(d.country):''}</span></div>
+      ${ins.map(x=>`<div class="rcp-ins ${x[0]}">${ICON(x[1]==='spark'?'spark':'info')}<span>${x[2]}</span></div>`).join('')}
+      <div class="rcp-field"><label>Merchant</label><input class="rcp-input" data-rcp-f="merchant" value="${esc(d.merchant)}" placeholder="Store name"></div>
+      <div class="rcp-row2">
+        <div class="rcp-field"><label>Total</label><input class="rcp-input" data-rcp-f="total" value="${d.total||''}" inputmode="decimal" placeholder="0.00"></div>
+        <div class="rcp-field"><label>Date</label><input class="rcp-input" type="date" data-rcp-f="date" value="${d.date}"></div>
+      </div>
+      <div class="rcp-row2">
+        <div class="rcp-field"><label>Tax / VAT</label><input class="rcp-input" data-rcp-f="tax" value="${d.tax||''}" inputmode="decimal" placeholder="0.00"></div>
+        <div class="rcp-field"><label>Category</label><select class="rcp-input" data-rcp-f="category">${rcpOptCats(d.category)}</select></div>
+      </div>
+      ${items?`<div class="rcp-field"><label>Items (${d.items.length})</label>${items}</div>`:''}
+      <div class="rcp-field"><label>Note (optional)</label><input class="rcp-input" data-rcp-f="note" value="${esc(d.note||'')}" placeholder="Add a note"></div>
+      ${GOALS&&GOALS.filter(g=>!g.completed).length?`<div class="rcp-field"><label>Assign to goal</label><select class="rcp-input" data-rcp-f="goal"><option value="">— None —</option>${GOALS.filter(g=>!g.completed).map(g=>`<option value="${g.id}"${d.goal===g.id?' selected':''}>${esc(g.name)}</option>`).join('')}</select></div>`:''}
+      <div class="rcp-toggle"><div><p class="font-semibold text-sm">Business expense</p><p class="text-xs" style="color:var(--muted)">Track VAT for tax export</p></div><button class="rcp-sw ${d.business?'on':''}" data-rcp="toggle" data-k="business" role="switch" aria-checked="${!!d.business}" aria-label="Business expense"></button></div>
+      <div class="rcp-toggle"><div><p class="font-semibold text-sm">Recurring</p><p class="text-xs" style="color:var(--muted)">Repeats monthly</p></div><button class="rcp-sw ${d.recurring?'on':''}" data-rcp="toggle" data-k="recurring" role="switch" aria-checked="${!!d.recurring}" aria-label="Recurring"></button></div>`;
+    foot=`<div class="flex gap-2"><button class="btn btn-ghost" data-rcp="retake" style="flex:0 0 auto">Retake</button><button class="btn btn-primary" data-rcp="save" style="flex:1">Save expense</button></div>`;
+  }
+  root.innerHTML=`<div class="rcp ${RCP.open?'open':''}" role="dialog" aria-modal="true" aria-label="Receipt scanner">
+    <div class="rcp-head"><h2>${title}</h2><button class="rcp-x" data-rcp="close" aria-label="Close">${ICON('x','ic-sm')}</button></div>
+    <div class="rcp-body">${body}</div>
+    ${foot?`<div class="rcp-foot">${foot}</div>`:''}
+  </div>`;
+  requestAnimationFrame(()=>root.querySelector('.rcp')?.classList.add('open'));
+}
+function updateRcpProgress(){const arc=document.getElementById('rcpArc');const pct=document.getElementById('rcpPct');const st=document.getElementById('rcpStage');
+  if(arc){const r=52,c=2*Math.PI*r;arc.style.strokeDashoffset=String(c-(RCP.pct/100)*c);}
+  if(pct)pct.textContent=RCP.pct+'%';if(st)st.textContent=RCP.stage;}
+
+// ---- scanner-internal event handlers ----
+function onRcpClick(e){
+  const b=e.target.closest('[data-rcp]');if(!b)return;
+  const a=b.getAttribute('data-rcp');
+  if(a==='close')closeScan();
+  else if(a==='cancel'){RCP.cancel=true;RCP.step='capture';RCP.busy=false;renderRcp();}
+  else if(a==='retake'){RCP.step='capture';RCP.img=null;RCP.data=null;renderRcp();}
+  else if(a==='takePhoto')document.getElementById('rcpCam')?.click();
+  else if(a==='pickGallery')document.getElementById('rcpGal')?.click();
+  else if(a==='toggle'){const k=b.getAttribute('data-k');RCP.data[k]=!RCP.data[k];b.classList.toggle('on');b.setAttribute('aria-checked',String(!!RCP.data[k]));}
+  else if(a==='save')saveReceipt();
+}
+function onRcpChange(e){
+  if(e.target.id==='rcpCam'||e.target.id==='rcpGal'){const f=e.target.files&&e.target.files[0];if(f)handleReceiptFile(f);return;}
+  const f=e.target.closest('[data-rcp-f]');if(f)updateRcpField(f);
+}
+function onRcpInput(e){
+  const f=e.target.closest('[data-rcp-f]');if(f){updateRcpField(f);return;}
+  const it=e.target.closest('[data-rcp-item]');if(it){const i=+it.getAttribute('data-rcp-item');const k=it.getAttribute('data-k');if(RCP.data.items[i]){RCP.data.items[i][k]=k==='name'?it.value:parseFloat(it.value)||0;}}
+}
+function updateRcpField(el){
+  const k=el.getAttribute('data-rcp-f');let v=el.value;
+  if(k==='total'||k==='tax')v=parseFloat(v)||0;
+  RCP.data[k]=v;
+  if(k==='category'&&RCP.data.merchant)merchantMemSet(RCP.data.merchant,v);
+}
+
+// ---- save (optimistic) ----
+async function saveReceipt(){
+  const d=RCP.data;const amount=parseFloat(d.total)||0;
+  if(amount<=0){toast('Enter a total amount first','err');return;}
+  if(!d.merchant)d.merchant='Receipt';
+  const btn=document.querySelector('[data-rcp="save"]');if(btn){btn.textContent='Saving…';btn.style.pointerEvents='none';}
+  if(d.category&&d.merchant)merchantMemSet(d.merchant,d.category);
+  const localExp={id:'r_'+Date.now(),user_id:(uid&&uid())||'demo',amount,category:d.category||'other',merchant:d.merchant,spent_at:d.date||todayISO(),source:'receipt'};
+  // optimistic: show it on the dashboard immediately
+  EXPENSES.unshift(localExp);bumpScanCount();
+  closeScan();toast('✓ Expense added from receipt');
+  render();
+  if(DEMO_MODE){try{DEMO_EXPENSES.unshift(localExp);}catch(e){}return;}
+  // persist for real
+  try{
+    const u=SESSION.user.id;const scanId=(crypto.randomUUID&&crypto.randomUUID())||('s'+Date.now());
+    let imagePath=null;
+    if(RCP.img){try{const blob=await(await fetch(RCP.img)).blob();imagePath=`${u}/${scanId}.jpg`;
+      const up=await sb.storage.from('receipts').upload(imagePath,blob,{contentType:'image/jpeg',upsert:true});if(up.error)imagePath=null;}catch(e){imagePath=null;}}
+    const {error:sErr}=await sb.from('receipt_scans').insert({id:scanId,user_id:u,image_path:imagePath,source:'scan',status:'done',ocr_text:(d.ocrText||'').slice(0,8000),merchant:d.merchant,detected_currency:d.currency,detected_country:d.country||null,category:d.category,total:amount,tax:d.tax||0,confidence:d.confidence||0,purchased_at:d.date||todayISO()});
+    if(!sErr&&d.items&&d.items.length){const rows=d.items.slice(0,25).map(it=>({scan_id:scanId,user_id:u,name:it.name,qty:it.qty||1,unit_price:it.price||0,line_total:(it.qty||1)*(it.price||0),category:d.category}));await sb.from('receipt_items').insert(rows).catch(()=>{});}
+    const {data:ins,error:eErr}=await sb.from('expenses').insert({user_id:u,amount,category:d.category||'other',merchant:d.merchant,spent_at:d.date||todayISO(),source:'receipt'}).select('id').single();
+    if(eErr){throw eErr;}
+    // reconcile optimistic id with the real row id
+    const idx=EXPENSES.findIndex(x=>x.id===localExp.id);if(idx>-1&&ins&&ins.id)EXPENSES[idx].id=ins.id;
+  }catch(err){
+    console.error('[Goalify] receipt save failed:',err);
+    const idx=EXPENSES.findIndex(x=>x.id===localExp.id);if(idx>-1)EXPENSES.splice(idx,1);
+    toast('Could not save — check your connection','err');render();
+  }
+}
+
+
+// ============================================================
+// GROUP GOALS — collaborative savings (frontend)
+// Backend: group_goals/group_members/group_contributions + RLS + RPCs
+// (create_group_goal, join_group_by_code). Self-contained view + handlers.
+// ============================================================
+let GROUPS=[],GROUP_OPEN=null,GROUPS_LOADED=false,GROUP_NEW=false;
+const _origin=()=>{try{return location.origin+location.pathname;}catch(e){return '';}}
+
+function seedDemoGroups(){
+  if(GROUPS.length)return;
+  GROUPS=[{id:'g1',owner_id:'demo',name:'Summer Trip 2026',emoji:'✈️',target_amount:2400,saved_amount:1450,currency:'EUR',target_date:'2026-08-01',privacy:'invite',invite_code:'trip26',status:'active',role:'owner',
+    _members:[{user_id:'demo',role:'owner',name:'You'},{user_id:'u2',role:'contributor',name:'Mira'},{user_id:'u3',role:'contributor',name:'Ben'}],
+    _contribs:[{user_id:'demo',name:'You',amount:600,note:'Deposit',created_at:'2026-06-20'},{user_id:'u2',name:'Mira',amount:500,note:'',created_at:'2026-06-28'},{user_id:'u3',name:'Ben',amount:350,note:'flights',created_at:'2026-07-02'}]}];
+  GROUPS_LOADED=true;
+}
+async function gEnsureLoaded(){
+  if(GROUPS_LOADED)return;
+  if(DEMO_MODE){seedDemoGroups();render();return;}
+  GROUPS_LOADED=true;
+  try{const u=SESSION.user.id;
+    const {data}=await sb.from('group_members').select('role,group_goals(*)').eq('user_id',u);
+    GROUPS=(data||[]).filter(r=>r.group_goals).map(r=>({...r.group_goals,role:r.role,_members:null,_contribs:null}));
+  }catch(e){console.warn('[Goalify] groups load failed',e);}
+  render();
+}
+async function gLoadDetail(g){
+  if(DEMO_MODE||g._members)return;
+  try{
+    const [{data:m},{data:c}]=await Promise.all([
+      sb.from('group_members').select('user_id,role,profiles(first_name,username,avatar_url)').eq('group_id',g.id),
+      sb.from('group_contributions').select('user_id,amount,note,created_at,profiles(first_name,username)').eq('group_id',g.id).order('created_at',{ascending:false}).limit(50)]);
+    g._members=(m||[]).map(x=>({user_id:x.user_id,role:x.role,name:(x.profiles&&(x.profiles.first_name||x.profiles.username))||'Saver'}));
+    g._contribs=(c||[]).map(x=>({user_id:x.user_id,amount:Number(x.amount),note:x.note,created_at:x.created_at,name:(x.profiles&&(x.profiles.first_name||x.profiles.username))||'Saver'}));
+  }catch(e){g._members=g._members||[];g._contribs=g._contribs||[];}
+  render();
+}
+
+function gCard(g){
+  const p=Math.min(100,Math.round((g.saved_amount/g.target_amount)*100||0));
+  const M='style="color:var(--muted)"';
+  return `<button class="glass rounded-2xl p-4 w-full text-left anim" data-action="gOpen" data-id="${g.id}">
+    <div class="flex items-center gap-3">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" style="background:var(--card-2)">${g.emoji||'🎯'}</span>
+      <div class="min-w-0 flex-1"><p class="font-bold truncate">${esc(g.name)}</p><p class="text-xs" ${M}>${p}% · ${fmt(g.saved_amount)} of ${fmt(g.target_amount)}</p></div>
+      <span class="chip">${g.role||'member'}</span>
+    </div>
+    <div class="mt-3 h-2 rounded-full" style="background:var(--card-2)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent3))"></div></div>
+  </button>`;
+}
+function groupNewView(){
+  const M='style="color:var(--muted)"';
+  const EMO=['🎯','✈️','🏠','🎁','💍','🚗','🎓','🏖️'];
+  return `<div class="dash-stack space-y-5">
+    <div class="flex items-center gap-3"><button class="rcp-x" data-action="gCancelNew" aria-label="Back">${ICON('x','ic-sm')}</button><h1 class="text-xl font-bold">New group goal</h1></div>
+    <div class="glass rounded-2xl p-4 space-y-4">
+      <div><label class="t-label">Name</label><input id="gnName" class="input w-full mt-1" placeholder="Summer Trip 2026" autocomplete="off"></div>
+      <div><label class="t-label">Icon</label><div class="flex gap-2 mt-1 flex-wrap" id="gnEmo">${EMO.map((e,i)=>`<button type="button" data-action="gnEmo" class="gn-emo flex h-10 w-10 items-center justify-center rounded-xl text-xl ${i===0?'sel':''}" data-e="${e}">${e}</button>`).join('')}</div></div>
+      <div><label class="t-label">Target amount</label><input id="gnTarget" class="input w-full mt-1" inputmode="decimal" placeholder="2400"></div>
+      <button class="btn btn-primary w-full" data-action="gCreateSubmit">Create group</button>
+    </div>
+    <p class="text-xs text-center" ${M}>You'll get an invite code to share once it's created.</p>
+  </div>`;
+}
+function groupsView(){
+  const M='style="color:var(--muted)"';
+  if(GROUP_NEW)return groupNewView();
+  if(GROUP_OPEN){const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(g)return groupDetailView(g);GROUP_OPEN=null;}
+  const list=GROUPS.length?GROUPS.map(gCard).join(''):
+    `<div class="glass rounded-2xl p-6 text-center"><div class="empty-orb" style="height:3rem;width:3rem;margin:0 auto">${ICON('users')}</div><p class="mt-3 font-bold">No group goals yet</p><p class="mt-1 text-sm" ${M}>Save together for a trip, a gift, or an apartment deposit. Create one and invite friends.</p></div>`;
+  return `<div class="dash-stack space-y-5">
+    <div class="page-head"><div><h1 class="page-h1">Group Goals</h1><p class="page-sub">Save together — shared progress, live.</p></div>
+      <button class="btn btn-primary shrink-0" data-action="gNew">+ New group</button></div>
+    <div class="glass rounded-2xl p-4"><label class="t-label">Join with a code</label>
+      <div class="flex gap-2 mt-2"><input id="gJoinCode" class="input flex-1" placeholder="e.g. trip26" autocomplete="off"><button class="btn btn-ghost" data-action="gJoin">Join</button></div></div>
+    <div class="space-y-3">${list}</div>
+  </div>`;
+}
+function groupDetailView(g){
+  const M='style="color:var(--muted)"';
+  const p=Math.min(100,Math.round((g.saved_amount/g.target_amount)*100||0));
+  const mem=g._members||[],con=g._contribs||[];
+  const canContribute=['owner','admin','contributor'].includes(g.role);
+  const days=g.target_date?Math.ceil((new Date(g.target_date)-Date.now())/864e5):null;
+  const avatars=mem.slice(0,6).map(m=>`<span class="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));margin-left:-6px;border:2px solid var(--bg)" title="${esc(m.name)} · ${m.role}">${esc((m.name||'?').slice(0,1).toUpperCase())}</span>`).join('');
+  const link=_origin()+'#join/'+g.invite_code;
+  return `<div class="dash-stack space-y-5">
+    <div class="flex items-center gap-3"><button class="rcp-x" data-action="gBack" aria-label="Back">${ICON('x','ic-sm')}</button><h1 class="text-xl font-bold truncate">${g.emoji||'🎯'} ${esc(g.name)}</h1></div>
+    <div class="glass-strong rounded-2xl p-6 text-center">
+      ${ring(p,'complete',fmt(g.saved_amount))}
+      <p class="mt-2 text-sm" ${M}>${fmt(g.saved_amount)} of <b style="color:var(--text)">${fmt(g.target_amount)}</b>${days!=null?` · ${days>0?days+' days left':'past due'}`:''}</p>
+      <div class="mt-3 flex items-center justify-center">${avatars}${mem.length>6?`<span class="ml-2 text-xs" ${M}>+${mem.length-6}</span>`:''}<span class="ml-3 text-xs" ${M}>${mem.length} member${mem.length===1?'':'s'}</span></div>
+    </div>
+    ${canContribute?`<div class="glass rounded-2xl p-4"><label class="t-label">Add contribution</label>
+      <div class="flex gap-2 mt-2"><input id="gAmt" class="input flex-1" inputmode="decimal" placeholder="Amount"><button class="btn btn-primary" data-action="gContribute" data-id="${g.id}">Add</button></div></div>`:
+      `<div class="glass rounded-2xl p-4 text-sm" ${M}>You're a viewer in this group.</div>`}
+    <div class="glass rounded-2xl p-4">
+      <div class="flex items-center justify-between"><h3 class="font-bold">Activity</h3><span class="chip">${con.length}</span></div>
+      ${con.length?`<div class="mt-2 space-y-2">${con.slice(0,20).map(c=>`<div class="flex items-center gap-3 py-1.5" style="border-bottom:1px solid var(--hair)"><span class="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold" style="background:var(--card-2);color:var(--text)">${esc((c.name||'?').slice(0,1).toUpperCase())}</span><div class="min-w-0 flex-1"><p class="text-sm font-semibold truncate">${esc(c.name)} ${c.amount<0?'withdrew':'added'} ${fmt(Math.abs(c.amount))}</p>${c.note?`<p class="text-xs truncate" ${M}>${esc(c.note)}</p>`:''}</div><span class="text-xs" ${M}>${fmtAgo(c.created_at)}</span></div>`).join('')}</div>`:
+        `<p class="mt-2 text-sm" ${M}>No contributions yet — be the first.</p>`}
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <label class="t-label">Invite link</label>
+      <div class="flex gap-2 mt-2"><input class="input flex-1" readonly value="${esc(link)}" onclick="this.select()"><button class="btn btn-ghost" data-action="gCopy" data-link="${esc(link)}">Copy</button></div>
+      <p class="mt-2 text-xs" ${M}>Code: <b style="color:var(--text)">${esc(g.invite_code)}</b> · Privacy: ${g.privacy}</p>
+    </div>
+    ${g.role!=='owner'?`<button class="btn btn-ghost w-full" data-action="gLeave" data-id="${g.id}">Leave group</button>`:''}
+  </div>`;
+}
+
+// ---- handlers ----
+async function gCreate(name,emoji,target){
+  const t=parseFloat(target)||0;if(!name||t<=0){toast('Enter a name and target','err');return;}
+  if(DEMO_MODE){const g={id:'g'+Date.now(),owner_id:'demo',name,emoji:emoji||'🎯',target_amount:t,saved_amount:0,currency:'EUR',target_date:null,privacy:'invite',invite_code:Math.random().toString(36).slice(2,8),status:'active',role:'owner',_members:[{user_id:'demo',role:'owner',name:'You'}],_contribs:[]};GROUPS.unshift(g);GROUP_OPEN=g.id;render();toast('Group created');return;}
+  try{const {data,error}=await sb.rpc('create_group_goal',{p_name:name,p_emoji:emoji||'🎯',p_target:t,p_currency:ME.currency||'EUR',p_target_date:null,p_privacy:'invite'});
+    if(error)throw error;const g={...data,role:'owner',_members:[{user_id:SESSION.user.id,role:'owner',name:ME.first_name||'You'}],_contribs:[]};GROUPS.unshift(g);GROUP_OPEN=g.id;render();toast('Group created');
+  }catch(e){toast('Could not create group','err');}
+}
+async function gJoinByCode(code){
+  code=(code||'').trim();if(!code){toast('Enter a code','err');return;}
+  if(DEMO_MODE){const g=GROUPS.find(x=>x.invite_code===code);if(g){GROUP_OPEN=g.id;render();toast('Joined!');}else toast('No group with that code (demo)','err');return;}
+  try{const {data:gid,error}=await sb.rpc('join_group_by_code',{p_code:code});if(error)throw error;
+    GROUPS_LOADED=false;await gEnsureLoaded();GROUP_OPEN=gid;render();toast('Joined group!');
+  }catch(e){toast(e.message&&/invalid/i.test(e.message)?'Invalid or expired code':'Could not join','err');}
+}
+async function gContribute(gid,amount){
+  const g=GROUPS.find(x=>x.id===gid);if(!g)return;const amt=parseFloat(amount)||0;if(amt===0){toast('Enter an amount','err');return;}
+  const who=DEMO_MODE?'You':(ME.first_name||'You');
+  const c={user_id:(uid&&uid())||'demo',name:who,amount:amt,note:'',created_at:new Date().toISOString()};
+  g._contribs=g._contribs||[];g._contribs.unshift(c);g.saved_amount=Number(g.saved_amount)+amt;
+  if(g.saved_amount>=g.target_amount)g.status='completed';
+  render();
+  if(DEMO_MODE)return;
+  try{const {error}=await sb.from('group_contributions').insert({group_id:gid,user_id:SESSION.user.id,amount:amt});if(error)throw error;
+    // reconcile authoritative saved_amount from the trigger
+    const {data}=await sb.from('group_goals').select('saved_amount,status').eq('id',gid).single();
+    if(data){g.saved_amount=Number(data.saved_amount);g.status=data.status;render();}
+  }catch(e){g._contribs.shift();g.saved_amount=Number(g.saved_amount)-amt;toast('Could not add contribution','err');render();}
+}
+async function gLeave(gid){
+  if(!confirm('Leave this group?'))return;
+  if(!DEMO_MODE){try{await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',SESSION.user.id);}catch(e){}}
+  GROUPS=GROUPS.filter(x=>x.id!==gid);GROUP_OPEN=null;render();toast('Left group');
+}
