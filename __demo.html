@@ -56,7 +56,7 @@
        phone, every hidden/grid/spacing class vanishes and the layout collapses.
        Rebuild after adding new utility classes:
        npx -y tailwindcss@3.4.14 -c tw.config.cjs --content "./index.html,./app.js" -o assets/tw.css -m -->
-  <link rel="stylesheet" href="./assets/tw.css?v=4" />
+  <link rel="stylesheet" href="./assets/tw.css?v=5" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -1682,7 +1682,7 @@
       /* sticky = pinned AND in flow (content can never slide underneath);
          with the language selector living in the menu, the bar is one slim row */
       /* slimmer bar, dropped below the status bar / notch (iPhone safe area) */
-      html[data-route="home"] header.fixed{position:sticky;top:0;padding:calc(.3rem + env(safe-area-inset-top)) .75rem .3rem}
+      html[data-route="home"] header.fixed{position:sticky;top:0;padding:calc(1rem + env(safe-area-inset-top)) .75rem .35rem}
       html[data-route="home"] .lp-hero{padding-top:1.4rem!important}
       .lp-navbar{align-items:center;padding:.3rem .55rem .3rem .75rem!important;border-radius:1.05rem}
       .lp-navbar .btn{min-height:2.15rem;padding:.4rem .9rem;font-size:.85rem}
@@ -1738,7 +1738,6 @@
     <linearGradient id="ltArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent2)" stop-opacity="0.35"/><stop offset="1" stop-color="var(--accent2)" stop-opacity="0"/></linearGradient>
   </defs></svg>
   <div id="root" class="min-h-screen"></div>
-  <div id="splash" aria-hidden="true"><div class="load-mark"></div><p class="splash-word">Goal<span class="gtext">ify</span></p><div class="splash-bar"><i></i></div></div>
   <div id="modal"></div>
   <div id="toast"></div>
   <script>

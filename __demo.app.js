@@ -75,7 +75,7 @@ const PLANS = {
 // monthly + yearly pricing (yearly = a few months free) — EUR only
 const PRICING={pro:{mo:3,yr:29},premium:{mo:5,yr:49},business:{mo:9,yr:75}};
 // referral reward tiers
-const REWARD_TIERS=[[10,'1 month Pro free'],[25,'3 months Pro free'],[50,'1 year Pro free'],[100,'1 year Premium free']];
+const REWARD_TIERS=[[25,'3 months of Pro free']];
 const PLAN_ORDER=['free','pro','premium','business'];
 // ⚠️ DEMO-ONLY: these live in client code and are readable in page source.
 // Move to server-side (edge function / DB) validation before launch.
@@ -494,7 +494,6 @@ function planNav(plan){
   if(plan==='premium'||plan==='business')nav.push(['goalverse','GoalVerse','globe']);
   nav.push(['rewards','Rewards','gift']);
   nav.push(['plans','Plans','wallet']);
-  if(plan==='free')nav.push(['student','Student Verify','student']);
   nav.push(['settings','Settings','gear']);
   return nav;
 }
@@ -593,7 +592,10 @@ const fmt=(n,cur=(ME?.currency||'EUR'))=>new Intl.NumberFormat('en-IE',{style:'c
 const pct=(a,b)=>b?Math.min(100,Math.round(a/b*100)):0;
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const ini=(p)=>((p?.first_name||p?.email||'U')[0]+(p?.last_name?.[0]||'')).toUpperCase();
-function toast(msg,type='ok'){ const c=type==='err'?'background:rgba(239,68,68,.95)':'background:rgba(16,185,129,.95)'; const el=document.getElementById('toast'); el.innerHTML=`<div class="toast text-white anim" style="${c}">${esc(msg)}</div>`; setTimeout(()=>{el.innerHTML='';},3200); }
+function toast(msg,type='ok'){ const el=document.getElementById('toast'); if(!el)return;
+  // errors show quietly (neutral pill, no alarm-red) and never dump raw internals on the user
+  const c=type==='err'?'background:rgba(44,44,48,.96);border:1px solid rgba(255,255,255,.14)':'background:rgba(16,185,129,.95)';
+  el.innerHTML=`<div class="toast text-white anim" style="${c}">${esc(msg)}</div>`; setTimeout(()=>{el.innerHTML='';},type==='err'?2600:3200); }
 // turn raw Supabase/network errors into friendly, actionable messages
 function friendlyErr(error,fallback){
   const m=((error&&error.message)||'').toLowerCase();
@@ -663,6 +665,10 @@ async function loadProfile(){
   if(data&&data.language){localStorage.setItem('goalify_lang',data.language);}
   // onboarding flag is set-only here (a lagging DB read must not undo a just-completed onboarding)
   if(data&&data.onboarded){localStorage.setItem('goalify_onboarded','1');}
+  // one-shot referral redemption stored at signup — clear regardless so bad codes never retry forever
+  try{const rc=localStorage.getItem('goalify_ref_entered');
+    if(rc&&!DEMO_MODE){localStorage.removeItem('goalify_ref_entered');
+      sb.rpc('redeem_referral',{p_code:rc}).then(({error})=>{if(!error)toast('Referral applied — thanks for joining through a friend!');});}}catch(e){}
   syncCoinLedger(); // fire-and-forget: settle any pending coin earns/spends + pull server balance
   return ME;
 }
@@ -739,7 +745,7 @@ function earnedBadges(){const s=streakState(),lvl=levelFromXp(ME?.xp).level,done
   return set;}
 function badgesPanel(){
   const got=earnedBadges(),total=BADGES.length,n=got.size,next=BADGES.find(b=>!got.has(b.key));
-  return `<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Achievements</h3><span class="text-xs" style="color:var(--muted)">${n}/${total} unlocked</span></div>
+  return `<div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Achievements</h3><span class="text-xs" style="color:var(--muted)">${n}/${total} unlocked</span></div>
   <div class="grid grid-cols-4 sm:grid-cols-6 gap-3">${BADGES.map(b=>{const on=got.has(b.key);return `<div class="flex flex-col items-center text-center rounded-xl p-2" title="${esc(b.desc)}" style="${on?'background:var(--glass)':''}"><div class="text-2xl ${on?'badge-pop':'grayscale opacity-30'}">${b.emoji}</div><p class="text-[9px] mt-1 ${on?'font-semibold':''}" style="color:var(--muted)">${esc(b.name)}</p></div>`;}).join('')}</div>
   ${next?`<p class="mt-3 text-xs" style="color:var(--muted)">Next up: <b>${next.emoji} ${esc(next.name)}</b> — ${esc(next.desc)}.</p>`:`<p class="mt-3 text-xs text-emerald-400">🎉 Every achievement unlocked — legend!</p>`}</div>`;
 }
@@ -1406,13 +1412,13 @@ function landing(){
       <div class="lp-navbar flex items-center justify-between rounded-2xl px-4 py-2.5">
         ${brand()}
         <nav class="lp-nav hidden gap-8 md:flex text-sm" style="color:var(--muted)">${navItem('Features','feat')}${navItem('How it works','how')}${navItem('Pricing','pricing')}${navItem('FAQ','faq')}</nav>
-        <div class="flex items-center gap-2.5"><span class="hidden md:inline-flex">${langSelect()}</span>${SESSION?`<a href="#app/dashboard" class="btn btn-primary !py-2 !px-4 text-sm">Open app</a>`:`<a href="#login" class="hidden sm:inline px-2 text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm whitespace-nowrap">Start for free</a>`}<button class="mnav-btn" data-action="mnav" aria-label="Open menu" aria-controls="mnavPanel">☰</button></div>
+        <div class="flex items-center gap-2.5"><span class="hidden md:inline-flex">${langSelect()}</span>${SESSION?``:`<a href="#login" class="hidden sm:inline px-2 text-sm" style="color:var(--muted)">Log in</a><a href="#signup" class="btn btn-primary !py-2 !px-4 text-sm whitespace-nowrap">Start for free</a>`}<button class="mnav-btn" data-action="mnav" aria-label="Open menu" aria-controls="mnavPanel">☰</button></div>
       </div>
       <div id="mnavPanel" class="mnav-panel hidden md:hidden">
         <a href="#home" data-scroll="feat">Features</a><a href="#home" data-scroll="how">How it works</a><a href="#home" data-scroll="pricing">Pricing</a><a href="#home" data-scroll="faq">FAQ</a>
         <a href="#privacy">Privacy &amp; Policy</a>
         <div class="mnav-lang"><span>Language</span>${langSelect()}</div>
-        <div class="mt-1 border-t pt-2" style="border-color:var(--border)">${SESSION?`<a href="#app/dashboard">Open app →</a>`:`<a href="#login">Log in</a><a href="#signup" class="font-bold" style="color:var(--accent3)">Start for free →</a>`}</div>
+        <div class="mt-1 border-t pt-2" style="border-color:var(--border)">${SESSION?``:`<a href="#login">Log in</a><a href="#signup" class="font-bold" style="color:var(--accent3)">Start for free →</a>`}</div>
       </div>
     </div>
   </header>
@@ -1523,7 +1529,7 @@ function landing(){
       <div class="mt-7 flex justify-center reveal">
         <label for="billYr" class="lp-billing"><span>Monthly</span><span class="lp-switch" aria-hidden="true"></span><span>Yearly <span style="color:var(--jade2);font-weight:600">· save up to 30%</span></span></label>
       </div>
-      <div class="lp-pricing mt-10 grid gap-6 lg:grid-cols-4">${PLAN_ORDER.map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3>${id==='free'?`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€0</span><span class="text-sm" style="color:var(--muted)">/forever</span></div><p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`:`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€<span class="price-mo">${p.price}</span><span class="price-yr">${pr.yr}</span></span><span class="text-sm" style="color:var(--muted)"><span class="price-mo">/mo</span><span class="price-yr">/yr</span></span></div><p class="mt-1 text-xs" style="color:var(--muted)"><span class="price-mo">or €${pr.yr}/year</span><span class="lp-save">Save ${save}% vs monthly</span></p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
+      <div class="lp-pricing mt-10 grid gap-6 lg:grid-cols-3">${['free','pro'].map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3>${id==='free'?`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€0</span><span class="text-sm" style="color:var(--muted)">/forever</span></div><p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`:`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€<span class="price-mo">${p.price}</span><span class="price-yr">${pr.yr}</span></span><span class="text-sm" style="color:var(--muted)"><span class="price-mo">/mo</span><span class="price-yr">/yr</span></span></div><p class="mt-1 text-xs" style="color:var(--muted)"><span class="price-mo">or €${pr.yr}/year</span><span class="lp-save">Save ${save}% vs monthly</span></p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
       <p class="mt-8 text-center text-sm reveal" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
     </section>
 
@@ -1612,7 +1618,6 @@ function signupView(){
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><label class="label">Date of birth</label><input name="birthdate" type="date" class="input" max="${todayISO()}" autocomplete="bday" required></div>
       <div><label class="label">Country</label><input name="country" list="signupCountries" class="input" placeholder="Start typing…" autocomplete="country-name" required><datalist id="signupCountries">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div></div>
       <div><label class="label">Student Verification <i style="color:var(--muted)">(optional)</i></label>
-        <label class="su-stud"><input type="checkbox" name="is_student" value="yes" class="sr-only"><b class="flex items-center gap-2">${ICON('student','ic-sm')} I'm a student</b><span>Verify your student email after signup — Pro free for 2 years</span></label>
       <p id="studHint" class="mt-1.5 hidden text-[11px]" style="color:var(--jade2)">Nice — after signup we'll point you straight to student verification.</p></div>
       <div><label class="label">Referral code <i style="color:var(--muted)">(optional)</i></label><input name="referral_code" class="input" placeholder="Friend's code — you both earn +500 GC" style="text-transform:uppercase" autocomplete="off" maxlength="12"></div>
       <div class="space-y-1.5">
@@ -2004,7 +2009,7 @@ const ANA_PERSONAS=[
   ['investor','🚀','The Future Investor','You’re already making smart decisions. A few small changes get you there months earlier.'],
   ['paycheck','🌞','The Fresh Starter','It’s tight right now — that’s okay. Goalify is built to make the first €100 feel possible.'],
   ['balanced','⚖️','The Balanced One','No wild leaks, no extremes. A dedicated goal is exactly what turns steady into unstoppable.'],
-  ['student','🎓','The Smart Student','Big plans, tight budget — smart of you to start now. Verify your student status to unlock Pro free for 2 years.'],
+  ['student','🎓','The Smart Student','Big plans, tight budget — smart of you to start now. Small consistent wins beat rare big ones.'],
   ['impulse','⚡','The Impulse Adventurer','Spontaneous and fun — but those “little” buys stack up. One goal gives them somewhere better to go.']
 ];
 function grantOnceCoins(amount,reason,ref){try{if(coinHas(reason,ref))return 0;const l=coinLedger();l.push({delta:amount,reason,ref,at:new Date().toISOString(),sync:0});setCoinLedger(l);refreshCoinPills();syncCoinLedger();return amount;}catch(e){return 0;}}
@@ -2145,7 +2150,7 @@ async function finishQuiz(inner){
     }catch(e){console.error('[Goalify] quiz expenses seed failed:',e);}
   }
   await loadProfile();
-  if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); // survive ME resets / lagging DB writes
+  if(ME)ME.onboarded=true; localStorage.setItem('goalify_onboarded','1'); localStorage.setItem('goalify_quiz_last',todayISO()); // survive ME resets / lagging DB writes
   try{localStorage.setItem('goalify_quiz_extras_'+uid(),JSON.stringify({employment:QA.employment,debt:QA.debt,efund:QA.efund,savehabit:QA.savehabit,invest:QA.invest,motivation:QA.motivation}));}catch(e){}
   localStorage.removeItem('goalify_quiz_draft'); // quiz complete — drop the resume draft
   const opp=(QA.reduce&&QA.spend[QA.reduce]>0)?[QA.reduce,QA.spend[QA.reduce]]:(sorted.find(([k])=>k!=='groceries'&&k!=='fuel'&&k!=='subscriptions')||sorted[0]||null);
@@ -2228,7 +2233,7 @@ function appMenuSheet(){
       <div class="sheet-grid">
         ${item('Goals','goals','goal')}${item('Groups','groups','users')}${item('Analytics','analytics','chart')}${item('Simulator','simulator','crystal')}
         ${item('Impact','spendcalc','euro')}${item('Challenges','challenges','trophy')}${item('Social','social','users')}
-        ${item('Rewards','rewards','gift')}${item('Student','student','student')}
+        ${item('Rewards','rewards','gift')}
         <button class="sheet-item" data-action="searchSavers">${ICON('search')}<span>Find savers</span></button>
       </div>
       <button class="btn btn-ghost w-full mt-3" data-action="logout">${ICON('logout','ic-sm')} Sign out</button>
@@ -2242,14 +2247,14 @@ function shell(route,inner){
     <nav class="flex-1 space-y-1 px-3 overflow-y-auto">${NAV.map(n=>`<a href="#app/${n[0]}" class="nav-link ${route===n[0]?'active':''} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${route===n[0]?'text-white':'text-slate-400 hover:text-white hover:bg-white/5'}">${ICON(n[2],'ic-sm')}${n[1]}</a>`).join('')}
     ${themeBtn}
     ${isAdmin?`<a href="#admin" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-amber-300 hover:bg-white/5"><span>🛡️</span>Admin Portal</a>`:''}</nav>
-    ${ME?.plan==='free'?`<div class="mx-3 mb-3 rounded-xl p-4" style="background:linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.2));border:1px solid rgba(255,255,255,.1)"><p class="text-sm font-semibold">Unlock Pro</p><p class="mt-1 text-xs text-slate-400">Verify student status for free Pro.</p><a href="#app/student" class="btn btn-primary mt-3 w-full !py-2 text-xs">Verify now</a></div>`:''}
+    
     <div class="mx-3 mb-2">${coinPillHTML()}</div>
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><div class="px-1 pb-2">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
   <div class="lg:pl-64">${mobileChrome(route)}<main class="app-main mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">${inner}</main>
   <button class="scan-fab lg:hidden" data-action="openScan" aria-label="Scan receipt">${ICON('camera')}</button></div></div>`;
 }
-function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span><span class="text-lg">${emoji}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
+function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
 function ring(score,label,sub){const r=58,c=2*Math.PI*r,off=c-(score/100)*c,gid='g'+label.replace(/\W/g,'');return `<div class="flex flex-col items-center"><div class="relative" style="width:140px;height:140px"><svg width="140" height="140" style="transform:rotate(-90deg)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><circle cx="70" cy="70" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="8" fill="none"/><circle cx="70" cy="70" r="${r}" stroke="url(#${gid})" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s ease"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold">${score}</span><span class="text-xs text-slate-400">${sub||''}</span></div></div><p class="mt-2 text-sm font-medium text-slate-400">${label}</p></div>`;}
 
 let GOALS=[],EXPENSES=[],AIUSED=0;
@@ -2351,7 +2356,7 @@ function goalOverviewHTML(){
 function whatToReduceHTML(){
   const items=whatToReduce(),sm=savingsMode(),cur=ME.savings_mode||'fun';
   return `<div class="glass rounded-2xl p-6">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">✂️ What to reduce</h3><p class="text-xs" style="color:var(--muted)">This month · ${sm.emoji} ${sm.name} mode (${Math.round(sm.cut*100)}% cuts)</p></div>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">What to reduce</h3><p class="text-xs" style="color:var(--muted)">This month · ${sm.emoji} ${sm.name} mode (${Math.round(sm.cut*100)}% cuts)</p></div>
       <div class="flex gap-1 rounded-xl p-1 text-xs" style="background:var(--glass)">${Object.keys(SAVINGS_MODES).map(k=>`<button data-action="setSavingsMode" data-mode="${k}" class="rounded-lg px-2.5 py-1.5 ${cur===k?'text-white':''}" title="${SAVINGS_MODES[k].name}" style="${cur===k?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${SAVINGS_MODES[k].emoji}</button>`).join('')}</div>
     </div>
     ${items.length?`<div class="space-y-3">${items.map(it=>{const m=CATS[it.cat]||CATS.other;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass)"><span class="flex h-10 w-10 items-center justify-center rounded-lg text-lg" style="background:var(--glass)">${m.e}</span><div class="min-w-0 flex-1"><p class="text-sm font-medium">${m.l}</p><p class="text-xs" style="color:var(--muted)">Now ${fmt(it.spend)}/mo${it.impact?' · '+it.impact:''}</p></div><div class="text-right"><p class="text-sm font-bold text-emerald-400">save ${fmt(it.save)}</p><p class="text-[11px]" style="color:var(--muted)">per month</p></div></div>`;}).join('')}<div class="rounded-xl p-3 text-center text-sm" style="background:var(--glass)">Total potential: <b class="text-emerald-400">${fmt(items.reduce((a,i)=>a+i.save,0))}/mo</b></div></div>`:`<p class="py-8 text-center text-sm" style="color:var(--muted)">Add some expenses and Goalify will show exactly where to cut.</p>`}
@@ -2362,14 +2367,14 @@ function todayMissionsHTML(){
   const due=allMissions().filter(missionDueToday);
   const doneToday=allMissions().filter(m=>m.cadence==='daily'&&isDoneToday(m.id)).length;
   return `<div class="glass-strong rounded-2xl p-6">
-    <div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">✅ Today's missions</h3><span class="text-xs" style="color:var(--muted)">${doneToday} done today</span></div>
+    <div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Today's missions</h3><span class="text-xs" style="color:var(--muted)">${doneToday} done today</span></div>
     ${due.length?`<div class="space-y-2">${due.map(m=>{const d=DIFF[m.difficulty]||DIFF.easy,st=missionStreak(m.id),h=streakHealth(st);return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass)"><button data-action="checkin" data-id="${m.id}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition" title="Check in" style="background:var(--glass);color:var(--muted);border:1px solid var(--border)">+</button><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(m.title)}</p><p class="text-[11px]" style="color:var(--muted)">${esc(m.goal.name)} · <span style="color:${d.c}">${d.label}</span> · +${d.xp} XP</p></div><span class="text-sm font-bold" style="color:${h.c}">${h.e} ${st}</span></div>`;}).join('')}</div>`:`<p class="py-6 text-center text-sm" style="color:var(--muted)">🎉 All caught up for today — nice work!</p>`}
     <a href="#app/goals" class="mt-3 block text-center text-sm font-medium text-accent-purple hover:underline">Manage missions →</a>
   </div>`;
 }
 function weeklySummaryHTML(){
   const wk=weekCheckins(),us=userStreak(),h=streakHealth(us),goalsActive=GOALS.filter(g=>!g.completed).length;
-  return `<div class="glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">📅 This week</h3>
+  return `<div class="glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">This week</h3>
     <div class="grid grid-cols-3 gap-3 text-center">
       <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold">${wk}</p><p class="text-[11px]" style="color:var(--muted)">check-ins</p></div>
       <div class="rounded-xl p-3" style="background:var(--glass)"><p class="text-2xl font-extrabold" style="color:${h.c}">${us}</p><p class="text-[11px]" style="color:var(--muted)">best streak</p></div>
@@ -2381,7 +2386,7 @@ function weeklySummaryHTML(){
 }
 function behaviourCardHTML(){
   const has=PLAN_ORDER.indexOf(ME.plan)>=PLAN_ORDER.indexOf('pro');
-  if(!has)return `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">🧠 AI behaviour coach</h3><span class="rounded-full px-2 py-0.5 text-[10px]" style="background:var(--glass);color:var(--muted)">Pro</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Goalify spots when you tend to slip and adjusts mission difficulty automatically.</p><a href="#app/plans" class="btn btn-primary mt-3 text-sm">Unlock Pro</a></div>`;
+  if(!has)return `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">AI behaviour coach</h3><span class="rounded-full px-2 py-0.5 text-[10px]" style="background:var(--glass);color:var(--muted)">Pro</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Goalify spots when you tend to slip and adjusts mission difficulty automatically.</p><a href="#app/plans" class="btn btn-primary mt-3 text-sm">Unlock Pro</a></div>`;
   const r=behaviourReport(),lines=[];
   if(r.worstDay)lines.push(`You miss most on <b>${r.worstDay}</b> (${r.worstRate}% skipped) — plan a lighter mission that day.`);
   r.suggestions.forEach(s=>{const m=s.m;lines.push(s.type==='up'?`🔼 You're crushing “${esc(m.title)}” — bump it to ${m.difficulty==='easy'?'Medium':'Hard'} for more XP.`:`🔽 “${esc(m.title)}” is slipping — ease it off to rebuild momentum.`);});
@@ -2610,8 +2615,7 @@ function communityRowHTML(){
     ['Social','social','users',c.social==='none'],
     ['Rewards','rewards','gift',false],
     ['Ranks','social','medal',c.social==='none'],
-    ['Student','student','student',false],
-    ['GoalVerse','goalverse','globe',!premium],
+        ['GoalVerse','goalverse','globe',!premium],
   ]);
 }
 function dashboardView(){
@@ -2626,9 +2630,9 @@ function dashboardView(){
     <div class="glass rounded-2xl p-6"><div class="mb-1 flex items-center gap-2 font-semibold">🔮 Goal forecast</div><p class="text-sm" style="color:var(--muted)">At this pace you'll spend about <b class="text-white">${fmt(s.spending*12)}</b> and save <b class="text-white">${fmt(Math.max(0,s.leftover*12))}</b> this year.${s.savingsRate<20?` Lifting your savings rate to 20% adds <b class="text-white">${fmt(Math.max(0,(s.income*0.2-s.leftover)*12))}/yr</b>.`:' Strong savings rate — keep going!'}</p><a href="#app/simulator" class="mt-3 inline-block text-sm font-medium text-accent-purple hover:underline">Open Simulator →</a></div></div>`;
   }
   const gamify=c.gamify?`<div class="grid gap-4 lg:grid-cols-2">${missionsCompactHTML()}${levelXpHTML()}</div><div class="grid gap-4 lg:grid-cols-2">${weeklyCompactHTML()}${achievementsLatestHTML()}</div>`:'';
-  const studentPerk=(plan==='free'&&localStorage.getItem('goalify_is_student')==='1')?`<a href="#app/student" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid color-mix(in srgb,var(--gold) 50%,var(--border))"><div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-2xl">🎓</span><div><h3 class="font-semibold">You said you're a student — claim free Pro</h3><p class="mt-0.5 text-sm" style="color:var(--muted)">Verify your student status once and get Pro free for 2 years.</p></div></div><span class="btn btn-primary !py-2 text-sm shrink-0">Verify now →</span></div></a>`:'';
-  const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🚀 Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro removes the goal limit and adds goal deletion. Premium adds the social feed, XP & levels, badges, themes and smart AI insights.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
-  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${analytics}${gamify}${studentPerk}${freePerk}</div>`;
+  const studentPerk='';
+  const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro removes the goal limit and adds goal deletion. Premium adds the social feed, XP & levels, badges, themes and smart AI insights.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
+  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${quizMonthlyPromptHTML()}${analytics}${gamify}${freePerk}</div>`;
 }
 
 function missionRow(m){
@@ -2821,8 +2825,8 @@ function simulatorView(){
   <div class="lg:col-span-2 space-y-5"><div class="grid gap-4 sm:grid-cols-3"><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Monthly savings</p><p id="simSave" class="mt-2 text-2xl font-bold text-emerald-400"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">Goal reached in</p><p id="simMonths" class="mt-2 text-2xl font-bold"></p></div><div class="glass rounded-2xl p-5"><p class="text-sm text-slate-400">In 5 years</p><p id="sim5y" class="mt-2 text-2xl font-bold gtext"></p></div></div>
   <div class="glass rounded-2xl p-4 sm:p-5"><h3 class="font-semibold mb-3">5-year projection</h3><div style="height:200px;max-height:38vh"><canvas id="simChart"></canvas></div></div>
   <div id="simInsight" class="glass-strong rounded-2xl p-5 text-sm"></div>
-  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">🏁 Milestones on the way</h3><div id="simMilestones" class="grid gap-3 sm:grid-cols-2"></div></div>
-  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">⚡ Try a scenario</h3><div class="flex flex-wrap gap-2">${[['Cut €100/mo more','cut100'],['Save aggressively','aggressive'],['Invest at 7%','invest'],['Reset','reset']].map(s=>`<button class="rounded-full px-3 py-1.5 text-xs" style="background:var(--glass);color:var(--muted)" data-action="simPreset" data-preset="${s[1]}">${s[0]}</button>`).join('')}</div></div>
+  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">Milestones on the way</h3><div id="simMilestones" class="grid gap-3 sm:grid-cols-2"></div></div>
+  <div class="glass rounded-2xl p-5"><h3 class="font-semibold mb-3">Try a scenario</h3><div class="flex flex-wrap gap-2">${[['Cut €100/mo more','cut100'],['Save aggressively','aggressive'],['Invest at 7%','invest'],['Reset','reset']].map(s=>`<button class="rounded-full px-3 py-1.5 text-xs" style="background:var(--glass);color:var(--muted)" data-action="simPreset" data-preset="${s[1]}">${s[0]}</button>`).join('')}</div></div>
   </div></div></div>`;
 }
 
@@ -2891,7 +2895,7 @@ function challengesView(){
     <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-extrabold text-white" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))">${level}</span><div><p class="font-semibold">Level ${level}</p><p class="text-sm text-slate-400">${ME.xp||0} XP total</p></div></div><div class="w-full sm:w-56"><div class="mb-1 flex justify-between text-xs text-slate-400"><span>${inLvl} XP</span><span>100 XP</span></div><div class="h-2.5 overflow-hidden rounded-full" style="background:var(--glass)"><div class="progress-fill h-full rounded-full" style="width:${inLvl}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>
     <div class="glass-strong rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-4"><span class="text-4xl">🔥</span><div><p class="text-2xl font-extrabold">${st.count} day${st.count===1?'':'s'}</p><p class="text-sm text-slate-400">Check-in streak</p></div></div><button class="btn ${checkedToday?'btn-ghost':'btn-primary'} !py-2.5 text-sm" data-action="checkIn" ${checkedToday?'disabled':''}>${checkedToday?'✓ Checked in today':'Check in (+10 XP)'}</button></div>
   </div>
-  <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">🏅 Badges</h3><span class="text-xs" style="color:var(--muted)">${earned.size} / ${BADGES.length} earned</span></div>
+  <div class="glass rounded-2xl p-6"><div class="mb-4 flex items-center justify-between"><h3 class="font-semibold">Badges</h3><span class="text-xs" style="color:var(--muted)">${earned.size} / ${BADGES.length} earned</span></div>
     <div class="grid gap-4 grid-cols-3 sm:grid-cols-6">${BADGES.map(b=>{const on=earned.has(b.key);return `<div class="flex flex-col items-center text-center" title="${esc(b.desc)}"><span class="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${on?'':'grayscale'}" style="background:var(--glass);${on?'box-shadow:0 0 0 2px var(--accent2)':'opacity:.45'}">${b.emoji}</span><p class="mt-2 text-[11px] font-medium ${on?'':'opacity-50'}">${b.name}</p></div>`;}).join('')}</div></div>
   ${joined.length?`<div><h3 class="mb-3 font-semibold">Your active challenges</h3><div class="grid gap-4 md:grid-cols-2">${joined.map(activeChalCard).join('')}</div></div>`:''}
   <div><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="font-semibold">Challenge catalog</h3><div class="grid grid-cols-4 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${filters.map(f=>`<button data-action="chalFilter" data-d="${f[0]}" class="rounded-lg px-2.5 py-1.5 text-center ${CHAL_FILTER===f[0]?'text-white':''}" style="${CHAL_FILTER===f[0]?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${f[1]}</button>`).join('')}</div></div>
@@ -2985,13 +2989,13 @@ function socialView(){
       ?`<div class="empty-wrap mt-4 !py-10"><div class="empty-orb" style="height:3.2rem;width:3.2rem;font-size:1.5rem">🗓️</div><p class="mt-3 text-sm font-bold">Monthly rankings start at launch</p><p class="mt-1 text-xs" ${M}>30-day scores begin counting once the community opens.</p></div>`
       :`<div class="mt-4 space-y-2"><div class="lb-row me"><span class="lb-rank gtext">#1</span><span class="relative inline-block">${framedAvatar(40,level)}<span class="online-dot" style="bottom:0;right:0;width:10px;height:10px"></span></span><div class="flex-1 min-w-0"><p class="text-sm font-bold truncate">${nm} <span class="ml-1 align-middle text-[10px] rounded-full px-2 py-0.5" style="background:var(--accent2);color:#fff">You</span></p><p class="text-[11px]" ${M}>Level ${level} · ${tierEmoji(tier)} ${esc(tier.title)}</p></div><span class="text-sm font-extrabold shrink-0">${metric}</span></div>
       <p class="mt-3 text-xs" ${M}>${profVisibility()==='public'?'Global rankings fill in as savers join — only public profiles appear.':'Your profile is Private, so you’re hidden from public leaderboards.'}</p></div>`;
-    body=`<div class="glass rounded-2xl p-5"><div class="flex flex-wrap items-center justify-between gap-3"><h3 class="font-bold">🏆 Leaderboards</h3>${ltabs}</div>${list}</div>`;
+    body=`<div class="glass rounded-2xl p-5"><div class="flex flex-wrap items-center justify-between gap-3"><h3 class="font-bold">Leaderboards</h3>${ltabs}</div>${list}</div>`;
   }else{
     const acts=myActivity();
-    body=`<div class="glass rounded-2xl p-5"><h3 class="font-bold">⚡ Your recent activity</h3><p class="text-xs" ${M}>What friends will see on your feed.</p>
+    body=`<div class="glass rounded-2xl p-5"><h3 class="font-bold">Your recent activity</h3><p class="text-xs" ${M}>What friends will see on your feed.</p>
       ${acts.length?`<div class="mt-2">${acts.map(x=>`<div class="feed-row"><span class="feed-ico">${x[0]}</span><div class="min-w-0"><p class="text-sm font-bold">${x[1]}</p><p class="text-sm" ${M}>${x[2]}</p></div></div>`).join('')}</div>`
       :`<div class="empty-wrap mt-4 !py-10"><div class="empty-orb" style="height:3.2rem;width:3.2rem;font-size:1.5rem">⚡</div><p class="mt-3 text-sm font-bold">No activity yet</p><p class="mt-1 text-xs" ${M}>Complete a goal or earn a badge and it shows up here.</p></div>`}</div>
-      <div class="glass rounded-2xl p-5"><h3 class="font-bold">👥 Friends' activity</h3><div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;font-size:1.3rem">👥</div><p class="mt-2 text-sm font-semibold">Your circle is empty (for now)</p><p class="mt-1 text-xs" ${M}>Follow people once accounts go live and their wins appear here.</p></div></div>`;
+      <div class="glass rounded-2xl p-5"><h3 class="font-bold">Friends' activity</h3><div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;font-size:1.3rem">👥</div><p class="mt-2 text-sm font-semibold">Your circle is empty (for now)</p><p class="mt-1 text-xs" ${M}>Follow people once accounts go live and their wins appear here.</p></div></div>`;
   }
   return `<div class="dash-stack space-y-5 sm:space-y-6">
     <div class="page-head"><div><h1 class="page-h1">Social</h1><p class="page-sub">Your public presence, rankings and community — friends make saving stick.</p></div>${tabs}</div>
@@ -3021,8 +3025,8 @@ function inboxView(){
   ${list.length?`<div class="space-y-2">${list.map(n=>{const un=!read.has(n.id);return `<div class="ib-row ${un?'unread':''}" data-action="inboxRead" data-id="${n.id}" role="button" tabindex="0" aria-label="${un?'Unread: ':''}${n.title}"><span class="ib-dot"></span><span class="ib-ico">${n.icon}</span><div class="min-w-0 flex-1"><div class="flex items-baseline justify-between gap-3"><p class="text-sm font-bold">${n.title}</p><span class="shrink-0 text-[11px]" style="color:var(--muted)">${fmtAgo(n.at)}</span></div><p class="mt-0.5 text-sm" style="color:var(--muted)">${n.body}</p></div></div>`;}).join('')}</div>`
   :`<div class="empty-wrap"><div class="empty-orb">📭</div><h3 class="mt-4 text-lg font-bold">Nothing here yet</h3><p class="mx-auto mt-1 max-w-sm text-sm" style="color:var(--muted)">${INBOX_FILTER==='social'?'Friend requests, follows and mentions land here once accounts go live.':'New notifications appear here as you use Goalify.'}</p></div>`}
   <div class="grid gap-4 sm:grid-cols-2">
-    <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">🤝 Friend requests</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Requests to connect appear here once accounts go live.</p></div>
-    <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">✉️ Messages</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Direct messages between members arrive here at launch.</p></div>
+    <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">Friend requests</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Requests to connect appear here once accounts go live.</p></div>
+    <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">Messages</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Direct messages between members arrive here at launch.</p></div>
   </div></div>`;
 }
 
@@ -3156,7 +3160,7 @@ function profileView(){
   const fav=featuredBadge(got);
   const featured=fav?`<div class="glass-strong rounded-2xl p-6 overflow-hidden relative"><div class="flex items-center gap-5"><div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-4xl badge-pop" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 8px 24px color-mix(in srgb,var(--accent2) 40%,transparent)">${fav.emoji}</div><div class="min-w-0"><p class="text-[11px] font-semibold uppercase tracking-widest gtext">⭐ Featured achievement</p><h3 class="mt-1 text-xl font-bold">${esc(fav.name)}</h3><p class="text-sm" ${M}>${esc(fav.desc)}</p></div></div></div>`:'';
 
-  const prog=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🎖️ Profile progression</h3><p class="text-[11px]" ${M}>Level up to unlock frames, titles and visual effects.</p></div><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span></div>
+  const prog=`<div class="glass rounded-2xl p-6"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Profile progression</h3><p class="text-[11px]" ${M}>Level up to unlock frames, titles and visual effects.</p></div><span class="pf-title-chip">${tierEmoji(tier)} ${esc(title)}</span></div>
     <div class="flex items-center gap-6 flex-wrap">
       <div class="text-center">${framedAvatar(84,level)}<p class="mt-3 text-xs" ${M}>Current frame</p></div>
       ${nxt?`<div class="text-center" style="opacity:.5">${framedAvatar(84,nxt.lvl)}<p class="mt-3 text-xs" ${M}>Next: ${esc(nxt.title)}</p></div>`:`<div class="text-center"><div class="flex h-[84px] w-[84px] items-center justify-center text-5xl">👑</div><p class="mt-3 text-xs" ${M}>Max tier</p></div>`}
@@ -3164,15 +3168,15 @@ function profileView(){
     </div></div>`;
 
   const prestige=canPrestige(level)
-   ? `<div class="glass-strong rounded-2xl p-6" style="border:1px solid var(--accent2)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">🌟 Prestige</h3><p class="mt-1 text-sm" ${M}>You hit Level 100 — the Grandmaster cap. Prestige starts a fresh climb and earns an exclusive prestige badge, prestige-only cosmetics and prestige leaderboards.</p></div><button class="btn btn-primary text-sm shrink-0" data-action="prestige">${ME.prestige?'Prestige '+(ME.prestige+1):'Prestige now'} 🌟</button></div></div>`
-   : `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">🌟 Prestige <span class="align-middle text-[10px] rounded-full px-2 py-0.5" style="background:var(--glass);color:var(--muted)">Level 100</span></h3><span class="text-xs" ${M}>${100-level} levels to go</span></div><p class="mt-1 text-sm" ${M}>Reach Level 100 to unlock Prestige — a fresh climb with an exclusive badge, prestige cosmetics and prestige-only leaderboards.</p></div>`;
+   ? `<div class="glass-strong rounded-2xl p-6" style="border:1px solid var(--accent2)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Prestige</h3><p class="mt-1 text-sm" ${M}>You hit Level 100 — the Grandmaster cap. Prestige starts a fresh climb and earns an exclusive prestige badge, prestige-only cosmetics and prestige leaderboards.</p></div><button class="btn btn-primary text-sm shrink-0" data-action="prestige">${ME.prestige?'Prestige '+(ME.prestige+1):'Prestige now'} 🌟</button></div></div>`
+   : `<div class="glass rounded-2xl p-6"><div class="flex items-center justify-between"><h3 class="font-semibold">Prestige <span class="align-middle text-[10px] rounded-full px-2 py-0.5" style="background:var(--glass);color:var(--muted)">Level 100</span></h3><span class="text-xs" ${M}>${100-level} levels to go</span></div><p class="mt-1 text-sm" ${M}>Reach Level 100 to unlock Prestige — a fresh climb with an exclusive badge, prestige cosmetics and prestige-only leaderboards.</p></div>`;
 
   const activeList=GOALS.filter(g=>!g.completed&&!g.private&&g.status!=='archived').slice(0,5);
-  const activeGoals=(isPublic&&showActiveGoalsPref()&&activeList.length)?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🎯 Active goals</h3><div class="space-y-3">${activeList.map(g=>{const p=pct(g.saved_amount,g.target_amount);return `<div class="flex items-center gap-3"><span class="text-xl">${g.emoji||'🎯'}</span><div class="flex-1 min-w-0"><div class="flex justify-between text-sm"><span class="truncate">${esc(g.name)}</span><span ${M}>${p}%</span></div><div class="mt-1 h-2 rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>`;}).join('')}</div></div>`:'';
+  const activeGoals=(isPublic&&showActiveGoalsPref()&&activeList.length)?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Active goals</h3><div class="space-y-3">${activeList.map(g=>{const p=pct(g.saved_amount,g.target_amount);return `<div class="flex items-center gap-3"><span class="text-xl">${g.emoji||'🎯'}</span><div class="flex-1 min-w-0"><div class="flex justify-between text-sm"><span class="truncate">${esc(g.name)}</span><span ${M}>${p}%</span></div><div class="mt-1 h-2 rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div></div></div></div>`;}).join('')}</div></div>`:'';
 
-  const achievementCards=completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🏆 Achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p></div>`).join('')}</div></div>`:'';
+  const achievementCards=completed.length?`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">Achievement cards</h3><div class="grid gap-3 sm:grid-cols-2">${completed.map(g=>`<div class="rounded-2xl p-5 text-center" style="background:linear-gradient(135deg,var(--accent1),var(--accent2))"><div class="text-3xl">${g.emoji||'🎯'}</div><p class="mt-2 font-bold text-white">${esc(g.name)}</p><p class="text-xs text-white/80">${fmt(g.target_amount)} reached 🎉</p></div>`).join('')}</div></div>`:'';
 
-  const tiersCard=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">🎖️ All progression tiers</h3><div class="grid gap-2 sm:grid-cols-2">${LEVEL_TIERS.map(t=>{const on=level>=t.lvl;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${on?'box-shadow:0 0 0 1px var(--accent2)':'opacity:.55'}"><span class="pf-frame ${t.frame} pf-mini" style="width:40px;height:40px">${t.crown?'<span class="pf-crown" aria-hidden="true">👑</span>':''}<span class="pf-frame-inner"><span class="flex h-full w-full items-center justify-center rounded-full text-xs font-bold text-white" style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${t.lvl}</span></span></span><div class="flex-1 min-w-0"><p class="text-sm font-semibold">Lvl ${t.lvl} · ${esc(t.title)}</p><p class="text-[11px]" ${M}>${esc(t.unlock)}</p></div>${on?'<span class="text-xs font-semibold text-emerald-400">✓</span>':'<span class="text-xs" '+M+'>🔒</span>'}</div>`;}).join('')}</div></div>`;
+  const tiersCard=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">All progression tiers</h3><div class="grid gap-2 sm:grid-cols-2">${LEVEL_TIERS.map(t=>{const on=level>=t.lvl;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${on?'box-shadow:0 0 0 1px var(--accent2)':'opacity:.55'}"><span class="pf-frame ${t.frame} pf-mini" style="width:40px;height:40px">${t.crown?'<span class="pf-crown" aria-hidden="true">👑</span>':''}<span class="pf-frame-inner"><span class="flex h-full w-full items-center justify-center rounded-full text-xs font-bold text-white" style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${t.lvl}</span></span></span><div class="flex-1 min-w-0"><p class="text-sm font-semibold">Lvl ${t.lvl} · ${esc(t.title)}</p><p class="text-[11px]" ${M}>${esc(t.unlock)}</p></div>${on?'<span class="text-xs font-semibold text-emerald-400">✓</span>':'<span class="text-xs" '+M+'>🔒</span>'}</div>`;}).join('')}</div></div>`;
 
   return `<div class="dash-stack space-y-5 sm:space-y-6"><div class="page-head"><div><h1 class="page-h1">Profile</h1><p class="page-sub">Your public profile, level progression and achievements.</p></div></div>
     ${visBar}${hero}${communityRowHTML()}${stats}${featured}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${tiersCard}
@@ -3278,8 +3282,8 @@ function paymentSuccessView(plan,cycle){
 function plansView(){
   const cur=ME.plan;
   return `<div class="space-y-6"><div><h1 class="text-3xl font-bold">Plans & Pricing</h1><p class="mt-1 text-sm text-slate-400">Pick the plan that fits you. You're on <b class="text-white">${PLANS[cur].name}</b>. Every paid plan includes a <b class="text-white">1-week free trial</b> — cancel anytime.</p></div>
-  <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">${PLAN_ORDER.map(id=>planCard(id,cur)).join('')}</div>
-  <div class="glass rounded-2xl p-5 text-sm text-slate-400"><b class="text-white">🎓 Students:</b> verify your status for <b class="text-white">Pro free for 2 years</b>. <b class="text-white">🎁 Everyone:</b> invite friends in <a href="#app/rewards" class="text-accent-purple hover:underline">Rewards</a> to earn free Pro & Premium.</div>
+  <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">${['free','pro'].map(id=>planCard(id,cur)).join('')}<div class="glass rounded-2xl p-6 flex flex-col items-center justify-center text-center" style="opacity:.8"><h3 class="text-lg font-semibold">Premium &amp; Business</h3><p class="mt-2 text-sm" style="color:var(--muted)">More power for power-savers and teams.</p><span class="chip mt-3">Coming soon</span></div></div>
+  <div class="glass rounded-2xl p-5 text-sm text-slate-400"><b class="text-white">Invite friends:</b> 25 invites unlocks <b class="text-white">3 months of Pro free</b> — see <a href="#app/rewards" class="text-accent-purple hover:underline">Rewards</a>.</div>
   ${DEMO_MODE?`<p class="text-xs text-slate-500">Demo: selecting a plan previews how that tier looks — no payment is taken. Real billing activates when the backend goes live.</p>`:''}
   </div>`;
 }
@@ -3319,7 +3323,7 @@ function openGiftModal(){
   if(!giftCanUse()){toast('Gifting is a Premium feature','err');return;}
   if(giftRemaining()<=0){toast('No gift tickets left this month','err');return;}
   const m=document.getElementById('modal');
-  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gfBack"><div class="w-full max-w-sm glass-strong rounded-2xl p-6 anim"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">🎁 Gift Premium</h2><button id="gfX" style="color:var(--muted)">✕</button></div>
+  m.innerHTML=`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" id="gfBack"><div class="w-full max-w-sm glass-strong rounded-2xl p-6 anim"><div class="flex items-center justify-between"><h2 class="text-xl font-bold">Gift Premium</h2><button id="gfX" style="color:var(--muted)">✕</button></div>
     <p class="mt-1 text-sm" style="color:var(--muted)">Send a friend <b style="color:var(--text)">1 week of Premium</b>. You have <b class="gtext">${giftRemaining()}</b> ticket${giftRemaining()===1?'':'s'} left this month.</p>
     <div class="mt-4 space-y-3"><div><label class="label">Friend's username or email</label><input id="gfTo" class="input" placeholder="@username or email"></div>
     <p id="gfErr" class="text-sm text-red-300"></p>
@@ -3335,7 +3339,7 @@ function openGiftModal(){
   });
 }
 // -------------------- Rewards / referrals --------------------
-function referralCode(){let c=localStorage.getItem('goalify_refcode');if(!c){c=(ME?.first_name||'GOAL').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)||'GOAL';c+=Math.random().toString(36).slice(2,6).toUpperCase();localStorage.setItem('goalify_refcode',c);}return c;}
+function referralCode(){return (ME&&ME.referral_code)?ME.referral_code.toUpperCase():'—';}
 // ── GoalVerse — flagship Premium: a living world that grows with savings ──
 function goalverseView(){
   const premium=(ME?.plan==='premium'||ME?.plan==='business');
@@ -3393,6 +3397,19 @@ function storeView(){
     <p class="text-xs" style="color:var(--muted)">GoalCoins are earned in-app — never bought. ${free?'Free plan earns up to 80 GC/week.':plan==='pro'?'Pro earns ×1.5 + 200 GC monthly stipend.':'Premium earns ×2 + 600 GC monthly stipend.'}</p>
   </div>`;
 }
+async function refEnsureCount(){
+  try{const {count}=await sb.from('referrals').select('referred_id',{count:'exact',head:true}).eq('referrer_id',SESSION.user.id);
+    const cur=localStorage.getItem('goalify_ref_invited');
+    if(String(count??0)!==cur){localStorage.setItem('goalify_ref_invited',String(count??0));render();}}catch(e){}
+}
+function quizMonthlyPromptHTML(){
+  try{
+    if(localStorage.getItem('goalify_quiz_monthly')!=='1')return '';
+    const last=localStorage.getItem('goalify_quiz_last');if(!last)return '';
+    if((Date.now()-new Date(last).getTime())/864e5<30)return '';
+    return `<a href="#quiz" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Time for your monthly check-in</h3><p class="mt-1 text-sm" style="color:var(--muted)">Update your spending numbers and see what changed since last month.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">Start →</span></div></a>`;
+  }catch(e){return '';}
+}
 function rewardsView(){
   const code=referralCode();
   const link=location.origin+location.pathname+'#r='+code;
@@ -3429,16 +3446,16 @@ function settingsView(){
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
   const themes=caps(p.plan).themes;
   const appearance = themes==='business'
-   ? `<div id="set-appearance" class="set-card biz-card p-6"><h2 class="text-lg font-bold">🎨 Appearance</h2><p class="mt-1 text-sm" style="color:var(--muted)">Business uses a fixed executive gold theme — no customization, by design.</p></div>`
+   ? `<div id="set-appearance" class="set-card biz-card p-6"><h2 class="text-lg font-bold">Appearance</h2><p class="mt-1 text-sm" style="color:var(--muted)">Business uses a fixed executive gold theme — no customization, by design.</p></div>`
    : themes==='red'
-   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">Pro</span></div>
+   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">Appearance</h2><span class="chip">Pro</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['light','☀️ Light'],['dark','🌙 Dark']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-4 flex items-center gap-3"><span class="h-10 w-10 shrink-0 rounded-full" style="background:#ef4444;box-shadow:0 0 0 3px var(--bg),0 0 0 5px #ef4444"></span><div><p class="text-sm font-bold">Signature Red</p><p class="text-sm" style="color:var(--muted)">Pro ships with one focused accent. Full color + wallpaper customization is a Premium feature.</p></div></div><a href="#app/plans" class="btn btn-ghost mt-4 text-sm">Compare with Premium</a></div>`
    : themes==='none'
-   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">Free</span></div>
+   ? `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">Appearance</h2><span class="chip">Free</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['light','☀️ Light'],['dark','🌙 Dark']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-4 flex flex-wrap items-center justify-between gap-3"><p class="text-sm" style="color:var(--muted)">🔒 Accent colors and wallpapers start on Pro & Premium.</p><a href="#app/plans" class="btn btn-primary btn-sm text-sm shrink-0">See plans</a></div></div>`
-   : `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🎨 Appearance</h2><span class="chip">${PLANS[p.plan].name}</span></div>
+   : `<div id="set-appearance" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">Appearance</h2><span class="chip">${PLANS[p.plan].name}</span></div>
     <div class="mt-4"><p class="label">Mode</p><div class="seg">${[['dark','🌙 Dark'],['light','☀️ Light']].map(m=>`<button data-action="setTheme" data-mode="${m[0]}" class="seg-btn ${curMode===m[0]?'on':''}">${m[1]}</button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Theme color</p><div class="flex flex-wrap gap-3">${COLORS.map(c=>`<button data-action="setColor" data-color="${c[0]}" title="${c[1]}" class="h-10 w-10 rounded-full transition hover:scale-110" style="background:${c[2]};${curColor===c[0]?'box-shadow:0 0 0 3px var(--bg),0 0 0 5px '+c[2]:''}"></button>`).join('')}</div></div>
     <div class="mt-5"><p class="label">Background design</p><div class="grid grid-cols-3 gap-3 sm:grid-cols-6">${BGS.map(b=>{const on=curBg===b[0];return `<button data-action="setBg" data-bg="${b[0]}" class="flex flex-col items-center gap-1 rounded-xl p-3 text-xs transition" style="background:var(--glass);border:1px solid ${on?'transparent':'var(--border)'};${on?'box-shadow:0 0 0 2px var(--accent2)':''}"><span class="text-xl">${b[2].startsWith('#')?'⬛':b[2]}</span><span class="${on?'font-semibold':''}" style="${on?'':'color:var(--muted)'}">${b[1]}</span></button>`;}).join('')}</div></div>
@@ -3450,18 +3467,19 @@ function settingsView(){
   <nav class="set-nav" aria-label="Settings sections">${SEC.map(s=>`<button type="button" onclick="document.getElementById('${s[0]}')?.scrollIntoView({behavior:'smooth',block:'start'})">${s[1]} ${s[2]}</button>`).join('')}</nav>
   <div class="min-w-0 space-y-5">
   ${appearance}
-  <div id="set-profile" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">👤 Profile</h2><p class="mt-1 text-sm" style="color:var(--muted)">How you appear across Goalify.</p>
+  <div class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold">Monthly check-in</h2><p class="mt-1 text-sm" style="color:var(--muted)">Retake the money quiz each month to refresh your budget and see what changed.</p></div><button class="rcp-sw ${localStorage.getItem('goalify_quiz_monthly')==='1'?'on':''}" data-action="quizMonthly" role="switch" aria-checked="${localStorage.getItem('goalify_quiz_monthly')==='1'}" aria-label="Monthly check-in"></button></div><a href="#quiz" class="btn btn-ghost btn-sm mt-4">Retake quiz now</a></div>
+  <div id="set-profile" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Profile</h2><p class="mt-1 text-sm" style="color:var(--muted)">How you appear across Goalify.</p>
     <div class="mt-4 flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full" style="box-shadow:0 0 0 2px var(--border)">${avatarHTML(64)}</span><div><label class="btn btn-ghost text-sm cursor-pointer">📷 Upload photo<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>${p.avatar_url?'<button class="btn btn-ghost text-sm ml-2" data-action="rmAvatar">Remove</button>':''}</div></div>
     <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><label class="label">Bio</label><textarea name="bio" rows="2" maxlength="160" class="input" placeholder="Tell people a bit about your goals…">${esc(p.bio||'')}</textarea><p class="mt-1 text-[11px]" style="color:var(--muted)">Shown on your public profile · max 160 characters</p></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
-  <div id="set-public" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🪪 Public profile</h2><p class="mt-1 text-sm" style="color:var(--muted)">Control who can see your profile, level, achievements and leaderboard rank.</p>
+  <div id="set-public" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Public profile</h2><p class="mt-1 text-sm" style="color:var(--muted)">Control who can see your profile, level, achievements and leaderboard rank.</p>
     <div class="mt-4"><p class="label">Profile visibility</p><div class="seg">${[['public','🌍 Public'],['private','🔒 Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="seg-btn ${vis===o[0]?'on':''}">${o[1]}</button>`).join('')}</div>
       <p class="mt-2 text-xs" style="color:var(--muted)">${vis==='public'?'Public: other users can view your profile, find you in search and see you on leaderboards.':'Private: hidden from all users, searches and leaderboards. Only personal statistics remain visible to you.'}</p></div>
     <label class="mt-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm" style="background:var(--glass);border:1px solid var(--border)"><span>Show my active goals on my public profile</span><input type="checkbox" class="sw" data-action="setShowGoals" ${showActiveGoalsPref()?'checked':''}></label>
     <a href="#app/profile" class="btn btn-ghost mt-4 text-sm">View my profile →</a></div>
-  <div id="set-strategy" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">💪 Savings strategy</h2><p class="mt-1 text-sm" style="color:var(--muted)">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm transition ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted);border:1px solid var(--border)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
-  <div id="set-security" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🔐 Security</h2><p class="mt-1 text-sm" style="color:var(--muted)">Update your password. Minimum 8 characters.</p><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
-  <div id="set-notifications" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🔔 Notifications</h2><p class="mt-1 text-sm" style="color:var(--muted)">Choose what lands in your inbox.</p><div class="mt-4 space-y-2.5">${[['weekly','Weekly reports','A summary of your spending, savings and streaks'],['alerts','Budget alerts','When a category is trending over budget'],['goals','Goal updates','Milestones, completions and pace changes'],['news','Product news','New features and improvements']].map(n=>`<label class="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm" style="background:var(--glass);border:1px solid var(--border)"><span><span class="font-semibold">${n[1]}</span><span class="block text-xs" style="color:var(--muted)">${n[2]}</span></span><input type="checkbox" class="sw" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
-  <div id="set-billing" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">💳 Payment method</h2>${pm?`<span class="chip">Default</span>`:''}</div>
+  <div id="set-strategy" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Savings strategy</h2><p class="mt-1 text-sm" style="color:var(--muted)">Controls how aggressive your cut suggestions are.</p><div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">${Object.keys(SAVINGS_MODES).map(k=>{const m=SAVINGS_MODES[k],on=(p.savings_mode||'fun')===k;return `<button data-action="setSavingsMode" data-mode="${k}" class="rounded-xl p-3 text-left text-sm transition ${on?'text-white':''}" style="${on?'background:linear-gradient(135deg,var(--accent1),var(--accent2))':'background:var(--glass);color:var(--muted);border:1px solid var(--border)'}"><div class="font-semibold">${m.emoji} ${m.name}</div><div class="text-xs opacity-80">${Math.round(m.cut*100)}% · ${m.desc}</div></button>`;}).join('')}</div></div>
+  <div id="set-security" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Security</h2><p class="mt-1 text-sm" style="color:var(--muted)">Update your password. Minimum 8 characters.</p><form id="pwForm" class="mt-4 grid gap-4 sm:grid-cols-2"><div><label class="label">New password</label><input name="password" type="password" class="input" minlength="8"></div><div><label class="label">Confirm</label><input name="confirm" type="password" class="input"></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Update password</button></div></form></div>
+  <div id="set-notifications" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Notifications</h2><p class="mt-1 text-sm" style="color:var(--muted)">Choose what lands in your inbox.</p><div class="mt-4 space-y-2.5">${[['weekly','Weekly reports','A summary of your spending, savings and streaks'],['alerts','Budget alerts','When a category is trending over budget'],['goals','Goal updates','Milestones, completions and pace changes'],['news','Product news','New features and improvements']].map(n=>`<label class="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm" style="background:var(--glass);border:1px solid var(--border)"><span><span class="font-semibold">${n[1]}</span><span class="block text-xs" style="color:var(--muted)">${n[2]}</span></span><input type="checkbox" class="sw" data-notif="${n[0]}" ${p.notification_prefs?.[n[0]]?'checked':''}></label>`).join('')}<button class="btn btn-primary text-sm" data-action="saveNotif">Save preferences</button></div></div>
+  <div id="set-billing" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">Payment method</h2>${pm?`<span class="chip">Default</span>`:''}</div>
     <p class="mt-1 text-sm" style="color:var(--muted)">${DEMO_MODE?'Demo — no real card is stored. When live, cards are handled securely by our payment provider — we never see your full number.':'Your card is stored securely by our payment provider — we never see the full number.'}</p>
     ${pm?`<div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl p-4" style="background:var(--glass);border:1px solid var(--border)"><div class="flex items-center gap-3"><span class="flex h-9 w-14 items-center justify-center rounded-md text-[10px] font-bold tracking-wide" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff">${esc(pm.brand.slice(0,8))}</span><div><p class="text-sm font-bold">${esc(pm.brand)} •••• ${esc(pm.last4)}</p><p class="text-[11px]" style="color:var(--muted)">Expires ${esc(pm.exp)}</p></div></div><button class="btn btn-ghost !py-1.5 text-sm" data-action="removePm">Remove</button></div>`
       :`<div class="mt-4 rounded-xl p-4 text-center text-sm" style="background:var(--glass);border:1px dashed var(--border);color:var(--muted)">No payment method saved.</div>
@@ -3470,12 +3488,12 @@ function settingsView(){
   </div>
   <div class="grid gap-5 sm:grid-cols-2">
     <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">Subscription</h2><p class="mt-1 text-sm" style="color:var(--muted)">Current: <b style="color:var(--text)">${PLANS[p.plan].name}</b> ${planBadge(p.plan)}</p>${p.plan!=='free'?`<p class="mt-3 text-sm text-emerald-400">You have ${PLANS[p.plan].name} access.</p>`:`<a href="#app/plans" class="btn btn-primary mt-4 text-sm">See plans</a>`}</div>
-    <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">🎟️ Redeem a code</h2><p class="mt-1 text-sm" style="color:var(--muted)">Have a promo code? Activate your plan instantly.</p><div class="mt-4 flex gap-2"><input id="promoInput" class="input" placeholder="ENTER-CODE-HERE" style="text-transform:uppercase"><button class="btn btn-primary text-sm shrink-0" data-action="redeemPromo">Redeem</button></div></div>
+    <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">Redeem a code</h2><p class="mt-1 text-sm" style="color:var(--muted)">Have a promo code? Activate your plan instantly.</p><div class="mt-4 flex gap-2"><input id="promoInput" class="input" placeholder="ENTER-CODE-HERE" style="text-transform:uppercase"><button class="btn btn-primary text-sm shrink-0" data-action="redeemPromo">Redeem</button></div></div>
   </div>
-  <div id="set-privacy" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🛟 Privacy & data</h2><p class="mt-1 text-sm" style="color:var(--muted)">Your data belongs to you — export it anytime.</p><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
-  <div id="set-admin" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">🛡️ Admin access</h2>${isDemoAdmin()?'<span class="chip gold">Signed in</span>':''}</div>${isDemoAdmin()?`<p class="mt-1 text-sm" style="color:var(--muted)">You're signed in as admin.</p><div class="mt-3 flex gap-2"><a href="#admin" class="btn btn-primary text-sm">Open admin dashboard</a><button class="btn btn-ghost text-sm" data-action="adminLogout">Sign out admin</button></div>`:`<p class="mt-1 text-sm" style="color:var(--muted)">Enter the admin access code to open the admin dashboard.</p><div class="mt-3 flex gap-2"><input id="adminInput" type="password" class="input" placeholder="Access code"><button class="btn btn-primary text-sm shrink-0" data-action="adminLogin">Enter</button></div>`}</div>
-  <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">🔄 Restart onboarding quiz</h2><p class="mt-1 text-sm" style="color:var(--muted)">Retake the spending quiz and rebuild your money profile. This resets only your onboarding answers and spending preferences — your account, goals and progress stay intact.</p><button class="btn btn-ghost mt-4 text-sm" data-action="restartQuiz">Restart Quiz</button></div>
-  <div id="set-support" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">🛟 Support</h2>
+  <div id="set-privacy" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Privacy & data</h2><p class="mt-1 text-sm" style="color:var(--muted)">Your data belongs to you — export it anytime.</p><div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-ghost text-sm" data-action="export">⬇ Export my data</button><a href="mailto:support@goalify.app" class="btn btn-ghost text-sm">🛟 Support Center</a></div></div>
+  <div id="set-admin" class="set-card glass rounded-2xl p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold">Admin access</h2>${isDemoAdmin()?'<span class="chip gold">Signed in</span>':''}</div>${isDemoAdmin()?`<p class="mt-1 text-sm" style="color:var(--muted)">You're signed in as admin.</p><div class="mt-3 flex gap-2"><a href="#admin" class="btn btn-primary text-sm">Open admin dashboard</a><button class="btn btn-ghost text-sm" data-action="adminLogout">Sign out admin</button></div>`:`<p class="mt-1 text-sm" style="color:var(--muted)">Enter the admin access code to open the admin dashboard.</p><div class="mt-3 flex gap-2"><input id="adminInput" type="password" class="input" placeholder="Access code"><button class="btn btn-primary text-sm shrink-0" data-action="adminLogin">Enter</button></div>`}</div>
+  <div class="glass rounded-2xl p-6"><h2 class="text-lg font-bold">Restart onboarding quiz</h2><p class="mt-1 text-sm" style="color:var(--muted)">Retake the spending quiz and rebuild your money profile. This resets only your onboarding answers and spending preferences — your account, goals and progress stay intact.</p><button class="btn btn-ghost mt-4 text-sm" data-action="restartQuiz">Restart Quiz</button></div>
+  <div id="set-support" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Support</h2>
     <div class="mt-4 grid gap-2 sm:grid-cols-2">
       <a href="#home" class="btn btn-ghost justify-start text-sm">${ICON('question','ic-sm')} FAQ</a>
       <a href="#privacy" class="btn btn-ghost justify-start text-sm">${ICON('shield','ic-sm')} Privacy Policy</a>
@@ -3497,9 +3515,9 @@ function adminDemoView(){
   return `<div class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8 flex items-center justify-between"><div class="flex items-center gap-3">${brand('#admin',{dark:true})}<span class="rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-300">Admin</span></div><div class="flex items-center gap-3 text-sm"><a href="#app/dashboard" class="text-slate-400 hover:text-white">← App</a><button class="btn btn-ghost !py-2 text-sm" data-action="adminLogout">Sign out admin</button></div></div>
   <div class="glass rounded-2xl p-5 mb-6" style="border:1px solid var(--accent2)"><p class="text-sm">⚠️ <b>Demo admin.</b> Real users, subscriptions and verification requests appear here once the Supabase backend is live and people sign up. The data below reads your local demo state.</p></div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${statCard('Users',1,'demo','👥')}${statCard('Your plan',PLANS[ME.plan].name,'','💳')}${statCard('Pending challenges',pendingChals.length,'','⚔️')}${statCard('Promo codes',codes.length,'','🎟️')}</div>
-  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎟️ Promo codes</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-white/10 text-left text-xs" style="color:var(--muted)"><th class="pb-2">Code</th><th class="pb-2">Grants</th><th class="pb-2">Status</th></tr></thead><tbody>${codes.map(([code,plan])=>`<tr class="border-b border-white/5"><td class="py-3 font-mono text-xs">${code}</td><td class="py-3">${PLANS[plan].name} ${planBadge(plan)}</td><td class="py-3">${used.includes(code)?'<span class="text-amber-300">used</span>':'<span class="text-emerald-400">active</span>'}</td></tr>`).join('')}</tbody></table></div><p class="mt-3 text-xs text-slate-500">At launch, codes are created/disabled in the database — not hardcoded here.</p></div>
-  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">⚔️ Challenge submissions to review</h3>${pendingChals.length===0?'<p class="py-6 text-center text-sm" style="color:var(--muted)">No submissions awaiting review.</p>':`<div class="space-y-3">${pendingChals.map(c=>{const def=CHALLENGES.find(x=>x.key===c.key)||{title:c.key,xp:0};return `<div class="rounded-xl p-4" style="background:var(--glass)"><div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-medium">${def.title}</p><p class="text-xs" style="color:var(--muted)">${(c.proofs||[]).length} proof entries · +${def.xp} XP on approval</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveChal" data-key="${c.key}">Approve</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectChal" data-key="${c.key}">Reject</button></div></div>${(c.proofs||[]).slice(-3).map(p=>`<p class="mt-2 rounded-lg p-2 text-xs" style="background:var(--glass);color:var(--muted)">📝 ${esc(p.day)}: ${esc(p.note||p.explanation||'')}${p.saved?` · €${esc(String(p.saved))}`:''}</p>`).join('')}</div>`;}).join('')}</div>`}</div>
-  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎓 Student verifications</h3><p class="py-6 text-center text-sm" style="color:var(--muted)">Verification requests appear here once the backend is live.</p></div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Promo codes</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-white/10 text-left text-xs" style="color:var(--muted)"><th class="pb-2">Code</th><th class="pb-2">Grants</th><th class="pb-2">Status</th></tr></thead><tbody>${codes.map(([code,plan])=>`<tr class="border-b border-white/5"><td class="py-3 font-mono text-xs">${code}</td><td class="py-3">${PLANS[plan].name} ${planBadge(plan)}</td><td class="py-3">${used.includes(code)?'<span class="text-amber-300">used</span>':'<span class="text-emerald-400">active</span>'}</td></tr>`).join('')}</tbody></table></div><p class="mt-3 text-xs text-slate-500">At launch, codes are created/disabled in the database — not hardcoded here.</p></div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Challenge submissions to review</h3>${pendingChals.length===0?'<p class="py-6 text-center text-sm" style="color:var(--muted)">No submissions awaiting review.</p>':`<div class="space-y-3">${pendingChals.map(c=>{const def=CHALLENGES.find(x=>x.key===c.key)||{title:c.key,xp:0};return `<div class="rounded-xl p-4" style="background:var(--glass)"><div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-medium">${def.title}</p><p class="text-xs" style="color:var(--muted)">${(c.proofs||[]).length} proof entries · +${def.xp} XP on approval</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveChal" data-key="${c.key}">Approve</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectChal" data-key="${c.key}">Reject</button></div></div>${(c.proofs||[]).slice(-3).map(p=>`<p class="mt-2 rounded-lg p-2 text-xs" style="background:var(--glass);color:var(--muted)">📝 ${esc(p.day)}: ${esc(p.note||p.explanation||'')}${p.saved?` · €${esc(String(p.saved))}`:''}</p>`).join('')}</div>`;}).join('')}</div>`}</div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Student verifications</h3><p class="py-6 text-center text-sm" style="color:var(--muted)">Verification requests appear here once the backend is live.</p></div>
   </div>`;
 }
 async function adminView(){
@@ -3514,7 +3532,7 @@ async function adminView(){
   return `<div class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8 flex items-center justify-between"><div class="flex items-center gap-3">${brand('#admin',{dark:true})}<span class="rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-300">Admin</span></div><div class="flex items-center gap-3 text-sm"><a href="#app/dashboard" class="text-slate-400 hover:text-white">← App</a><button class="btn btn-ghost !py-2 text-sm" data-action="logout">Sign out</button></div></div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">${statCard('Total users',list.length,'','👥')}${statCard('MRR',fmt(mrr),'','📈')}${statCard('Insights used',aiCount||0,'','✨')}${statCard('Pending students',(pending||[]).length,'','🎓')}</div>
   <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Plan distribution</h3>${PLAN_ORDER.map(id=>{const n=counts[id]||0,p=list.length?Math.round(n/list.length*100):0;return `<div class="mb-3"><div class="mb-1 flex justify-between text-sm"><span>${PLANS[id].name}</span><span class="text-slate-400">${n} (${p}%)</span></div><div class="h-2 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)"></div></div></div>`;}).join('')}</div>
-  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">🎓 Student verification requests</h3>${(pending||[]).length===0?'<p class="py-6 text-center text-sm text-slate-400">No pending requests.</p>':`<div class="space-y-3">${pending.map(v=>`<div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3"><div><p class="text-sm font-medium">${esc(v.university)}</p><p class="text-xs text-slate-400">${esc(v.student_email)} ${v.document_url?`· <a href="${esc(v.document_url)}" target="_blank" class="text-accent-purple">document</a>`:''}</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveSV" data-id="${v.id}">Approve → Pro</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectSV" data-id="${v.id}">Reject</button></div></div>`).join('')}</div>`}</div>
+  <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Student verification requests</h3>${(pending||[]).length===0?'<p class="py-6 text-center text-sm text-slate-400">No pending requests.</p>':`<div class="space-y-3">${pending.map(v=>`<div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3"><div><p class="text-sm font-medium">${esc(v.university)}</p><p class="text-xs text-slate-400">${esc(v.student_email)} ${v.document_url?`· <a href="${esc(v.document_url)}" target="_blank" class="text-accent-purple">document</a>`:''}</p></div><div class="flex gap-2"><button class="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-xs font-medium text-white" data-action="approveSV" data-id="${v.id}">Approve → Pro</button><button class="rounded-lg border border-white/10 px-3 py-1.5 text-xs" data-action="rejectSV" data-id="${v.id}">Reject</button></div></div>`).join('')}</div>`}</div>
   <div class="mt-6 glass rounded-2xl p-6"><h3 class="mb-4 font-semibold">Users (${list.length})</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b border-white/10 text-left text-xs text-slate-400"><th class="pb-2">User</th><th class="pb-2">Joined</th><th class="pb-2">Role</th><th class="pb-2">Plan</th></tr></thead><tbody>${list.map(u=>`<tr class="border-b border-white/5"><td class="py-3"><p class="font-medium">${esc((u.first_name||'')+' '+(u.last_name||''))||'—'}</p><p class="text-xs text-slate-400">${esc(u.email)}</p></td><td class="py-3 text-slate-400">${(u.created_at||'').slice(0,10)}</td><td class="py-3">${u.role==='admin'?'<span class="text-amber-300">admin</span>':'user'}</td><td class="py-3"><select data-action="setPlan" data-id="${u.id}" class="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs">${PLAN_ORDER.map(pp=>`<option value="${pp}" ${u.plan===pp?'selected':''}>${PLANS[pp].name}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div></div></div>`;
 }
 
@@ -3682,7 +3700,7 @@ async function render(){
   if(hash==='admin'){ if(ME?.role!=='admin'&&!isDemoAdmin()){toast('Admins only','err');location.hash='#app/settings';return;} root.innerHTML=await adminView(); window.scrollTo(0,0); return; }
   if(hash==='quiz'){ siteTheme();QSTEP=0; root.innerHTML=quizView(); renderQuiz(); return; }
   if(hash.startsWith('app/')){
-    if(!isOnboarded()){location.hash='#quiz';return;}
+    if(ME&&!ME.onboarded&&localStorage.getItem('goalify_onboarded')!=='1'){location.hash='#quiz';return;}
     const route=hash.split('/')[1]||'dashboard';
     [GOALS,EXPENSES]=await Promise.all([getGoals(),getExpenses()]);
     if(DEMO_MODE){AIUSED=0;} else {
@@ -3701,20 +3719,20 @@ async function render(){
     const c=caps(ME.plan);
     // plan-gated routes fall back to dashboard if not allowed for this plan
     const allowed=new Set(planNav(ME.plan).map(n=>n[0]));
-    const route2base=(allowed.has(route)||route==='student'||route==='goalverse'||route==='store'||route==='groups'||route==='friends')?route:'dashboard';
+    const route2base=(allowed.has(route)||route==='goalverse'||route==='store'||route==='groups'||route==='friends')?route:'dashboard';
     // Onboarding already requires a goal. Never force completed users back to goal creation —
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
-    const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,friends:friendsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,student:studentView,settings:settingsView};
+    const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,friends:friendsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,settings:settingsView};
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
     window.scrollTo(0,0);
     if(route2==='dashboard'&&c.engage){drawSpend('year');drawCat();}
     if(route2==='analytics'){drawSpend('year');drawCat();}
     if(route2==='simulator'){runSim();}
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
-    if(route2==='student'){renderSVStatus();}
     if(route2==='groups'){gEnsureLoaded();}else{GROUP_OPEN=null;GROUP_NEW=false;}
     if(route2==='friends'){fEnsureLoaded();}
+    if(route2==='rewards'&&!DEMO_MODE){refEnsureCount();}
     if(_coinPulse){const p=_coinPulse;_coinPulse=null;requestAnimationFrame(()=>pulseCoinPill(p.from,p.to));}
     if(window._focusSoSearch){window._focusSoSearch=false;setTimeout(()=>document.getElementById('soSearch')?.focus(),60);}
     return;
@@ -3937,7 +3955,7 @@ function bizDashboard(){
   const alerts=al.length?`<div class="biz-card p-4 mb-5"><p class="text-xs uppercase tracking-wider mb-2" style="color:var(--muted)">⚡ Smart alerts</p><div class="space-y-1.5">${al.slice(0,5).map(x=>`<a href="${x.href}" class="flex items-center gap-2 text-sm hover:underline"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></a>`).join('')}</div></div>`:'';
   const chartsRow=`<div class="grid gap-4 lg:grid-cols-3 mb-5"><div class="biz-card p-5 lg:col-span-2"><h3 class="font-semibold mb-3">Revenue vs Expenses</h3><div style="height:240px"><canvas id="bizRevExp"></canvas></div></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Asset allocation</h3><div style="height:240px"><canvas id="bizAssets"></canvas></div></div></div>`;
   const u=bizRecs('invoices').filter(i=>i.status==='unpaid');
-  const ai=`<div class="grid gap-4 lg:grid-cols-2 mb-5"><div class="biz-card p-5"><h3 class="font-semibold mb-3">🤖 AI advisor</h3><ul class="space-y-2 text-sm" style="color:var(--muted)">${ins.slice(0,4).map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul><a href="#app/ai" class="mt-3 inline-block text-sm gold-text font-medium">Full analysis →</a></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Quick actions</h3><div class="grid grid-cols-2 gap-2">${[['invoices','🧾 New invoice'],['payments','💳 New payment'],['employees','👔 Add employee'],['properties','🏠 Add property']].map(q=>`<button class="btn btn-ghost !py-2 text-xs" data-action="bizAdd" data-coll="${q[0]}">${q[1]}</button>`).join('')}</div><div class="biz-divider my-4"></div><h3 class="font-semibold mb-2 text-sm">Outstanding invoices</h3>${u.length?u.slice(0,3).map(i=>`<div class="flex justify-between text-sm py-1"><span>${esc(i.client)}</span><span class="font-semibold" style="color:#f59e0b">${fmt(i.amount)}</span></div>`).join(''):'<p class="text-xs" style="color:var(--muted)">All invoices paid 🎉</p>'}</div></div>`;
+  const ai=`<div class="grid gap-4 lg:grid-cols-2 mb-5"><div class="biz-card p-5"><h3 class="font-semibold mb-3">AI advisor</h3><ul class="space-y-2 text-sm" style="color:var(--muted)">${ins.slice(0,4).map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul><a href="#app/ai" class="mt-3 inline-block text-sm gold-text font-medium">Full analysis →</a></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Quick actions</h3><div class="grid grid-cols-2 gap-2">${[['invoices','🧾 New invoice'],['payments','💳 New payment'],['employees','👔 Add employee'],['properties','🏠 Add property']].map(q=>`<button class="btn btn-ghost !py-2 text-xs" data-action="bizAdd" data-coll="${q[0]}">${q[1]}</button>`).join('')}</div><div class="biz-divider my-4"></div><h3 class="font-semibold mb-2 text-sm">Outstanding invoices</h3>${u.length?u.slice(0,3).map(i=>`<div class="flex justify-between text-sm py-1"><span>${esc(i.client)}</span><span class="font-semibold" style="color:#f59e0b">${fmt(i.amount)}</span></div>`).join(''):'<p class="text-xs" style="color:var(--muted)">All invoices paid 🎉</p>'}</div></div>`;
   return header+k+alerts+chartsRow+ai;
 }
 function bizCompanies(){
@@ -3950,7 +3968,7 @@ function bizCompanies(){
 function bizCashflow(){
   const m=bizMetrics();
   const pred=m.profit>=0?`At your current pace you'll add about ${fmt(m.profit*12)} to cash over the next 12 months.`:`At your current pace you'll burn about ${fmt(-m.profit*12)} over the next 12 months — act on expenses.`;
-  return bizHead('Cash Flow Analytics','💸','Money in vs money out, with a forward projection')+`<div class="grid gap-3 sm:grid-cols-4 mb-5">${bizStat('Money in',fmt(m.revenue),'monthly','⬆️','#22c55e')}${bizStat('Money out',fmt(m.expenses),'monthly','⬇️','#ef4444')}${bizStat('Net flow',fmt(m.profit),'monthly','🔁',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Cash on hand',fmt(m.cash),'','🏦','gold')}</div>`+bizPanel('6-month trend',`<div style="height:280px"><canvas id="bizCash"></canvas></div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">🔮 Projection</h3><p class="text-sm" style="color:var(--muted)">${pred}</p></div>`;
+  return bizHead('Cash Flow Analytics','💸','Money in vs money out, with a forward projection')+`<div class="grid gap-3 sm:grid-cols-4 mb-5">${bizStat('Money in',fmt(m.revenue),'monthly','⬆️','#22c55e')}${bizStat('Money out',fmt(m.expenses),'monthly','⬇️','#ef4444')}${bizStat('Net flow',fmt(m.profit),'monthly','🔁',m.profit>=0?'#22c55e':'#ef4444')}${bizStat('Cash on hand',fmt(m.cash),'','🏦','gold')}</div>`+bizPanel('6-month trend',`<div style="height:280px"><canvas id="bizCash"></canvas></div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">Projection</h3><p class="text-sm" style="color:var(--muted)">${pred}</p></div>`;
 }
 function bizNetworth(){
   const m=bizMetrics();const rows=[['Cash',m.cash],['Property',m.propVal],['Investments',m.invVal],['Fleet',m.vehVal],['Inventory',m.stockVal]];
@@ -4016,12 +4034,12 @@ function bizGoals(){
   const recs=bizRecs('goals');const ach=bizAchievements();
   const body=recs.length?recs.map(g=>{const p=g.target?Math.min(100,Math.round((+g.current||0)/g.target*100)):0;return `<div class="mb-4"><div class="flex justify-between text-sm mb-1"><span class="font-medium">${esc(g.title)} ${bizTag(g.kind||'Goal','#d4af37')}</span><span style="color:var(--muted)">${fmt(g.current||0)} / ${fmt(g.target)}</span></div><div class="h-2.5 rounded-full" style="background:var(--glass)"><div class="h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#b8860b,#f3d97c)"></div></div><div class="text-right mt-1">${rowActions('goals',g.id)}</div></div>`;}).join(''):bizEmpty('Set targets: revenue, hiring, new location, equipment.');
   const grid=`<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${ach.map(a=>`<div class="biz-card p-4 text-center ${a.got?'':'opacity-40'}"><div class="text-3xl">${a.e}</div><p class="text-xs mt-2 ${a.got?'gold-text font-semibold':''}">${a.name}</p><p class="text-[10px] mt-1" style="color:${a.got?'#22c55e':'var(--muted)'}">${a.got?'Unlocked':'Locked'}</p></div>`).join('')}</div>`;
-  return bizHead('Goals & Achievements','🎯','Grow with targets and unlock milestones')+bizPanel('Business goals',body,addBtn('goals','Goal'))+`<div class="mt-5"><h3 class="font-semibold mb-3">🏅 Achievements</h3>${grid}</div>`;
+  return bizHead('Goals & Achievements','🎯','Grow with targets and unlock milestones')+bizPanel('Business goals',body,addBtn('goals','Goal'))+`<div class="mt-5"><h3 class="font-semibold mb-3">Achievements</h3>${grid}</div>`;
 }
 function bizAi(){
   const ins=bizInsights();const al=bizAlerts();const m=bizMetrics();
   const summary=`Your company is ${m.health>=75?'in strong shape':m.health>=50?'stable':'under pressure'} with a health score of ${m.health}/100. Monthly revenue is ${fmt(m.revenue)} against ${fmt(m.expenses)} in expenses, for a ${m.profit>=0?'profit':'loss'} of ${fmt(Math.abs(m.profit))}. Net worth stands at ${fmt(m.netWorth)}.`;
-  return bizHead('AI Business Advisor','🤖','Grounded analysis from your real numbers')+`<div class="biz-card p-5 mb-4"><h3 class="font-semibold mb-2">Executive summary</h3><p class="text-sm" style="color:var(--muted)">${summary}</p></div><div class="grid gap-4 lg:grid-cols-2"><div class="biz-card p-5"><h3 class="font-semibold mb-3">📊 Insights</h3><ul class="space-y-2.5 text-sm" style="color:var(--muted)">${ins.map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">⚡ Action items</h3>${al.length?`<ul class="space-y-2.5 text-sm">${al.map(x=>`<li class="flex gap-2"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></li>`).join('')}</ul>`:'<p class="text-sm" style="color:var(--muted)">No urgent issues. Everything looks healthy. ✅</p>'}</div></div>`;
+  return bizHead('AI Business Advisor','🤖','Grounded analysis from your real numbers')+`<div class="biz-card p-5 mb-4"><h3 class="font-semibold mb-2">Executive summary</h3><p class="text-sm" style="color:var(--muted)">${summary}</p></div><div class="grid gap-4 lg:grid-cols-2"><div class="biz-card p-5"><h3 class="font-semibold mb-3">Insights</h3><ul class="space-y-2.5 text-sm" style="color:var(--muted)">${ins.map(x=>`<li class="flex gap-2"><span>${x.i}</span><span>${x.t}</span></li>`).join('')}</ul></div><div class="biz-card p-5"><h3 class="font-semibold mb-3">Action items</h3>${al.length?`<ul class="space-y-2.5 text-sm">${al.map(x=>`<li class="flex gap-2"><span>${x.icon}</span><span style="color:${x.tone}">${x.text}</span></li>`).join('')}</ul>`:'<p class="text-sm" style="color:var(--muted)">No urgent issues. Everything looks healthy. ✅</p>'}</div></div>`;
 }
 function bizTeam(){
   const recs=bizRecs('team');
@@ -4043,7 +4061,7 @@ function bizProfile(){
 }
 function bizReports(){
   const sets=[['summary','Financial summary'],['invoices','Invoices'],['payments','Payments'],['employees','Employees'],['properties','Properties'],['investments','Investments'],['vehicles','Fleet'],['inventory','Inventory'],['taxes','Taxes'],['clients','Clients']];
-  return bizHead('Reports & Export','📄','Download CSV reports or print a PDF')+bizPanel('Export data',`<div class="grid gap-2 sm:grid-cols-2">${sets.map(s=>`<button class="btn btn-ghost !py-2.5 text-sm" data-action="bizExport" data-coll="${s[0]}" style="justify-content:space-between"><span>${s[1]}</span><span>⬇️ CSV</span></button>`).join('')}</div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">📑 PDF report</h3><p class="text-sm mb-3" style="color:var(--muted)">Generate a printable financial overview (use your browser's "Save as PDF").</p><button class="btn btn-primary !py-2 text-sm" data-action="bizPrint">🖨️ Print / Save as PDF</button></div>`;
+  return bizHead('Reports & Export','📄','Download CSV reports or print a PDF')+bizPanel('Export data',`<div class="grid gap-2 sm:grid-cols-2">${sets.map(s=>`<button class="btn btn-ghost !py-2.5 text-sm" data-action="bizExport" data-coll="${s[0]}" style="justify-content:space-between"><span>${s[1]}</span><span>⬇️ CSV</span></button>`).join('')}</div>`)+`<div class="biz-card p-5 mt-4"><h3 class="font-semibold mb-2">PDF report</h3><p class="text-sm mb-3" style="color:var(--muted)">Generate a printable financial overview (use your browser's "Save as PDF").</p><button class="btn btn-primary !py-2 text-sm" data-action="bizPrint">🖨️ Print / Save as PDF</button></div>`;
 }
 
 // ---------- actions ----------
@@ -4152,6 +4170,19 @@ document.addEventListener('click',async(e)=>{
     else if(act==='fAccept'){fRespond(a.getAttribute('data-id'),true);}
     else if(act==='fDecline'){fRespond(a.getAttribute('data-id'),false);}
     else if(act==='fUnfriend'){fUnfriend(a.getAttribute('data-id'));}
+    else if(act==='fMsg'){fOpenChat(a.getAttribute('data-id'),a.getAttribute('data-name')||'friend');}
+    else if(act==='fMsgClose'){FCHAT=null;FCHAT_MSGS=[];render();}
+    else if(act==='fSendPreset'){fSendPreset(a.getAttribute('data-body'));}
+    else if(act==='gSendText'||act==='gSendPreset'){
+      const gid=a.getAttribute('data-id');const g=GROUPS.find(x=>x.id===gid);if(!g)return;
+      const preset=act==='gSendPreset';const body=preset?a.getAttribute('data-body'):(document.getElementById('gChatInput')?.value||'').trim();
+      if(!body)return;
+      g._msgs=g._msgs||[];g._msgs.push({body,created_at:new Date().toISOString(),mine:true,name:'You'});render();
+      if(DEMO_MODE)return;
+      sb.rpc('send_group_message',{p_group:gid,p_body:body,p_kind:preset?'preset':'text'}).then(({error})=>{
+        if(error){g._msgs.pop();render();toast(/LIMIT/.test(error.message)?'This group hit 50 messages today':/UPGRADE/.test(error.message)?'Pro unlocks custom messages':'Could not send','err');}
+      });
+    }
     else if(act==='appMenu'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.add('open');}
     else if(act==='appMenuClose'){const sc=document.getElementById('appMenuScrim');if(sc)sc.classList.remove('open');}
     else if(act==='noop'){/* swallow clicks inside the sheet so the scrim doesn't close it */}
@@ -4318,7 +4349,6 @@ document.addEventListener('input',(e)=>{
 });
 document.addEventListener('change',async(e)=>{
   if(e.target.id==='langSel'){setLang(e.target.value);return;}
-  if(e.target.name==='is_student'){localStorage.setItem('goalify_is_student',e.target.checked?'1':'0');const h=document.getElementById('studHint');if(h)h.classList.toggle('hidden',!e.target.checked);return;}
   if(e.target.matches&&e.target.matches('[data-action="setShowGoals"]')){const on=e.target.checked;localStorage.setItem('goalify_show_goals',on?'1':'0');if(ME)ME.show_active_goals=on;if(!DEMO_MODE){await sb.from('profiles').update({show_active_goals:on}).eq('id',SESSION.user.id).catch(()=>{});}toast(on?'Active goals shown on profile':'Active goals hidden from profile');return;}
   if(e.target.id==='bizSwitch'){bizSwitchTo(e.target.value);return;}
   const a=e.target.closest('[data-action="setPlan"]'); if(a){try{await sb.rpc('admin_set_plan',{p_user:a.getAttribute('data-id'),p_plan:a.value});toast('Plan updated');}catch(err){toast(err.message,'err');}}
@@ -4580,9 +4610,6 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   if(event==='SIGNED_OUT'){ localStorage.removeItem('goalify_onboarded'); render(); return; }
   render();
 });
-function dismissSplash(){const sp=document.getElementById('splash');if(sp&&!sp.classList.contains('done')){sp.classList.add('done');setTimeout(()=>sp.remove(),500);}}
-try{new MutationObserver((m,obs)=>{dismissSplash();obs.disconnect();}).observe(document.getElementById('root'),{childList:true});}catch(e){}
-setTimeout(dismissSplash,6000); // failsafe: never trap the user on the splash
 window.addEventListener('hashchange',render);
 loadTheme();
 (async()=>{
@@ -4933,9 +4960,12 @@ async function gEnsureLoaded(){
 async function gLoadDetail(g){
   if(DEMO_MODE||g._members)return;
   try{
-    const [{data:m},{data:c}]=await Promise.all([
+    const [{data:m},{data:c},{data:ms}]=await Promise.all([
       sb.from('group_members').select('user_id,role,profiles(first_name,username,avatar_url)').eq('group_id',g.id),
-      sb.from('group_contributions').select('user_id,amount,note,created_at,profiles(first_name,username)').eq('group_id',g.id).order('created_at',{ascending:false}).limit(50)]);
+      sb.from('group_contributions').select('user_id,amount,note,created_at,profiles(first_name,username)').eq('group_id',g.id).order('created_at',{ascending:false}).limit(50),
+      sb.from('group_messages').select('user_id,body,created_at').eq('group_id',g.id).order('created_at',{ascending:true}).limit(40)]);
+    const meId=SESSION.user.id;
+    g._msgs=(ms||[]).map(x=>({body:x.body,created_at:x.created_at,mine:x.user_id===meId,name:x.user_id===meId?'You':'Member'}));
     g._members=(m||[]).map(x=>({user_id:x.user_id,role:x.role,name:(x.profiles&&(x.profiles.first_name||x.profiles.username))||'Saver'}));
     g._contribs=(c||[]).map(x=>({user_id:x.user_id,amount:Number(x.amount),note:x.note,created_at:x.created_at,name:(x.profiles&&(x.profiles.first_name||x.profiles.username))||'Saver'}));
   }catch(e){g._members=g._members||[];g._contribs=g._contribs||[];}
@@ -5006,6 +5036,12 @@ function groupDetailView(g){
         `<p class="mt-2 text-sm" ${M}>No contributions yet — be the first.</p>`}
     </div>
     <div class="glass rounded-2xl p-4">
+      <div class="flex items-center justify-between"><h3 class="font-bold">Group chat</h3><span class="chip">50 msgs/day</span></div>
+      <div class="mt-2 space-y-1.5 max-h-[240px] overflow-y-auto">${(g._msgs&&g._msgs.length)?g._msgs.map(m=>`<div class="rounded-xl px-3 py-2 text-sm ${m.mine?'ml-8':'mr-8'}" style="background:${m.mine?'color-mix(in srgb,var(--accent2) 22%,var(--card-2))':'var(--card-2)'}"><b class="text-[11px] block" style="color:var(--muted)">${esc(m.name||'Saver')}</b>${esc(m.body)}</div>`).join(''):`<p class="text-sm py-3 text-center" style="color:var(--muted)">No messages yet — start the conversation.</p>`}</div>
+      ${(ME&&ME.plan!=='free')?`<div class="mt-3 flex gap-2"><input id="gChatInput" class="input flex-1" maxlength="500" placeholder="Message the group…"><button class="btn btn-primary" data-action="gSendText" data-id="${g.id}">Send</button></div>`
+        :`<p class="t-label mt-3">Quick messages · upgrade to Pro for custom messages</p><div class="mt-1.5 flex flex-wrap gap-1.5">${chatPresets().map(t=>`<button class="btn btn-ghost btn-sm" data-action="gSendPreset" data-id="${g.id}" data-body="${esc(t)}">${esc(t)}</button>`).join('')}</div>`}
+    </div>
+    <div class="glass rounded-2xl p-4">
       <label class="t-label">Invite link</label>
       <div class="flex gap-2 mt-2"><input class="input flex-1" readonly value="${esc(link)}" onclick="this.select()"><button class="btn btn-ghost" data-action="gCopy" data-link="${esc(link)}">Copy</button></div>
       <p class="mt-2 text-xs" ${M}>Code: <b style="color:var(--text)">${esc(g.invite_code)}</b> · Privacy: ${g.privacy}</p>
@@ -5055,7 +5091,17 @@ async function gLeave(gid){
 // Backend: follows / friend_requests / friendships + respond_friend_request/unfriend RPCs.
 // Messaging is intentionally NOT here yet (separate build).
 // ============================================================
-let FRIENDS=[],FR_IN=[],FR_OUT=[],FRIENDS_LOADED=false;
+let FRIENDS=[],FR_IN=[],FR_OUT=[],FRIENDS_LOADED=false,FCHAT=null,FCHAT_MSGS=[];
+function chatPresets(){
+  try{const s=snapshot(ME,EXPENSES);const g=topGoal();const st=(streakState().count)||0;
+    return [
+      'I saved '+fmt(Math.max(0,s.leftover))+' this month',
+      g?('My "'+(g.name||'goal')+'" goal is '+pct(g.saved_amount,g.target_amount)+'% complete'):'I just set a new savings goal',
+      st>0?("I'm on a "+st+'-day streak'):'I logged my spending today',
+      'Just added money to my goal'
+    ].map(x=>x.slice(0,180));
+  }catch(e){return ['I saved money today','My goal is going well','I logged my spending','Just added to my goal'];}
+}
 let _fSearchT=null;
 
 async function fEnsureLoaded(){
@@ -5089,12 +5135,19 @@ function friendsView(){
   </div>`:'';
   const friendsSection=`<div class="glass rounded-2xl p-4">
     <div class="flex items-center justify-between mb-1"><h3 class="font-bold">Friends</h3><span class="chip">${FRIENDS.length}</span></div>
-    ${FRIENDS.length?FRIENDS.map(f=>fRow(f,`<button class="btn btn-ghost btn-sm" data-action="fUnfriend" data-id="${f.id}">Remove</button>`)).join('')
+    ${FRIENDS.length?FRIENDS.map(f=>fRow(f,`<div class="flex gap-1.5"><button class="btn btn-primary btn-sm" data-action="fMsg" data-id="${f.id}" data-name="${esc(f.name)}">Message</button><button class="btn btn-ghost btn-sm" data-action="fUnfriend" data-id="${f.id}">Remove</button></div>`)).join('')
       :`<div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;margin:0 auto">${ICON('users')}</div><p class="mt-2 text-sm font-semibold">No friends yet</p><p class="mt-1 text-xs" ${M}>Search savers below and send a request.</p></div>`}
   </div>`;
+  const chatPanel=FCHAT?`<div class="glass-strong rounded-2xl p-4">
+    <div class="flex items-center justify-between"><h3 class="font-bold">Message ${esc(FCHAT.name)}</h3><button class="rcp-x" data-action="fMsgClose" aria-label="Close">${ICON('x','ic-sm')}</button></div>
+    <div class="mt-2 space-y-1.5 max-h-[220px] overflow-y-auto">${FCHAT_MSGS.length?FCHAT_MSGS.map(m=>`<div class="rounded-xl px-3 py-2 text-sm ${m.mine?'ml-8':'mr-8'}" style="background:${m.mine?'color-mix(in srgb,var(--accent2) 22%,var(--card-2))':'var(--card-2)'}">${esc(m.body)}<span class="block text-[10px] mt-0.5" style="color:var(--muted)">${fmtAgo(m.created_at)}</span></div>`).join(''):`<p class="text-sm py-3 text-center" style="color:var(--muted)">Say hi with a quick message below.</p>`}</div>
+    <p class="t-label mt-3">Quick messages · 4 per day</p>
+    <div class="mt-1.5 flex flex-wrap gap-1.5">${chatPresets().map(t=>`<button class="btn btn-ghost btn-sm" data-action="fSendPreset" data-body="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+  </div>`:'';
   return `<div class="dash-stack space-y-5">
     <div class="page-head"><div><h1 class="page-h1">Friends</h1><p class="page-sub">Follow savers, add friends, save together.</p></div>
       <button class="btn btn-primary shrink-0" data-action="gNew">${ICON('users','ic-sm')} Create Group Goal</button></div>
+    ${chatPanel}
     <div class="glass rounded-2xl p-4"><label class="t-label">Find savers</label>
       <div class="so-search mt-2"><span class="so-ic">${ICON('search','ic-sm')}</span><input id="fSearch" class="input" placeholder="Search by name or username…" autocomplete="off"></div>
       <div id="fResults" class="mt-2"></div></div>
@@ -5131,6 +5184,24 @@ async function fRespond(rid,accept){
   try{const {error}=await sb.rpc('respond_friend_request',{p_id:rid,p_accept:accept});if(error)throw error;
     toast(accept?'Friend added 🎉':'Request declined');FRIENDS_LOADED=false;await fEnsureLoaded();
   }catch(e){toast('Could not update request','err');}
+}
+async function fOpenChat(id,name){
+  FCHAT={id,name};FCHAT_MSGS=[];render();
+  if(DEMO_MODE)return;
+  try{const u=SESSION.user.id;
+    const {data}=await sb.from('friend_messages').select('sender_id,body,created_at')
+      .or(`and(sender_id.eq.${u},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${u})`)
+      .order('created_at',{ascending:true}).limit(30);
+    FCHAT_MSGS=(data||[]).map(m=>({body:m.body,created_at:m.created_at,mine:m.sender_id===u}));render();
+  }catch(e){}
+}
+async function fSendPreset(body){
+  if(!FCHAT)return;
+  const mine={body,created_at:new Date().toISOString(),mine:true};
+  if(DEMO_MODE){FCHAT_MSGS.push(mine);render();return;}
+  FCHAT_MSGS.push(mine);render();
+  const {error}=await sb.rpc('send_friend_message',{p_to:FCHAT.id,p_body:body});
+  if(error){FCHAT_MSGS.pop();render();toast(/LIMIT/.test(error.message)?'Daily limit reached — 4 quick messages per day':'Could not send','err');}
 }
 async function fUnfriend(id){
   if(!confirm('Remove this friend?'))return;
