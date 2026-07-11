@@ -130,9 +130,10 @@
     /* light mode */
     html.light{
       color-scheme:light;
-      /* porcelain system: warm white, graphite text, soft warm grays */
-      --bg:#F7F5F1; --text:#1C1C1E; --muted:#6E6E73;
-      --card:#FFFFFF; --card-2:#FFFFFF; --sidebar:#FFFFFF; --glass:#FFFFFF; --glass-strong:#FFFFFF; --border:#E9E6E0; --hair:rgba(28,28,30,.06);
+      /* white system: pure white, graphite text, blue/green accents (no default purple) */
+      --bg:#FFFFFF; --text:#111114; --muted:#6E6E73;
+      --card:#FFFFFF; --card-2:#F6F6F8; --sidebar:#FFFFFF; --glass:#FFFFFF; --glass-strong:#FFFFFF; --border:#E5E5EA; --hair:rgba(17,17,20,.06);
+      --accent1:#1D4ED8; --accent2:#2563EB; --accent3:#60A5FA;
       --shadow-sm:0 1px 2px rgba(17,24,39,.06),0 1px 1px rgba(17,24,39,.04);
       --shadow-md:0 8px 24px -12px rgba(17,24,39,.18),0 2px 6px -2px rgba(17,24,39,.10);
       --shadow-lg:0 28px 60px -24px rgba(17,24,39,.26),0 8px 22px -12px rgba(17,24,39,.14);
@@ -794,7 +795,7 @@
        coral momentum. Calm surfaces, crisp borders, dense product UI.
        ============================================================ */
     :root{--bg:#0B0C10;--card:#13151B;--card-2:#16181F;--sidebar:#0E1015}
-    html.light{--bg:#F7F5F1;--text:#1C1C1E;--muted:#6E6E73}
+    html.light{--bg:#FFFFFF;--text:#111114;--muted:#6E6E73}
     .text-emerald-400,.text-emerald-300{color:var(--jade2)!important}
     .text-amber-300{color:var(--gold2)!important}
     html.light .text-emerald-400,html.light .text-emerald-300{color:var(--jade)!important}
@@ -909,11 +910,11 @@
        ============================================================ */
     /* warm light tokens (landing forces light + default accent) */
     html.light[data-accent="blue"]{
-      --bg:#F6F2EA; --text:#14171C; --muted:#5C6470;
-      --card:#FFFFFF; --card-2:#FBF9F4; --sidebar:#FFFFFF;
-      --glass:#F1EEE7; --glass-strong:#FFFFFF;
-      --border:#DDD6CA; --hair:rgba(29,33,41,.08);
-      --accent1:#4B2E83; --accent2:#5A3EA6; --accent3:#7658C4;
+      --bg:#FFFFFF; --text:#111114; --muted:#6E6E73;
+      --card:#FFFFFF; --card-2:#F6F6F8; --sidebar:#FFFFFF;
+      --glass:#FFFFFF; --glass-strong:#FFFFFF;
+      --border:#E5E5EA; --hair:rgba(17,17,20,.06);
+      --accent1:#1D4ED8; --accent2:#2563EB; --accent3:#60A5FA;
       --jade:#2F8F72; --jade2:#45B083; --gold:#C6A15B; --gold2:#B98F3E;
       --steel:#426C82; --steel2:#6E91A3; --coral:#C96F4A; --danger:#B8503E;
       --shadow-sm:0 1px 2px rgba(70,58,32,.08),0 1px 1px rgba(70,58,32,.05);
@@ -932,7 +933,9 @@
     html.light .lp-navbar{background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);border:1px solid var(--border);box-shadow:0 10px 26px -18px rgba(70,58,32,.35)}
     /* CTA hierarchy */
     /* porcelain button hierarchy — black primary, white secondary, purple stays an accent */
-    html.light .btn-primary{background:linear-gradient(180deg,#2C2C30,#131316);box-shadow:0 10px 22px -12px rgba(17,17,20,.55),inset 0 1px 0 rgba(255,255,255,.10)}
+    /* black button MUST have white text — base .btn-primary sets dark text for dark mode's
+       white button, so without this override light mode rendered black-on-black ("Start for free" bug) */
+    html.light .btn-primary{color:#fff;background:#111114;box-shadow:0 10px 22px -12px rgba(17,17,20,.55)}
     html.light .btn-primary:hover{filter:brightness(1.25)}
     html.light .btn-ghost{background:#fff;border-color:#DCD9D3;box-shadow:var(--shadow-sm)}
     html.light .btn-primary:hover{filter:brightness(1.07)}
@@ -1260,6 +1263,13 @@
     .scan-fab:active{transform:scale(.9)}
     .scan-fab svg{width:24px;height:24px;stroke-width:2}
     @media(min-width:1024px){.scan-fab{display:none}}
+    /* challenges FAB mirrors the scanner FAB on the left */
+    .chal-fab{position:fixed;left:1rem;bottom:calc(5.2rem + env(safe-area-inset-bottom));z-index:45;display:flex;align-items:center;justify-content:center;width:3.4rem;height:3.4rem;border-radius:9999px;background:#F5F5F7;color:#0B0B0C;border:none;box-shadow:0 8px 24px -6px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);-webkit-tap-highlight-color:transparent;transition:transform .18s var(--ease-spring)}
+    .chal-fab:active{transform:scale(.9)}
+    .chal-fab svg{width:24px;height:24px;stroke-width:2}
+    @media(min-width:1024px){.chal-fab{display:none}}
+    /* light mode: FABs go black w/ white icons (buttons are black in the white theme) */
+    html.light .scan-fab,html.light .chal-fab{background:#111114;color:#fff;box-shadow:0 8px 24px -8px rgba(17,17,20,.45)}
     /* full-screen scanner overlay */
     .rcp{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .28s var(--ease-out),visibility .28s}
     .rcp.open{opacity:1;visibility:visible}

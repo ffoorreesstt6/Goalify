@@ -34,7 +34,7 @@ const DEMO_ME = {
   plan:'premium', role:'user', personality:'goal_chaser', onboarded:false,
   monthly_income:3500, monthly_savings:700, xp:0, currency:'EUR',
   budget:{coffee:61,delivery:78,fastfood:52,restaurants:70,taxi:26,nightlife:65,gaming:26,shopping:109,beauty:17,clothing:39,groceries:435,fuel:252,subscriptions:60},
-  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'dark', language:'en',
+  notification_prefs:{weekly:true,alerts:true,goals:true,news:false}, theme:'light', language:'en',
   coach_mode:'fun', savings_mode:'fun', theme_color:'blue', avatar_url:null,
   profile_visibility:'public', show_active_goals:true, prestige:0,
   country:'Kosovo', spend_freq:{coffee:14,delivery:3,fastfood:3,restaurants:2,taxi:2,nightlife:1,gaming:1,shopping:1,beauty:1,clothing:1,groceries:5,fuel:1}, created_at:'2025-08-01T00:00:00Z'
@@ -987,7 +987,7 @@ function seedDemoMissions(){
 // theme
 function applyTheme(mode,color){const r=document.documentElement;if(mode){r.classList.toggle('light',mode==='light');localStorage.setItem('goalify_theme',mode);if(ME)ME.theme=mode;}if(color){r.setAttribute('data-accent',color);localStorage.setItem('goalify_color',color);if(ME)ME.theme_color=color;}}
 function applyBg(bg){document.documentElement.setAttribute('data-bg',bg||'none');localStorage.setItem('goalify_bg',bg||'none');if(ME)ME.bg=bg;}
-function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'dark',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
+function loadTheme(){applyTheme(localStorage.getItem('goalify_theme')||'light',localStorage.getItem('goalify_color')||'blue');applyBg(localStorage.getItem('goalify_bg')||'none');}
 // Landing, quiz and auth always use the light premium theme.
 function siteTheme(){const r=document.documentElement;r.removeAttribute('data-biz');r.classList.add('light');r.setAttribute('data-accent','blue');r.setAttribute('data-bg','none');}
 // Enforce per-plan theme rules without overwriting Premium's saved prefs.
@@ -995,7 +995,7 @@ function enforcePlanTheme(plan){
   const r=document.documentElement,c=caps(plan);
   if(plan==='business')return; // gold executive handled via data-biz
   // porcelain light is the default appearance for every plan; dark is an explicit choice
-  const mode=localStorage.getItem('goalify_theme')||'dark';
+  const mode=localStorage.getItem('goalify_theme')||'light';
   r.classList.toggle('light',mode==='light');
   if(c.themes==='full'){ r.setAttribute('data-accent',localStorage.getItem('goalify_color')||'blue'); applyBg(localStorage.getItem('goalify_bg')||'none'); }
   else if(c.themes==='red'){ r.setAttribute('data-accent','red'); r.setAttribute('data-bg','none'); }
@@ -2252,6 +2252,7 @@ function shell(route,inner){
     <div class="border-t border-white/10 p-3"><div class="flex items-center gap-3 px-2 py-2">${avatarHTML(36)}<div class="min-w-0"><p class="truncate text-sm font-medium">${esc(ME?.first_name||'You')} ${planBadge(ME?.plan)}</p><p class="text-xs text-slate-400">${PLANS[ME?.plan||'free'].name} plan</p></div></div><div class="px-1 pb-2">${langSelect()}</div><button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-white/5 hover:text-white" data-action="logout">Sign out</button></div>
   </aside>
   <div class="lg:pl-64">${mobileChrome(route)}<main class="app-main mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 lg:pb-8">${inner}</main>
+  <a href="#app/challenges" class="chal-fab lg:hidden" aria-label="Challenges">${ICON('trophy')}</a>
   <button class="scan-fab lg:hidden" data-action="openScan" aria-label="Scan receipt">${ICON('camera')}</button></div></div>`;
 }
 function statCard(label,val,sub,emoji){return `<div class="glass rounded-2xl p-5 anim stat-card"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold uppercase tracking-wider" style="color:var(--muted)">${label}</span></div><p class="mt-2.5 text-2xl font-extrabold tracking-tight">${val}</p>${sub?`<p class="mt-1 text-xs" style="color:var(--muted)">${sub}</p>`:''}</div>`;}
@@ -2605,7 +2606,6 @@ function toolsRowHTML(){
     ['Simulator','simulator','crystal',false],
     ['Impact','spendcalc','euro',false],
     ['Analytics','analytics','chart',false],
-    ['Challenges','challenges','trophy',false],
     ['Goals','goals','goal',false],
   ]);
 }
@@ -2632,7 +2632,7 @@ function dashboardView(){
   const gamify=c.gamify?`<div class="grid gap-4 lg:grid-cols-2">${missionsCompactHTML()}${levelXpHTML()}</div><div class="grid gap-4 lg:grid-cols-2">${weeklyCompactHTML()}${achievementsLatestHTML()}</div>`:'';
   const studentPerk='';
   const freePerk = plan==='free' ? `<a href="#app/plans" class="block glass-strong rounded-2xl p-5 transition hover:brightness-110" style="border:1px solid var(--border)"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Unlock more with Pro & Premium</h3><p class="mt-1 text-sm" style="color:var(--muted)">Pro removes the goal limit and adds goal deletion. Premium adds the social feed, XP & levels, badges, themes and smart AI insights.</p></div><span class="btn btn-primary !py-2 text-sm shrink-0">See plans →</span></div></a>` : '';
-  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${quizMonthlyPromptHTML()}${analytics}${gamify}${freePerk}</div>`;
+  return `<div class="dash-stack space-y-5 sm:space-y-6">${header}${heroStatsHTML(s)}${toolsRowHTML()}${goalsOverviewHTML()}${savingsOpportunitiesHTML()}${moneyHealthHTML(h)}${smartInsightsHTML()}${quizMonthlyPromptHTML()}${analytics}${freePerk}</div>`;
 }
 
 function missionRow(m){
@@ -3101,6 +3101,24 @@ function profileProgressHTML(){
 // ============================================================
 // the most prestigious badge the user has earned (later in the list = rarer)
 function featuredBadge(got){let best=null;BADGES.forEach(b=>{if(got&&got.has&&got.has(b.key))best=b;});return best;}
+let PROF_COUNTS=null;
+async function profEnsureCounts(){
+  if(PROF_COUNTS||DEMO_MODE)return;
+  PROF_COUNTS={followers:0,following:0,friends:0};
+  try{const u=SESSION.user.id;
+    const [a,b,c]=await Promise.all([
+      sb.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',u),
+      sb.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',u),
+      sb.from('friendships').select('user_low',{count:'exact',head:true}).or(`user_low.eq.${u},user_high.eq.${u}`)]);
+    PROF_COUNTS={followers:a.count||0,following:b.count||0,friends:c.count||0};render();
+  }catch(e){}
+}
+function socialStatsHTML(){
+  const lvl=levelFromXp(ME.xp).level;const c=PROF_COUNTS||{followers:0,following:0,friends:0};
+  const cell=(v,l,href)=>`<a href="${href||'#app/friends'}" class="a-metric text-center block"><p class="v">${v}</p><p class="l">${l}</p></a>`;
+  return `<div class="grid grid-cols-4 gap-2.5">${cell(c.followers,'Followers')}${cell(c.following,'Following')}${cell(c.friends,'Friends')}${cell('Lv.'+lvl,'Level','#app/challenges')}</div>
+  <div class="grid grid-cols-2 gap-2.5"><a href="#app/settings" class="btn btn-ghost">Edit username</a><a href="#app/groups" class="btn btn-ghost">Group goals</a></div>`;
+}
 function profileView(){
   const lvl=levelFromXp(ME.xp),level=lvl.level,tier=profileTier(level),nxt=nextTier(level);
   const title=tier.title,vis=profVisibility(),isPublic=vis==='public';
@@ -3115,8 +3133,8 @@ function profileView(){
   const bimg=bannerImg();
 
   const visBar=`<div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-    <div><p class="text-sm font-semibold">${isPublic?'🌍 Public profile':'🔒 Private profile'}</p><p class="text-[11px]" ${M}>${isPublic?'Visible to other Goalify users, searches and leaderboards.':'Hidden from everyone — only you can see these stats.'}</p></div>
-    <div class="flex gap-1 rounded-xl p-1" style="background:var(--glass)">${[['public','🌍 Public'],['private','🔒 Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="rounded-lg px-3 py-1.5 text-xs ${vis===o[0]?'text-white':''}" style="${vis===o[0]?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${o[1]}</button>`).join('')}</div></div>`;
+    <div><p class="font-semibold text-sm">Profile visibility</p><p class="text-xs" style="color:var(--muted)">${isPublic?'Anyone can find you in search.':'Hidden from search and leaderboards.'}</p></div>
+    <div class="seg" role="tablist" aria-label="Profile visibility"><button role="tab" aria-selected="${isPublic}" class="seg-btn ${isPublic?'on':''}" data-action="setVisibility" data-v="public">Public</button><button role="tab" aria-selected="${!isPublic}" class="seg-btn ${isPublic?'':'on'}" data-action="setVisibility" data-v="private">Private</button></div></div>`;
 
   const hero=`<div class="glass-strong rounded-2xl overflow-hidden">
     <div class="relative ${bannerCls||bimg?'h-28':'h-24'} ${bimg?'':bannerCls}" style="${bimg?`background:url(${bimg}) center/cover no-repeat`:(bannerCls?'':'background:linear-gradient(120deg,var(--accent1),var(--accent2))')}">
@@ -3179,7 +3197,7 @@ function profileView(){
   const tiersCard=`<div class="glass rounded-2xl p-6"><h3 class="font-semibold mb-4">All progression tiers</h3><div class="grid gap-2 sm:grid-cols-2">${LEVEL_TIERS.map(t=>{const on=level>=t.lvl;return `<div class="flex items-center gap-3 rounded-xl p-3" style="background:var(--glass);${on?'box-shadow:0 0 0 1px var(--accent2)':'opacity:.55'}"><span class="pf-frame ${t.frame} pf-mini" style="width:40px;height:40px">${t.crown?'<span class="pf-crown" aria-hidden="true">👑</span>':''}<span class="pf-frame-inner"><span class="flex h-full w-full items-center justify-center rounded-full text-xs font-bold text-white" style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${t.lvl}</span></span></span><div class="flex-1 min-w-0"><p class="text-sm font-semibold">Lvl ${t.lvl} · ${esc(t.title)}</p><p class="text-[11px]" ${M}>${esc(t.unlock)}</p></div>${on?'<span class="text-xs font-semibold text-emerald-400">✓</span>':'<span class="text-xs" '+M+'>🔒</span>'}</div>`;}).join('')}</div></div>`;
 
   return `<div class="dash-stack space-y-5 sm:space-y-6"><div class="page-head"><div><h1 class="page-h1">Profile</h1><p class="page-sub">Your public profile, level progression and achievements.</p></div></div>
-    ${visBar}${hero}${communityRowHTML()}${stats}${featured}${prog}${prestige}${badgesPanel()}${activeGoals}${achievementCards}${tiersCard}
+    ${visBar}${hero}${socialStatsHTML()}${activeGoals}
     <p class="text-xs text-slate-500">Other people's profiles open here once accounts go live — no placeholder users in demo.</p></div>`;
 }
 
@@ -3441,7 +3459,7 @@ function settingsView(){
   const p=ME;
   const vis=profVisibility();
   const pm=getPM();
-  const curMode=localStorage.getItem('goalify_theme')||'dark',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
+  const curMode=localStorage.getItem('goalify_theme')||'light',curColor=localStorage.getItem('goalify_color')||'blue',curBg=localStorage.getItem('goalify_bg')||'none';
   const COLORS=[['blue','Plum','#6D45D8'],['red','Red','#ef4444'],['green','Green','#22c55e'],['pink','Pink','#ec4899'],['orange','Orange','#f97316'],['yellow','Yellow','#eab308'],['grey','Grey','#6b7280']];
   const BGS=[['none','Plain','#0b0f1d'],['aurora','Aurora','🌌'],['mesh','Mesh','🪩'],['glow','Glow','💡'],['grid','Grid','▦'],['dots','Dots','⋯']];
   const themes=caps(p.plan).themes;
@@ -3472,7 +3490,7 @@ function settingsView(){
     <div class="mt-4 flex items-center gap-4"><span class="inline-flex h-16 w-16 overflow-hidden rounded-full" style="box-shadow:0 0 0 2px var(--border)">${avatarHTML(64)}</span><div><label class="btn btn-ghost text-sm cursor-pointer">📷 Upload photo<input id="avatarInput" type="file" accept="image/*" class="hidden"></label>${p.avatar_url?'<button class="btn btn-ghost text-sm ml-2" data-action="rmAvatar">Remove</button>':''}</div></div>
     <form id="profForm" class="mt-5 grid gap-4 sm:grid-cols-2"><div><label class="label">First name</label><input name="first_name" class="input" value="${esc(p.first_name||'')}"></div><div><label class="label">Last name</label><input name="last_name" class="input" value="${esc(p.last_name||'')}"></div><div><label class="label">Username</label><input name="username" class="input" value="${esc(p.username||'')}"></div><div><label class="label">Country</label><input name="country" list="countryList2" class="input" value="${esc(p.country||'')}"><datalist id="countryList2">${COUNTRIES.map(c=>`<option value="${c}">`).join('')}</datalist></div><div><label class="label">Monthly income (€)</label><input name="monthly_income" type="number" class="input" value="${p.monthly_income||0}"></div><div><label class="label">Currency</label><select name="currency" class="input">${['EUR','USD','GBP'].map(c=>`<option ${p.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="sm:col-span-2"><label class="label">Bio</label><textarea name="bio" rows="2" maxlength="160" class="input" placeholder="Tell people a bit about your goals…">${esc(p.bio||'')}</textarea><p class="mt-1 text-[11px]" style="color:var(--muted)">Shown on your public profile · max 160 characters</p></div><div class="sm:col-span-2"><button class="btn btn-primary text-sm">Save profile</button></div></form></div>
   <div id="set-public" class="set-card glass rounded-2xl p-6"><h2 class="text-lg font-bold">Public profile</h2><p class="mt-1 text-sm" style="color:var(--muted)">Control who can see your profile, level, achievements and leaderboard rank.</p>
-    <div class="mt-4"><p class="label">Profile visibility</p><div class="seg">${[['public','🌍 Public'],['private','🔒 Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="seg-btn ${vis===o[0]?'on':''}">${o[1]}</button>`).join('')}</div>
+    <div class="mt-4"><p class="label">Profile visibility</p><div class="seg">${[['public','Public'],['private','Private']].map(o=>`<button data-action="setVisibility" data-v="${o[0]}" class="seg-btn ${vis===o[0]?'on':''}">${o[1]}</button>`).join('')}</div>
       <p class="mt-2 text-xs" style="color:var(--muted)">${vis==='public'?'Public: other users can view your profile, find you in search and see you on leaderboards.':'Private: hidden from all users, searches and leaderboards. Only personal statistics remain visible to you.'}</p></div>
     <label class="mt-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm" style="background:var(--glass);border:1px solid var(--border)"><span>Show my active goals on my public profile</span><input type="checkbox" class="sw" data-action="setShowGoals" ${showActiveGoalsPref()?'checked':''}></label>
     <a href="#app/profile" class="btn btn-ghost mt-4 text-sm">View my profile →</a></div>
@@ -3732,6 +3750,7 @@ async function render(){
     if(route2==='spendcalc'){setTimeout(updateSpendCalc,0);}
     if(route2==='groups'){gEnsureLoaded();}else{GROUP_OPEN=null;GROUP_NEW=false;}
     if(route2==='friends'){fEnsureLoaded();}
+    if(route2==='profile'&&!DEMO_MODE){profEnsureCounts();}
     if(route2==='rewards'&&!DEMO_MODE){refEnsureCount();}
     if(_coinPulse){const p=_coinPulse;_coinPulse=null;requestAnimationFrame(()=>pulseCoinPill(p.from,p.to));}
     if(window._focusSoSearch){window._focusSoSearch=false;setTimeout(()=>document.getElementById('soSearch')?.focus(),60);}
@@ -4224,7 +4243,7 @@ document.addEventListener('click',async(e)=>{
     else if(act==='setTheme'){applyTheme(a.getAttribute('data-mode'),null);if(!DEMO_MODE){await sb.from('profiles').update({theme:ME.theme}).eq('id',SESSION.user.id);}render();}
     else if(act==='setColor'){applyTheme(null,a.getAttribute('data-color'));if(!DEMO_MODE){await sb.from('profiles').update({theme_color:ME.theme_color}).eq('id',SESSION.user.id);}render();}
     else if(act==='setBg'){applyBg(a.getAttribute('data-bg'));if(!DEMO_MODE){await sb.from('profiles').update({bg:ME.bg}).eq('id',SESSION.user.id);}render();}
-    else if(act==='setVisibility'){const v=a.getAttribute('data-v');localStorage.setItem('goalify_visibility',v);if(ME)ME.profile_visibility=v;if(!DEMO_MODE){await sb.from('profiles').update({profile_visibility:v}).eq('id',SESSION.user.id).catch(()=>{});}toast(v==='public'?'🌍 Profile is now public':'🔒 Profile is now private');render();}
+    else if(act==='setVisibility'){const v=a.getAttribute('data-v');localStorage.setItem('goalify_visibility',v);if(ME)ME.profile_visibility=v;if(!DEMO_MODE){await sb.from('profiles').update({profile_visibility:v}).eq('id',SESSION.user.id).catch(()=>{});}toast(v==='public'?'Profile is now public':'Profile is now private');render();}
     else if(act==='prestige'){const level=levelFromXp(ME.xp).level;if(!canPrestige(level)){toast('Reach Level 100 to prestige','err');return;}const np=(ME.prestige||0)+1;if(DEMO_MODE){DEMO_ME.prestige=np;DEMO_ME.xp=0;ME.prestige=np;ME.xp=0;}else{await sb.from('profiles').update({prestige:np,xp:0}).eq('id',SESSION.user.id).catch(()=>{});await loadProfile();}toast('🌟 Prestige '+np+'! A fresh climb begins.');render();}
     else if(act==='demoPlan'){const pl=a.getAttribute('data-plan');const cyc=a.getAttribute('data-cycle')||'monthly';if(DEMO_MODE){DEMO_ME.plan=pl;ME.plan=pl;if(pl!=='free'){location.hash='#payment-success?plan='+pl+'&cycle='+cyc;}else{toast('Now on the Free plan (demo)');render();}}else{toast('Upgrades are handled by an admin or via student verification.');}}
     else if(act==='redeemPromo'){const code=($('#promoInput')?.value||'').trim().toUpperCase();if(!code)return toast('Enter a code','err');const plan=PROMO_CODES[code];if(!plan)return toast('Invalid or expired code','err');const used=JSON.parse(localStorage.getItem('goalify_promo_used')||'[]');if(used.includes(code))return toast('This code has already been used','err');used.push(code);localStorage.setItem('goalify_promo_used',JSON.stringify(used));if(DEMO_MODE){DEMO_ME.plan=plan;ME.plan=plan;}else{await sb.from('profiles').update({plan}).eq('id',SESSION.user.id);await loadProfile();}toast('🎉 '+PLANS[plan].name+' plan activated!');render();}
