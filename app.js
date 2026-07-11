@@ -1425,19 +1425,19 @@ function landing(){
   <main>
     <section class="lp-hero px-4">
       <div class="lp-aurora"></div><div class="lp-haze"></div>
-      <div class="relative mx-auto grid max-w-7xl items-start gap-8 md:grid-cols-2 lg:gap-12">
-        <div class="reveal">
+      <div class="relative mx-auto flex max-w-4xl flex-col items-center gap-8 text-center">
+        <div class="reveal flex flex-col items-center">
           <span class="lp-eyebrow"><span class="dot"></span> Your money, finally on your side</span>
-          <h1 class="lp-h1 mt-5"><span>Turn every euro</span> <span>into</span> <span class="gtext">progress.</span></h1>
-          <p class="lp-lead mt-4 max-w-md">Goalify makes saving something you look forward to — track spending in seconds, build streaks that stick, and reach every goal faster.</p>
-          <div class="mt-7 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <h1 class="lp-h1 lp-h1-glow mt-5"><span>Turn every euro</span> <span>into</span> <span class="gtext lp-glow">progress.</span></h1>
+          <p class="lp-lead mt-4 max-w-md mx-auto">Goalify makes saving something you look forward to — track spending in seconds, build streaks that stick, and reach every goal faster.</p>
+          <div class="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <a href="${cta}" class="btn btn-primary lp-btn-lg">Start for free →</a>
             <a href="#home" data-scroll="how" class="btn btn-ghost lp-btn-lg">See how it works</a>
           </div>
-          <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--jade2)">${t[0]==='✓'?ICON('check','ic-sm'):t[0]}</span>${t[1]}</span>`).join('')}</div>
+          <div class="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm" style="color:var(--muted)">${trust.map(t=>`<span class="inline-flex items-center gap-1.5"><span style="color:var(--jade2)">${t[0]==='✓'?ICON('check','ic-sm'):t[0]}</span>${t[1]}</span>`).join('')}</div>
           <div class="lp-hero-trust"><span class="inline-flex items-center gap-1.5 text-sm" style="color:var(--muted)">${ICON('globe','ic-sm')} 6 languages · <span style="color:var(--jade2)">€0</span> to start · no card required</span></div>
         </div>
-        <div class="reveal lp-showcase" style="transition-delay:.08s">
+        <div class="reveal lp-showcase mx-auto" style="transition-delay:.08s">
           <div class="lp-showcase-desktop">
             <div class="lp-frame lp-float">
               <div class="lp-frame-bar"><i></i><i></i><i></i></div>
@@ -1491,7 +1491,7 @@ function landing(){
       </div>
       <div class="mt-14 grid gap-6 lg:grid-cols-3">
         ${[
-          ['🎓','Students','Tight budget, big plans.',['Pro free for 2 years with student verification','Track shared costs, textbooks and nights out','Reach a semester-abroad fund on time']],
+          ['🎓','Students','Tight budget, big plans.',['Track shared costs, textbooks and nights out','Build a buffer before you need it','Reach a semester-abroad fund on time']],
           ['💼','Young professionals','First salary, first real goals.',['See exactly where each month goes','An emergency-fund plan with a real date','Streaks that keep the habit alive']],
           ['🏡','Families','Every euro has a job.',['Plan for holidays, school and the unexpected','Cut categories without cutting joy','Watch shared goals fill up together']]
         ].map((p,i)=>`<div class="lp-persona reveal" style="transition-delay:${i*0.06}s"><span class="lp-ico" style="background:color-mix(in srgb,var(--accent2) 14%,transparent)">${p[0]}</span><div><h3 class="text-lg font-bold">${p[1]}</h3><p class="mt-0.5 text-sm" style="color:var(--muted)">${p[2]}</p></div><ul>${p[3].map(x=>`<li class="flex gap-2"><span style="color:var(--jade2)">✓</span><span>${x}</span></li>`).join('')}</ul></div>`).join('')}
@@ -1510,8 +1510,7 @@ function landing(){
         ${[['shield','Row-level security','Every row in the database is scoped to your account — other users can never query your data.'],['encrypt','Encrypted in transit','All traffic between your device and our infrastructure runs over HTTPS/TLS.'],['export','Export &amp; delete anytime','One click exports your data; deleting your account removes it permanently.'],['noads','No ads, no data selling','Goalify is funded by plans — never by selling your behaviour to advertisers.']].map((t,i)=>`<div class="lp-sec-tile reveal" style="transition-delay:${i*0.05}s"><span class="lp-ico" style="color:var(--steel2);background:color-mix(in srgb,var(--steel) 16%,transparent)">${ICON(t[0])}</span><h3 class="mt-3 font-bold">${t[1]}</h3><p class="mt-1 text-sm leading-relaxed" style="color:var(--muted)">${t[2]}</p></div>`).join('')}
       </div>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        <div class="lp-sec-tile reveal flex items-start gap-3"><span class="lp-ico shrink-0" style="color:var(--gold2);background:color-mix(in srgb,var(--gold) 16%,transparent)">${ICON('student')}</span><div><h3 class="font-bold">Student benefits</h3><p class="mt-1 text-sm" style="color:var(--muted)">Verify once with your university email and get <b style="color:var(--text)">Pro free for 2 years</b> — unlimited goals, analytics and trends included.</p></div></div>
-        <div class="lp-sec-tile reveal flex items-start gap-3" style="transition-delay:.05s"><span class="lp-ico shrink-0" style="color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent)">${ICON('sync')}</span><div><h3 class="font-bold">Cross-device sync</h3><p class="mt-1 text-sm" style="color:var(--muted)">Your account lives in the cloud — start on your laptop, log a coffee from your phone, everything stays in step.</p></div></div>
+                <div class="lp-sec-tile reveal flex items-start gap-3" style="transition-delay:.05s"><span class="lp-ico shrink-0" style="color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent)">${ICON('sync')}</span><div><h3 class="font-bold">Cross-device sync</h3><p class="mt-1 text-sm" style="color:var(--muted)">Your account lives in the cloud — start on your laptop, log a coffee from your phone, everything stays in step.</p></div></div>
       </div>
     </section>
 
@@ -1530,12 +1529,11 @@ function landing(){
         <label for="billYr" class="lp-billing"><span>Monthly</span><span class="lp-switch" aria-hidden="true"></span><span>Yearly <span style="color:var(--jade2);font-weight:600">· save up to 30%</span></span></label>
       </div>
       <div class="lp-pricing mt-10 grid gap-6 lg:grid-cols-3">${['free','pro'].map((id,i)=>{const p=PLANS[id],pr=PRICING[id];const save=pr?Math.round((1-(pr.yr/(pr.mo*12)))*100):0;return `<div class="lp-price ${p.highlight?'pop':''} reveal" style="transition-delay:${i*0.05}s">${p.highlight?`<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:linear-gradient(90deg,var(--accent1),var(--accent2))">Most popular</span>`:''}<h3 class="text-lg font-semibold">${p.name}</h3>${id==='free'?`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€0</span><span class="text-sm" style="color:var(--muted)">/forever</span></div><p class="mt-1 text-xs" style="color:var(--muted)">No card needed</p>`:`<div class="mt-3 flex items-baseline gap-1"><span class="text-4xl font-extrabold tracking-tight">€<span class="price-mo">${p.price}</span><span class="price-yr">${pr.yr}</span></span><span class="text-sm" style="color:var(--muted)"><span class="price-mo">/mo</span><span class="price-yr">/yr</span></span></div><p class="mt-1 text-xs" style="color:var(--muted)"><span class="price-mo">or €${pr.yr}/year</span><span class="lp-save">Save ${save}% vs monthly</span></p>`}<a href="${cta}" class="btn ${p.highlight?'btn-primary':'btn-ghost'} mt-5 w-full text-sm">Get started</a><ul class="mt-6 space-y-2.5 text-sm" style="color:var(--muted)">${PLAN_FEATURES[id].map(f=>`<li class="flex gap-2"><span style="color:var(--accent2)">✓</span><span>${f}</span></li>`).join('')}</ul></div>`;}).join('')}</div>
-      <p class="mt-8 text-center text-sm reveal" style="color:var(--muted)">🎓 Students get <b style="color:var(--text)">Pro free for 2 years</b> · 🎁 Invite friends to earn free upgrades</p>
     </section>
 
     <section id="sec-faq" class="lp-sec mx-auto max-w-3xl px-4">
       <div class="text-center reveal"><p class="lp-kicker gtext">FAQ</p><h2 class="lp-h2 mt-3">Questions, answered</h2></div>
-      <div class="mt-12 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['How do students get Pro free?','Submit your university and student email under Student Verification. Once approved, your plan upgrades to Pro automatically.'],['Does Goalify connect to my bank?','No — Goalify never touches your bank. Every figure is one you enter yourself, which is why it works in any country and needs no sensitive banking permissions.'],['Which languages does it support?','Six today — English, Albanian, German, Spanish, Italian and French — with the whole interface translated, switchable anytime from the menu.'],['How are the spending estimates calculated?','The onboarding quiz uses average local prices across 190+ countries, so a coffee or a night out is estimated in your currency — you can fine-tune every number later.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['Can I cancel anytime?','Yes. Paid plans renew until you cancel, and you can cancel or downgrade whenever you like — no lock-in, no cancellation fee.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="lp-faq reveal"><button data-action="faq" data-i="${i}"><span>${f[0]}</span><span class="chev" id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm leading-relaxed" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
+      <div class="mt-12 space-y-3">${[['Is Goalify really free?','Yes — the Free plan includes expense tracking, your money profile, basic insights and up to 3 goals, forever.'],['Does Goalify connect to my bank?','No — Goalify never touches your bank. Every figure is one you enter yourself, which is why it works in any country and needs no sensitive banking permissions.'],['Which languages does it support?','Six today — English, Albanian, German, Spanish, Italian and French — with the whole interface translated, switchable anytime from the menu.'],['How are the spending estimates calculated?','The onboarding quiz uses average local prices across 190+ countries, so a coffee or a night out is estimated in your currency — you can fine-tune every number later.'],['Is my data secure?','Auth and data are powered by Supabase with row-level security, so only you (and admins) can access your data.'],['Can I cancel anytime?','Yes. Paid plans renew until you cancel, and you can cancel or downgrade whenever you like — no lock-in, no cancellation fee.'],['What do I get with Premium?','XP, levels, achievements, challenges, leaderboards, social features, premium profile effects and advanced insights.']].map((f,i)=>`<div class="lp-faq reveal"><button data-action="faq" data-i="${i}"><span>${f[0]}</span><span class="chev" id="fi-${i}">+</span></button><div id="fa-${i}" class="hidden px-6 pb-5 text-sm leading-relaxed" style="color:var(--muted)">${f[1]}</div></div>`).join('')}</div>
     </section>
 
     <section class="mx-auto max-w-5xl px-4" style="padding-bottom:clamp(4rem,9vw,7rem)">
@@ -2780,23 +2778,23 @@ function analyticsView(){
   const thisM=spend.filter(e=>new Date(e.spent_at)>=mStart).reduce((s,e)=>s+Number(e.amount),0);
   const lastM=spend.filter(e=>{const d=new Date(e.spent_at);return d>=lastStart&&d<mStart;}).reduce((s,e)=>s+Number(e.amount),0);
   const delta=lastM>0?Math.round((thisM-lastM)/lastM*100):null;
-  const s=snapshot(ME,EXPENSES),h=healthScore(s),income=s.income||0;
+  const s=snapshot(ME,EXPENSES),h=healthScore(s),hv=(h&&typeof h==='object')?(h.v||0):(h||0),income=s.income||0;
   const thisRate=income>0?Math.round((income-thisM)/income*100):0;
   const lastRate=income>0?Math.round((income-lastM)/income*100):0;
   const rateDiff=lastM>0?thisRate-lastRate:null;
   const flow=income-thisM;
   const M='style="color:var(--muted)"';
-  const hlabel=h>=75?'Excellent':h>=60?'Healthy':h>=40?'Getting there':'Needs care';
+  const hlabel=hv>=75?'Excellent':hv>=60?'Healthy':hv>=40?'Getting there':'Needs care';
   const hero=`<div class="glass-strong rounded-2xl p-5 sm:p-6">
     <div class="flex flex-col sm:flex-row items-center gap-5">
-      <div class="shrink-0">${ring(h,'Financial health',hlabel)}</div>
+      <div class="shrink-0">${ring(hv,'Financial health',hlabel)}</div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 w-full">
         <div class="a-metric"><p class="l">Savings rate</p><p class="v" style="color:var(--jade2)">${Math.max(0,thisRate)}%</p><p class="i" ${M}>${rateDiff==null?'this month':rateDiff>0?'▲ '+rateDiff+'% vs last month':rateDiff<0?'▼ '+Math.abs(rateDiff)+'% vs last month':'same as last month'}</p></div>
         <div class="a-metric"><p class="l">Cash flow</p><p class="v" style="color:${flow>=0?'var(--jade2)':'var(--coral)'}">${flow>=0?'+':''}${fmt(flow)}</p><p class="i" ${M}>income minus spend</p></div>
         <div class="a-metric"><p class="l">Spent this month</p><p class="v">${fmt(thisM)}</p><p class="i" ${M}>${delta==null?'—':delta<=0?'▼ '+Math.abs(delta)+'% — trending down':'▲ '+delta+'% vs last month'}</p></div>
       </div>
     </div>
-    <p class="mt-4 text-sm" ${M}>${h>=75?'Strong position — keep automating savings and you’ll hit goals early.':h>=60?'Healthy money habits. Trimming your top category would push this higher.':h>=40?'You’re on your way — lifting your savings rate above 20% is the fastest win.':'Focus on a small buffer first — even €50/week builds momentum.'}</p>
+    <p class="mt-4 text-sm" ${M}>${hv>=75?'Strong position — keep automating savings and you’ll hit goals early.':hv>=60?'Healthy money habits. Trimming your top category would push this higher.':hv>=40?'You’re on your way — lifting your savings rate above 20% is the fastest win.':'Focus on a small buffer first — even €50/week builds momentum.'}</p>
   </div>`;
   const chartsRow=`<div class="grid gap-5 lg:grid-cols-5">
     <div class="glass rounded-2xl p-4 sm:p-5 lg:col-span-3"><div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-bold">Spending trend</h3><p class="text-xs" ${M}>All logged expenses over time</p></div><div class="grid grid-cols-3 gap-1 rounded-xl p-1 text-xs sm:flex" style="background:var(--glass)">${[['month','Month'],['year','Year'],['five','5Y']].map((t,i)=>`<button data-action="tf" data-tf="${t[0]}" class="rounded-lg px-2.5 py-1.5 text-center font-semibold ${i===1?'text-white':''}" style="${i===1?'background:linear-gradient(90deg,var(--accent1),var(--accent2))':'color:var(--muted)'}">${t[1]}</button>`).join('')}</div></div><div style="height:220px;max-height:42vh"><canvas id="spendChart"></canvas></div></div>
@@ -3565,7 +3563,7 @@ function series(tf){const spend=EXPENSES.filter(isSpend),now=new Date(),out=[];
   else{for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),e=new Date(now.getFullYear(),now.getMonth()-i+1,0);out.push([d.toLocaleDateString('en-IE',{month:'short'}),spend.filter(x=>{const dd=new Date(x.spent_at);return dd>=d&&dd<=e;}).reduce((s,x)=>s+Number(x.amount),0)]);}}
   return out;}
 // light animation, no constant motion
-function chartOpts(){return {responsive:true,maintainAspectRatio:false,animation:{duration:300},resizeDelay:150,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:10},maxRotation:0,autoSkip:true}},y:{grid:{color:'rgba(128,128,128,.10)'},ticks:{color:'#64748b',font:{size:10}}}}};}
+function chartOpts(){return {responsive:true,maintainAspectRatio:false,animation:false,resizeDelay:150,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:10},maxRotation:0,autoSkip:true}},y:{grid:{color:'rgba(128,128,128,.10)'},ticks:{color:'#64748b',font:{size:10}}}}};}
 function drawSpend(tf){const el=$('#spendChart');if(!el)return;const data=series(tf),ctx=el.getContext('2d');const g=ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,'rgba(108,143,168,.42)');g.addColorStop(1,'rgba(61,111,142,.02)');if(charts.spend)charts.spend.destroy();charts.spend=new Chart(ctx,{type:'line',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),borderColor:'#6C8FA8',backgroundColor:g,fill:true,tension:.4,pointRadius:0,borderWidth:2.5}]},options:chartOpts()});}
 function drawCat(){const el=$('#catChart');if(!el)return;const now=new Date(),m=new Date(now.getFullYear(),now.getMonth(),1),map={};EXPENSES.filter(e=>isSpend(e)&&new Date(e.spent_at)>=m).forEach(e=>map[e.category]=(map[e.category]||0)+Number(e.amount));const keys=Object.keys(map);if(!keys.length){el.insertAdjacentHTML('afterend','<p class="py-8 text-center text-sm text-slate-400">No spending this month yet.</p>');el.style.display='none';return;}charts.cat=new Chart(el,{type:'doughnut',data:{labels:keys.map(k=>(CATS[k]||CATS.other).l),datasets:[{data:keys.map(k=>map[k]),backgroundColor:keys.map(k=>(CATS[k]||CATS.other).c),borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}},cutout:'62%'}});}
 function runSim(){const inc=+($('#simIncome')?.value||0),exp=+($('#simExp')?.value||0),goal=+($('#simGoal')?.value||0),rate=+($('#simRate')?.value||0);
@@ -3742,8 +3740,11 @@ async function render(){
     // the dashboard shows a friendly empty state + "Create goal" if a goal failed to load.
     const route2=route2base;
     const views={dashboard:dashboardView,goals:goalsView,groups:groupsView,friends:friendsView,analytics:analyticsView,simulator:simulatorView,spendcalc:spendingCalcView,challenges:challengesView,social:socialView,inbox:inboxView,profile:profileView,store:storeView,goalverse:goalverseView,rewards:rewardsView,plans:plansView,settings:settingsView};
+    const sameRoute=window._lastAppRoute===route2;window._lastAppRoute=route2;
+    const keepY=sameRoute?window.scrollY:0;
     root.innerHTML=shell(route2,(views[route2]||dashboardView)());
-    window.scrollTo(0,0);
+    root.classList.toggle('no-anim',sameRoute);
+    if(sameRoute){window.scrollTo(0,keepY);}else{window.scrollTo(0,0);}
     if(route2==='dashboard'&&c.engage){drawSpend('year');drawCat();}
     if(route2==='analytics'){drawSpend('year');drawCat();}
     if(route2==='simulator'){runSim();}
@@ -4462,18 +4463,40 @@ document.addEventListener('submit',async(e)=>{
     else if(f.id==='loginForm'){
       const fd=new FormData(f);
       if(DEMO_MODE){toast('Welcome back! 👋');location.hash=DEMO_ME.onboarded?'#app/dashboard':'#quiz';return;}
+      if(window._loginInFlight)return; // ignore double-taps while a request is already resolving
       if(fd.get('remember'))localStorage.setItem(REMEMBER,'1');else localStorage.removeItem(REMEMBER);
       const btn=$('#loginBtn');btn.disabled=true;btn.textContent='Logging in…';
-      const fail=(m)=>{btn.disabled=false;btn.textContent='Log in';toast(m||'Login failed — please try again','err');};
+      const fail=(m)=>{window._loginInFlight=false;btn.disabled=false;btn.textContent='Log in';toast(m||'Login failed — please try again','err');};
+      window._loginInFlight=true;
       // Self-contained login: don't wait on onAuthStateChange (which can lag/hang on slow networks).
+      // 20s (was 12s — too aggressive, tripped on ordinary mobile latency and a cold/paused Supabase
+      // project). A race can't cancel the underlying request — a slow-but-working connection keeps
+      // trying in the background even after our timeout fires. So on timeout we don't give up
+      // instantly: we poll for up to ~6 more seconds for the session to land before telling the
+      // user it failed. This is what "network is slow" should actually mean — wait longer, not error faster.
       try{
-        const res=await Promise.race([
-          sb.auth.signInWithPassword({email:fd.get('email'),password:fd.get('password')}),
-          new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),12000))
-        ]);
+        let res;
+        try{
+          res=await Promise.race([
+            sb.auth.signInWithPassword({email:fd.get('email'),password:fd.get('password')}),
+            new Promise((_,rej)=>setTimeout(()=>rej(new Error('__timeout__')),20000))
+          ]);
+        }catch(raceErr){
+          if(raceErr&&raceErr.message==='__timeout__'){
+            let landed=null;
+            for(let i=0;i<4&&!landed;i++){
+              await new Promise(r=>setTimeout(r,1500));
+              const {data}=await sb.auth.getSession();
+              if(data&&data.session)landed=data.session;
+            }
+            if(landed){res={data:{session:landed},error:null};} // the slow request actually succeeded — don't lie to the user
+            else throw raceErr;
+          } else throw raceErr;
+        }
         if(res&&res.error){return fail(res.error.message);}
         SESSION=(res&&res.data&&res.data.session)||(await sb.auth.getSession()).data.session;
         if(!SESSION){return fail('Incorrect email or password');}
+        window._loginInFlight=false;
         btn.textContent='Success ✓';
         try{await Promise.race([loadProfile(),new Promise(r=>setTimeout(r,6000))]);}catch(e){}
         toast('Welcome back! 👋');
