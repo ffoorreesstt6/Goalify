@@ -4610,6 +4610,16 @@ sb.auth.onAuthStateChange(async (event,session)=>{
   if(event==='SIGNED_OUT'){ localStorage.removeItem('goalify_onboarded'); render(); return; }
   render();
 });
+// path->hash bridge: vercel rewrites serve index.html for every path, so friendly
+// URLs like /login, /signup, /dashboard work by translating into hash routes.
+function pathToHash(path){const seg=(path||'').replace(/^\/+|\/+$/g,'');if(!seg||seg==='index.html')return '';
+  const known=['login','signup','forgot','reset','verify','quiz','privacy'];
+  if(known.indexOf(seg)>-1)return '#'+seg;
+  if(seg.indexOf('join/')===0)return '#'+seg;
+  if(seg==='dashboard'||seg==='app')return '#app/dashboard';
+  if(seg.indexOf('app/')===0)return '#'+seg;
+  return '';}
+window.pathToHash=pathToHash;try{const _h=pathToHash(location.pathname);if(_h){history.replaceState(null,'',location.origin+'/');location.hash=_h;}}catch(e){}
 window.addEventListener('hashchange',render);
 loadTheme();
 (async()=>{
