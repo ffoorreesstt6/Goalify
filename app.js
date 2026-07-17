@@ -652,6 +652,12 @@ function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch
 
 // -------------------- data layer --------------------
 async function loadProfile(){
+  // account isolation: if a different user signs in on this tab, wipe the previous user's state first
+  try{const uid_=SESSION&&SESSION.user&&SESSION.user.id;
+    if(uid_){const prev=localStorage.getItem('goalify_last_uid');
+      if(prev&&prev!==uid_)resetUserState();
+      localStorage.setItem('goalify_last_uid',uid_);}}catch(e){}
+
   if(DEMO_MODE){ME=DEMO_ME;return DEMO_ME;}
   if(!SESSION) return null;
   let { data } = await sb.from('profiles').select('*').eq('id',SESSION.user.id).maybeSingle();
@@ -2976,7 +2982,7 @@ function socialView(){
       <div class="so-search mt-3"><span class="so-ic">${ICON('search','ic-sm')}</span><input id="soSearch" class="input" placeholder="Search savers…" autocomplete="off" aria-label="Search members"></div>
       <div id="soResults" class="hidden mt-2 rounded-xl" style="background:var(--glass);border:1px solid var(--border)"></div></div>`;
     const stat=(v,l,e)=>`<div class="kpi text-center"><p class="k-v" style="margin-top:0">${e?e+' ':''}${v}</p><p class="k-s">${l}</p></div>`;
-    const stats=`<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">${stat(0,'Followers','👥')}${stat(0,'Following','➕')}${stat(curStreak,'day streak','🔥')}${stat('Lvl '+level,(ME.xp||0)+' XP','⭐')}</div>`;
+    const stats=`<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">${stat(curStreak,'day streak','🔥')}${stat('Lvl '+level,(ME.xp||0)+' XP','⭐')}</div>`;
     const empt=(ico,t,s)=>`<div class="glass rounded-2xl p-5"><h3 class="font-bold">${ico} ${t}</h3><div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;font-size:1.3rem">${ico}</div><p class="mt-2 text-sm font-semibold">Nothing here yet</p><p class="mt-1 text-xs" ${M}>${s}</p></div></div>`;
     body=`${search}${stats}<div class="grid gap-5 lg:grid-cols-2">${empt('🤝','Suggested friends','Recommendations appear once accounts go live — no placeholder users in demo.')}${empt('👀','Recent visitors','See who viewed your profile once the community opens.')}</div>`;
   }else if(SOTAB==='leaders'){
@@ -3021,7 +3027,7 @@ function inboxView(){
   <div class="page-head"><div><h1 class="page-h1">Inbox</h1><p class="page-sub">Everything that happened across your goals, achievements and account.</p></div>${unread?`<button class="btn btn-ghost !py-2 text-sm" data-action="inboxReadAll">Mark all read (${unread})</button>`:''}</div>
   <div class="seg" role="tablist" aria-label="Filter notifications">${FILTERS.map(f=>`<button role="tab" aria-selected="${INBOX_FILTER===f[0]}" class="seg-btn ${INBOX_FILTER===f[0]?'on':''}" data-action="inboxFilter" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>
   ${list.length?`<div class="space-y-2">${list.map(n=>{const un=!read.has(n.id);return `<div class="ib-row ${un?'unread':''}" data-action="inboxRead" data-id="${n.id}" role="button" tabindex="0" aria-label="${un?'Unread: ':''}${n.title}"><span class="ib-dot"></span><span class="ib-ico">${n.icon}</span><div class="min-w-0 flex-1"><div class="flex items-baseline justify-between gap-3"><p class="text-sm font-bold">${n.title}</p><span class="shrink-0 text-[11px]" style="color:var(--muted)">${fmtAgo(n.at)}</span></div><p class="mt-0.5 text-sm" style="color:var(--muted)">${n.body}</p></div></div>`;}).join('')}</div>`
-  :`<div class="empty-wrap"><div class="empty-orb">📭</div><h3 class="mt-4 text-lg font-bold">Nothing here yet</h3><p class="mx-auto mt-1 max-w-sm text-sm" style="color:var(--muted)">${INBOX_FILTER==='social'?'Friend requests, follows and mentions land here once accounts go live.':'New notifications appear here as you use Goalify.'}</p></div>`}
+  :`<div class="empty-wrap"><div class="empty-orb">📭</div><h3 class="mt-4 text-lg font-bold">Nothing here yet</h3><p class="mx-auto mt-1 max-w-sm text-sm" style="color:var(--muted)">${INBOX_FILTER==='social'?'Friend requests and mentions land here once accounts go live.':'New notifications appear here as you use Goalify.'}</p></div>`}
   <div class="grid gap-4 sm:grid-cols-2">
     <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">Friend requests</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Requests to connect appear here once accounts go live.</p></div>
     <div class="glass rounded-2xl p-5"><div class="flex items-center justify-between"><h3 class="font-bold">Messages</h3><span class="chip">0</span></div><p class="mt-2 text-sm" style="color:var(--muted)">Direct messages between members arrive here at launch.</p></div>
@@ -3102,19 +3108,16 @@ function featuredBadge(got){let best=null;BADGES.forEach(b=>{if(got&&got.has&&go
 let PROF_COUNTS=null;
 async function profEnsureCounts(){
   if(PROF_COUNTS||DEMO_MODE)return;
-  PROF_COUNTS={followers:0,following:0,friends:0};
+  PROF_COUNTS={friends:0};
   try{const u=SESSION.user.id;
-    const [a,b,c]=await Promise.all([
-      sb.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',u),
-      sb.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',u),
-      sb.from('friendships').select('user_low',{count:'exact',head:true}).or(`user_low.eq.${u},user_high.eq.${u}`)]);
-    PROF_COUNTS={followers:a.count||0,following:b.count||0,friends:c.count||0};render();
+    const c=await sb.from('friendships').select('user_low',{count:'exact',head:true}).or(`user_low.eq.${u},user_high.eq.${u}`);
+    PROF_COUNTS={friends:c.count||0};render();
   }catch(e){}
 }
 function socialStatsHTML(){
-  const lvl=levelFromXp(ME.xp).level;const c=PROF_COUNTS||{followers:0,following:0,friends:0};
+  const lvl=levelFromXp(ME.xp).level;const c=PROF_COUNTS||{friends:0};
   const cell=(v,l,href)=>`<a href="${href||'#app/friends'}" class="a-metric text-center block"><p class="v">${v}</p><p class="l">${l}</p></a>`;
-  return `<div class="grid grid-cols-4 gap-2.5">${cell(c.followers,'Followers')}${cell(c.following,'Following')}${cell(c.friends,'Friends')}${cell('Lv.'+lvl,'Level','#app/challenges')}</div>
+  return `<div class="grid grid-cols-2 gap-2.5">${cell(c.friends,'Friends')}${cell('Lv.'+lvl,'Level','#app/challenges')}</div>
   <div class="grid grid-cols-2 gap-2.5"><a href="#app/settings" class="btn btn-ghost">Edit username</a><a href="#app/groups" class="btn btn-ghost">Group goals</a></div>`;
 }
 function profileView(){
@@ -4127,6 +4130,29 @@ function openBizForm(coll,id){
 // ============================================================
 // EVENTS
 // ============================================================
+// ============================================================
+// ACCOUNT ISOLATION — every user gets a clean slate.
+// All per-user module state + unscoped per-user localStorage keys are wiped on
+// logout and on any uid change (defense-in-depth for OAuth/redirect logins).
+// Device prefs (theme, color, bg, language, remember) intentionally survive.
+// ============================================================
+function resetUserState(){
+  try{
+    ME=null;GOALS=[];EXPENSES=[];
+    FRIENDS=[];FR_IN=[];FR_OUT=[];FRIENDS_LOADED=false;FCHAT=null;FCHAT_MSGS=[];
+    GROUPS=[];GROUP_OPEN=null;GROUPS_LOADED=false;GROUP_NEW=false;
+    PROF_COUNTS=null;
+    if(typeof RCP!=='undefined'){RCP.open=false;RCP.data=null;RCP.img=null;const rr=document.getElementById('rcpRoot');if(rr)rr.innerHTML='';}
+    window._lastAppRoute=null;window._loginInFlight=false;
+    try{QSTEP=0;SPENDIDX=0;SHOWINSIGHT=false;QA={lang:'en',income:0,incomeBracket:'',_custom:false,country:'Kosovo',freq:{},subs:[],spend:{},frustrate:'',reduce:'',bankcheck:'',challenge:'',employment:'',debt:'',efund:'',savehabit:'',invest:'',motivation:''};}catch(e){}
+    ['goalify_onboarded','goalify_quiz_last','goalify_quiz_monthly','goalify_quiz_draft',
+     'goalify_ref_invited','goalify_ref_entered','goalify_refcode','goalify_visibility',
+     'goalify_gifts','goalify_promo_used','goalify_merchant_cats','goalify_chalv',
+     'goalify_pending_email','goalify_pending_join','goalify_last_uid'
+    ].forEach(k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+}
+window.resetUserState=resetUserState;
 document.addEventListener('click',async(e)=>{
   const sc=e.target.closest('[data-scroll]'); if(sc){const id=sc.getAttribute('data-scroll');const el=document.getElementById('sec-'+id);if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth'});}return;}
   const a=e.target.closest('[data-action]'); if(!a)return;
@@ -4215,7 +4241,12 @@ document.addEventListener('click',async(e)=>{
     else if(act==='imgApply'){applyImgEditor();}
     else if(act==='langMenu'){const dd=a.closest('[data-lang-dd]'),m=dd&&dd.querySelector('.lang-menu');document.querySelectorAll('.lang-menu').forEach(x=>{if(x!==m)x.classList.add('hidden');});document.querySelectorAll('[data-lang-dd]').forEach(x=>{if(x!==dd){x.classList.remove('open');const b=x.querySelector('.lang-btn');if(b)b.setAttribute('aria-expanded','false');}});if(m){const willOpen=m.classList.contains('hidden');m.classList.toggle('hidden');dd.classList.toggle('open',willOpen);a.setAttribute('aria-expanded',willOpen?'true':'false');if(willOpen){positionLangMenu(dd);const s=m.querySelector('#langSearch');if(s){s.value='';filterLangTiles(dd,'');if(window.matchMedia&&window.matchMedia('(hover:hover)').matches){setTimeout(()=>{try{s.focus();}catch(_){}},30);}}}else{m.style.left='';m.style.right='';m.style.top='';m.style.bottom='';}}}
     else if(act==='langPick'){const dd=a.closest('[data-lang-dd]');if(dd){const m=dd.querySelector('.lang-menu'),b=dd.querySelector('.lang-btn');if(m)m.classList.add('hidden');dd.classList.remove('open');if(b)b.setAttribute('aria-expanded','false');}setLang(a.getAttribute('data-lang'));}
-    else if(act==='logout'){localStorage.removeItem('goalify_onboarded');if(!DEMO_MODE){await sb.auth.signOut();}ME=null;location.hash='#home';}
+    else if(act==='logout'){
+      resetUserState();
+      if(!DEMO_MODE){try{await sb.auth.signOut();}catch(e){}}
+      // fresh-install behavior: a full reload guarantees zero in-memory carryover for the next account
+      location.replace(location.pathname+location.search+'#home');location.reload();return;
+    }
     else if(act==='newGoal'){openGoalModal();}
     else if(act==='newMission'){openMissionModal(a.getAttribute('data-goal'));}
     else if(act==='checkin'){const id=a.getAttribute('data-id');const m=allMissions().find(x=>x.id===id);if(!m)return;
@@ -5089,7 +5120,7 @@ function groupDetailView(g){
     </div>
     <div class="glass rounded-2xl p-4">
       <div class="flex items-center justify-between"><h3 class="font-bold">Group chat</h3><span class="chip">50 msgs/day</span></div>
-      <div class="mt-2 space-y-1.5 max-h-[240px] overflow-y-auto">${(g._msgs&&g._msgs.length)?g._msgs.map(m=>`<div class="rounded-xl px-3 py-2 text-sm ${m.mine?'ml-8':'mr-8'}" style="background:${m.mine?'color-mix(in srgb,var(--accent2) 22%,var(--card-2))':'var(--card-2)'}"><b class="text-[11px] block" style="color:var(--muted)">${esc(m.name||'Saver')}</b>${esc(m.body)}</div>`).join(''):`<p class="text-sm py-3 text-center" style="color:var(--muted)">No messages yet — start the conversation.</p>`}</div>
+      <div id="gChatScroll" class="chat-scroll mt-2">${(g._msgs&&g._msgs.length)?g._msgs.map((m,i,a)=>{const grp=i>0&&a[i-1].name===m.name&&a[i-1].mine===m.mine;return `<div class="chat-row ${m.mine?'me':''} ${grp?'grp':''}"><div class="chat-bubble ${m.mine?'me':''}">${(m.mine||grp)?'':`<b class="chat-who">${esc(m.name||'Saver')}</b>`}${esc(m.body)}</div></div>`;}).join(''):`<div class="chat-empty">${ICON('users')}<p>No messages yet</p><span>Start the conversation with your group.</span></div>`}</div>
       ${(ME&&ME.plan!=='free')?`<div class="mt-3 flex gap-2"><input id="gChatInput" class="input flex-1" maxlength="500" placeholder="Message the group…"><button class="btn btn-primary" data-action="gSendText" data-id="${g.id}">Send</button></div>`
         :`<p class="t-label mt-3">Quick messages · upgrade to Pro for custom messages</p><div class="mt-1.5 flex flex-wrap gap-1.5">${chatPresets().map(t=>`<button class="btn btn-ghost btn-sm" data-action="gSendPreset" data-id="${g.id}" data-body="${esc(t)}">${esc(t)}</button>`).join('')}</div>`}
     </div>
@@ -5177,7 +5208,7 @@ async function fEnsureLoaded(){
   render();
 }
 function fAvatar(f,size){size=size||40;return `<span class="flex items-center justify-center overflow-hidden rounded-full text-white font-bold shrink-0" style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--accent1),var(--accent2))">${f.av?`<img src="${esc(f.av)}" class="h-full w-full object-cover" alt="">`:esc((f.name||'?').slice(0,1).toUpperCase())}</span>`;}
-function fRow(f,actions){const M='style="color:var(--muted)"';return `<div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--hair)">${fAvatar(f)}<div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">${esc(f.name)} ${planBadge(f.plan)}</p><p class="truncate text-[11px]" ${M}>@${esc(f.un||(f.name||'').toLowerCase())}${f.lvl?' · Lv.'+f.lvl:''}</p></div>${actions}</div>`;}
+function fRow(f,actions){const M='style="color:var(--muted)"';return `<div class="fr-row flex items-center gap-3 py-2.5 px-1 -mx-1 rounded-lg" style="border-bottom:1px solid var(--hair)">${fAvatar(f)}<div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">${esc(f.name)} ${planBadge(f.plan)}</p><p class="truncate text-[11px]" ${M}>@${esc(f.un||(f.name||'').toLowerCase())}${f.lvl?' · Lv.'+f.lvl:''}</p></div>${actions}</div>`;}
 function friendsView(){
   const M='style="color:var(--muted)"';
   const reqSection=(FR_IN.length||FR_OUT.length)?`<div class="glass rounded-2xl p-4">
@@ -5187,12 +5218,12 @@ function friendsView(){
   </div>`:'';
   const friendsSection=`<div class="glass rounded-2xl p-4">
     <div class="flex items-center justify-between mb-1"><h3 class="font-bold">Friends</h3><span class="chip">${FRIENDS.length}</span></div>
-    ${FRIENDS.length?FRIENDS.map(f=>fRow(f,`<div class="flex gap-1.5"><button class="btn btn-primary btn-sm" data-action="fMsg" data-id="${f.id}" data-name="${esc(f.name)}">Message</button><button class="btn btn-ghost btn-sm" data-action="fUnfriend" data-id="${f.id}">Remove</button></div>`)).join('')
+    ${(!FRIENDS_LOADED&&!DEMO_MODE)?[0,1,2].map(()=>`<div class="flex items-center gap-3 py-2.5"><span class="sk" style="width:40px;height:40px;border-radius:9999px"></span><div class="flex-1"><span class="sk h-3 block" style="width:45%"></span><span class="sk h-2 block mt-1.5" style="width:30%"></span></div></div>`).join(''):FRIENDS.length?FRIENDS.map(f=>fRow(f,`<div class="flex gap-1.5"><button class="btn btn-primary btn-sm" data-action="fMsg" data-id="${f.id}" data-name="${esc(f.name)}">Message</button><button class="btn btn-ghost btn-sm" data-action="fUnfriend" data-id="${f.id}">Remove</button></div>`)).join('')
       :`<div class="empty-wrap mt-3 !py-8"><div class="empty-orb" style="height:3rem;width:3rem;margin:0 auto">${ICON('users')}</div><p class="mt-2 text-sm font-semibold">No friends yet</p><p class="mt-1 text-xs" ${M}>Search savers below and send a request.</p></div>`}
   </div>`;
   const chatPanel=FCHAT?`<div class="glass-strong rounded-2xl p-4">
     <div class="flex items-center justify-between"><h3 class="font-bold">Message ${esc(FCHAT.name)}</h3><button class="rcp-x" data-action="fMsgClose" aria-label="Close">${ICON('x','ic-sm')}</button></div>
-    <div class="mt-2 space-y-1.5 max-h-[220px] overflow-y-auto">${FCHAT_MSGS.length?FCHAT_MSGS.map(m=>`<div class="rounded-xl px-3 py-2 text-sm ${m.mine?'ml-8':'mr-8'}" style="background:${m.mine?'color-mix(in srgb,var(--accent2) 22%,var(--card-2))':'var(--card-2)'}">${esc(m.body)}<span class="block text-[10px] mt-0.5" style="color:var(--muted)">${fmtAgo(m.created_at)}</span></div>`).join(''):`<p class="text-sm py-3 text-center" style="color:var(--muted)">Say hi with a quick message below.</p>`}</div>
+    <div id="fChatScroll" class="chat-scroll mt-2">${FCHAT_MSGS.length?FCHAT_MSGS.map((m,i,a)=>{const grp=i>0&&a[i-1].mine===m.mine;return `<div class="chat-row ${m.mine?'me':''} ${grp?'grp':''}"><div class="chat-bubble ${m.mine?'me':''}">${esc(m.body)}<span class="chat-when">${fmtAgo(m.created_at)}</span></div></div>`;}).join(''):`<div class="chat-empty">${ICON('users')}<p>No messages yet</p><span>Say hi with a quick message below.</span></div>`}</div>
     <p class="t-label mt-3">Quick messages · 4 per day</p>
     <div class="mt-1.5 flex flex-wrap gap-1.5">${chatPresets().map(t=>`<button class="btn btn-ghost btn-sm" data-action="fSendPreset" data-body="${esc(t)}">${esc(t)}</button>`).join('')}</div>
   </div>`:'';

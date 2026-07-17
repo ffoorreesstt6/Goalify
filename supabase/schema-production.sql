@@ -453,24 +453,10 @@ create policy receipt_items_own on public.receipt_items for all
 create index if not exists receipt_items_scan_idx on public.receipt_items(scan_id);
 
 -- ============================================================================
--- SOCIAL — follows · friend requests · friendships · visitors
+-- SOCIAL — friend requests · friendships · visitors
 -- ============================================================================
-create table if not exists public.follows (
-  follower_id  uuid not null references auth.users(id) on delete cascade,
-  following_id uuid not null references auth.users(id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  primary key (follower_id, following_id),
-  check (follower_id <> following_id)
-);
-alter table public.follows enable row level security;
-drop policy if exists follows_read on public.follows;
-create policy follows_read on public.follows for select
-  using (auth.uid() = follower_id or auth.uid() = following_id);
-drop policy if exists follows_write on public.follows;
-create policy follows_write on public.follows for insert with check (auth.uid() = follower_id);
-drop policy if exists follows_delete on public.follows;
-create policy follows_delete on public.follows for delete using (auth.uid() = follower_id);
-create index if not exists follows_following_idx on public.follows(following_id);
+-- NOTE: the follower/following `follows` table was removed 2026-07 (migration
+-- drop_dead_follows_system). Goalify uses a mutual-friendship model only.
 
 create table if not exists public.friend_requests (
   id          uuid primary key default gen_random_uuid(),
